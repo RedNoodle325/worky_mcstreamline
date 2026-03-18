@@ -46,23 +46,21 @@ function renderSiteCards(sites, units, tickets) {
     const inProgCount = siteTickets.filter(t => ['parts_ordered','tech_dispatched','on_site'].includes(t.status||'')).length;
     const resolvedCount = siteTickets.filter(t => t.status === 'resolved').length;
 
-    // Units with any open/in-progress tickets
-    const unitsWithIssues = new Set(siteTickets.filter(t => !['resolved','closed'].includes(t.status||'')).map(t=>t.unit_id).filter(Boolean)).size;
+    const unitsWithIssues = new Set(
+      siteTickets.filter(t => !['resolved','closed'].includes(t.status||'')).map(t=>t.unit_id).filter(Boolean)
+    ).size;
 
-    // Commission dot grid
-    const maxLine = siteUnits.length ? Math.max(...siteUnits.map(u=>u.line_number||1), 10) : 10;
-    const cols = Math.min(maxLine, 20);
-    const byLine = {};
-    siteUnits.forEach(u => { byLine[u.line_number] = u; });
-    const nums = Array.from({length: cols}, (_,i)=>i+1);
-
-    const coilLevel = (u) => {
-      const lvl = u?.commission_level;
-      if (!lvl || lvl==='none') return 'none';
-      if (lvl==='complete') return 'complete';
-      const n = parseInt(lvl.replace('L',''));
-      return n >= 3 ? 'complete' : 'progress';
-    };
+    // Warranty status: in warranty if ANY unit has warranty_end_date >= today
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const warUnits = siteUnits.filter(u => u.warranty_end_date);
+    const inWarranty = warUnits.some(u => new Date(u.warranty_end_date) >= today);
+    const allExpired = warUnits.length > 0 && warUnits.every(u => new Date(u.warranty_end_date) < today);
+    const warrantyBadge = inWarranty
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#14532d44;color:#4ade80;border:1px solid #4ade8044;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600">✓ In Warranty</span>`
+      : allExpired
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#7f1d1d44;color:#fca5a5;border:1px solid #fca5a544;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600">Warranty Expired</span>`
+      : '';
 
     const lastContact = site.last_contact_date
       ? new Date(site.last_contact_date).toLocaleDateString()
@@ -102,32 +100,13 @@ function renderSiteCards(sites, units, tickets) {
         </div>
       </div>
 
-      <!-- Commission dot grid -->
-      <div style="overflow-x:auto;margin-bottom:8px">
-        <div style="display:flex;align-items:center;margin-bottom:2px">
-          <div class="dash-row-label">COIL</div>
-          ${nums.map(n => {
-            const u = byLine[n];
-            const lvl = u ? coilLevel(u) : 'none';
-            const cls = lvl==='complete'?'dot-complete':lvl==='progress'?'dot-progress':'dot-none';
-            return `<div class="unit-dot ${cls}" title="${u?serial(u):'#'+n}">${lvl==='complete'?'✓':''}</div>`;
-          }).join('')}
+      <!-- Footer: units, warranty, last contact -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-top:1px solid var(--border);padding-top:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text3)">${siteUnits.length} unit${siteUnits.length!==1?'s':''}${unitsWithIssues>0?' · <span style="color:var(--orange)">'+unitsWithIssues+' affected</span>':''}</span>
+          ${warrantyBadge}
         </div>
-        <div style="display:flex;align-items:center">
-          <div class="dash-row-label">PM</div>
-          ${nums.map(n => {
-            const u = byLine[n];
-            const lvl = u?.commission_level||'none';
-            const cls = lvl==='complete'?'dot-complete':(lvl&&lvl!=='none')?'dot-progress':'dot-none';
-            return `<div class="unit-dot ${cls}" title="${u?serial(u):'#'+n}">${lvl==='complete'?'✓':''}</div>`;
-          }).join('')}
-        </div>
-      </div>
-
-      <!-- Footer meta -->
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:7px;margin-top:4px">
-        <span>${siteUnits.length} unit${siteUnits.length!==1?'s':''}${unitsWithIssues?' · <span style="color:var(--orange)">'+unitsWithIssues+' affected</span>':''}</span>
-        <span>${lastContact ? '📞 '+lastContact : '<span style="color:var(--text3)">No contact logged</span>'}</span>
+        <span style="font-size:11px;color:var(--text3)">${lastContact ? '📞 '+lastContact : 'No contact logged'}</span>
       </div>
     </div>`;
   }).join('');
