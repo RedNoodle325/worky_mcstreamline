@@ -12,6 +12,7 @@ use crate::{
 };
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct TicketFilter {
     pub site_id: Option<Uuid>,
     pub unit_id: Option<Uuid>,

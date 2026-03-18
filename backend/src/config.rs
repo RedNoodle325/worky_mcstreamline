@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Config {
     pub database_url: String,
     pub supabase_url: String,

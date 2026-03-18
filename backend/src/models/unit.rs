@@ -24,6 +24,7 @@ pub struct Unit {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct UnitWithSerial {
     #[serde(flatten)]
     pub unit: Unit,

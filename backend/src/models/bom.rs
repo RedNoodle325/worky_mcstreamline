@@ -28,6 +28,7 @@ pub struct BomItem {
 
 // Parsed from the Glovia BOM PDF text
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ParsedBomLine {
     pub quantity: f64,
     pub unit_of_measure: String,

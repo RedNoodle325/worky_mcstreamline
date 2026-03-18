@@ -12,6 +12,7 @@ use crate::{
 };
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct UnitFilter {
     pub site_id: Option<Uuid>,
     pub unit_type: Option<String>,

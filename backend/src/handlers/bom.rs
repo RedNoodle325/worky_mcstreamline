@@ -13,6 +13,7 @@ use crate::{
 };
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct BomQuery {
     pub site_id: Option<Uuid>,
     pub unit_id: Option<Uuid>,
@@ -20,7 +21,7 @@ pub struct BomQuery {
 
 pub async fn list_bom_imports(
     State(pool): State<PgPool>,
-    Query(q): Query<BomQuery>,
+    Query(_q): Query<BomQuery>,
 ) -> Result<Json<Vec<BomImport>>> {
     let imports = sqlx::query_as::<_, BomImport>(
         "SELECT id, site_id, unit_id, assembly_number, bom_description, source_filename, imported_at
