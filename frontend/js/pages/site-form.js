@@ -65,6 +65,7 @@ async function renderSiteForm(container, { id, backTo = 'sites', backParams = {}
       <div class="card" style="margin-bottom:16px">
         <div class="card-title" style="margin-bottom:16px">Primary Contact</div>
         <div class="form-grid">
+          <div class="form-group full"><label>Contact Name</label><input name="customer_contact_name" value="${escHtml(site.customer_contact_name||'')}" placeholder="e.g. Jane Smith"/></div>
           <div class="form-group"><label>Phone</label><input name="customer_contact_phone" value="${escHtml(site.customer_contact_phone||'')}"/></div>
           <div class="form-group"><label>Email</label><input name="customer_contact_email" type="email" value="${escHtml(site.customer_contact_email||'')}"/></div>
           <div class="form-group full"><label>Notes</label><textarea name="notes" rows="3">${escHtml(site.notes||'')}</textarea></div>

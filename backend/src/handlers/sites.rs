@@ -43,8 +43,8 @@ pub async fn create_site(
             shipping_name, shipping_contact_name, shipping_contact_phone,
             shipping_address_street, shipping_address_city, shipping_address_state, shipping_address_zip,
             access_requirements, required_paperwork, orientation_info,
-            customer_contact_phone, customer_contact_email, notes)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+            customer_contact_name, customer_contact_phone, customer_contact_email, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
            RETURNING *"#,
     )
     .bind(&body.name)
@@ -62,6 +62,7 @@ pub async fn create_site(
     .bind(&body.access_requirements)
     .bind(&body.required_paperwork)
     .bind(&body.orientation_info)
+    .bind(&body.customer_contact_name)
     .bind(&body.customer_contact_phone)
     .bind(&body.customer_contact_email)
     .bind(&body.notes)
@@ -92,11 +93,12 @@ pub async fn update_site(
            access_requirements = COALESCE($14, access_requirements),
            required_paperwork = COALESCE($15, required_paperwork),
            orientation_info = COALESCE($16, orientation_info),
-           customer_contact_phone = COALESCE($17, customer_contact_phone),
-           customer_contact_email = COALESCE($18, customer_contact_email),
-           notes = COALESCE($19, notes),
-           last_contact_date = COALESCE($20, last_contact_date),
-           techs_on_site = COALESCE($21, techs_on_site),
+           customer_contact_name = COALESCE($17, customer_contact_name),
+           customer_contact_phone = COALESCE($18, customer_contact_phone),
+           customer_contact_email = COALESCE($19, customer_contact_email),
+           notes = COALESCE($20, notes),
+           last_contact_date = COALESCE($21, last_contact_date),
+           techs_on_site = COALESCE($22, techs_on_site),
            updated_at = now()
            WHERE id = $1
            RETURNING *"#,
@@ -117,6 +119,7 @@ pub async fn update_site(
     .bind(&body.access_requirements)
     .bind(&body.required_paperwork)
     .bind(&body.orientation_info)
+    .bind(&body.customer_contact_name)
     .bind(&body.customer_contact_phone)
     .bind(&body.customer_contact_email)
     .bind(&body.notes)

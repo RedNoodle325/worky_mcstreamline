@@ -102,6 +102,14 @@ async function renderSiteDetail(container, { id } = {}) {
               <div class="section-title">Notes</div>
               <div style="color:var(--text2);white-space:pre-wrap;font-size:12px">${escHtml(site.notes)}</div>
             </div>` : ''}
+            ${(site.customer_contact_name || site.customer_contact_phone || site.customer_contact_email) ? `<div>
+              <div class="section-title">Primary Contact</div>
+              <div style="color:var(--text2)">
+                ${site.customer_contact_name ? `<div style="font-weight:500;color:var(--text)">${escHtml(site.customer_contact_name)}</div>` : ''}
+                ${site.customer_contact_phone ? `<div style="font-size:12px"><a href="tel:${escHtml(site.customer_contact_phone)}">${escHtml(site.customer_contact_phone)}</a></div>` : ''}
+                ${site.customer_contact_email ? `<div style="font-size:12px"><a href="mailto:${escHtml(site.customer_contact_email)}">${escHtml(site.customer_contact_email)}</a></div>` : ''}
+              </div>
+            </div>` : ''}
             <div>
               <div class="section-title">Last Contact</div>
               <div style="display:flex;align-items:center;gap:8px">
@@ -163,15 +171,6 @@ async function renderSiteDetail(container, { id } = {}) {
           </div>
         </div>
         <div id="units-list">${renderUnitsList(siteUnits, siteTickets)}</div>
-      </div>
-
-      <!-- Contractors -->
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="card-title">Contractors</div>
-          <button class="btn btn-sm btn-secondary" onclick="navigate('contacts')">Manage All</button>
-        </div>
-        ${renderContractorsList(contractors)}
       </div>
 
       <!-- Commission Snapshot -->

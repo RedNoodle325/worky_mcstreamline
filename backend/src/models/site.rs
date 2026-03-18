@@ -24,6 +24,7 @@ pub struct Site {
     pub required_paperwork: Option<String>,
     pub orientation_info: Option<String>,
     // Customer contact
+    pub customer_contact_name: Option<String>,
     pub customer_contact_phone: Option<String>,
     pub customer_contact_email: Option<String>,
     pub notes: Option<String>,
@@ -52,6 +53,7 @@ pub struct CreateSite {
     pub access_requirements: Option<String>,
     pub required_paperwork: Option<String>,
     pub orientation_info: Option<String>,
+    pub customer_contact_name: Option<String>,
     pub customer_contact_phone: Option<String>,
     pub customer_contact_email: Option<String>,
     pub notes: Option<String>,
@@ -74,6 +76,7 @@ pub struct UpdateSite {
     pub access_requirements: Option<String>,
     pub required_paperwork: Option<String>,
     pub orientation_info: Option<String>,
+    pub customer_contact_name: Option<String>,
     pub customer_contact_phone: Option<String>,
     pub customer_contact_email: Option<String>,
     pub notes: Option<String>,
