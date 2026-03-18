@@ -125,8 +125,10 @@ async function renderTickets(container) {
         </button>
       </div>
       <div class="form-actions">
-        <button class="btn btn-secondary" onclick="showTicketForm(tickets.find(x=>x.id==='${t.id}'),sites,units,()=>{load();});closeModal()">Edit</button>
+        <button class="btn btn-secondary" onclick="editCurrentTicket()">Edit</button>
       </div>`);
+
+    window.editCurrentTicket = () => { showTicketForm(t, sites, units, load); closeModal(); };
 
     window.setTicketStatus = async (ticketId, status) => {
       try {
