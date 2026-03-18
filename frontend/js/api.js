@@ -1,0 +1,72 @@
+// ── API Client ────────────────────────────────────────────────────────────
+const API_BASE = '/api';
+
+async function apiFetch(path, options = {}) {
+  const url = API_BASE + path;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+const API = {
+  // Sites
+  sites: {
+    list: () => apiFetch('/sites'),
+    get: (id) => apiFetch(`/sites/${id}`),
+    create: (data) => apiFetch('/sites', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/sites/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/sites/${id}`, { method: 'DELETE' }),
+  },
+
+  // Units
+  units: {
+    list: (params = {}) => apiFetch('/units?' + new URLSearchParams(params)),
+    get: (id) => apiFetch(`/units/${id}`),
+    create: (data) => apiFetch('/units', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/units/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // Tickets
+  tickets: {
+    list: (params = {}) => apiFetch('/tickets?' + new URLSearchParams(params)),
+    get: (id) => apiFetch(`/tickets/${id}`),
+    create: (data) => apiFetch('/tickets', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/tickets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // Commissioning
+  commissioning: {
+    get: (unitId) => apiFetch(`/units/${unitId}/commissioning`),
+    updateLevel: (unitId, data) => apiFetch(`/units/${unitId}/commissioning/level`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // Contractors
+  contractors: {
+    list: () => apiFetch('/contractors'),
+    get: (id) => apiFetch(`/contractors/${id}`),
+    create: (data) => apiFetch('/contractors', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/contractors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  // BOM
+  bom: {
+    list: () => apiFetch('/bom'),
+    getItems: (id) => apiFetch(`/bom/${id}/items`),
+    import: (formData) => fetch(API_BASE + '/bom/import', { method: 'POST', body: formData }).then(r => r.json()),
+    searchParts: (q) => apiFetch(`/parts/search?q=${encodeURIComponent(q)}`),
+  },
+
+  // Warranty
+  warranty: {
+    list: () => apiFetch('/warranty'),
+    create: (data) => apiFetch('/warranty', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiFetch(`/warranty/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+};

@@ -1,0 +1,123 @@
+// ── App Router ────────────────────────────────────────────────────────────
+const PAGES = {
+  dashboard:     renderDashboard,
+  sites:         renderSites,
+  units:         renderUnits,
+  tickets:       renderTickets,
+  commissioning: renderCommissioning,
+  contractors:   renderContractors,
+  bom:           renderBom,
+  warranty:      renderWarranty,
+};
+
+let currentPage = 'dashboard';
+
+function navigate(page) {
+  currentPage = page;
+
+  // Update nav
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === page);
+  });
+
+  // Render page
+  const container = document.getElementById('page-container');
+  container.innerHTML = '<div style="color:var(--text2);padding:40px;text-align:center">Loading…</div>';
+  const fn = PAGES[page];
+  if (fn) fn(container);
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────────────
+function openModal(title, html, onSubmit) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+
+  if (onSubmit) {
+    const form = document.getElementById('modal-body').querySelector('form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await onSubmit(form);
+      });
+    }
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+  document.getElementById('modal-body').innerHTML = '';
+}
+
+// ── Toast helpers ─────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Utility helpers ───────────────────────────────────────────────────────
+function unitTypeBadge(t) {
+  const labels = {
+    chiller: 'Chiller',
+    air_handler: 'Air Handler',
+    indirect_cooling: 'Indirect Cooling',
+    indirect_evaporative: 'Indirect Evap',
+    sycool: 'SyCool',
+  };
+  return `<span class="badge type-${t || ''}">${labels[t] || t || '—'}</span>`;
+}
+
+function statusBadge(s) {
+  const labels = {
+    open: 'Open',
+    parts_ordered: 'Parts Ordered',
+    tech_dispatched: 'Tech Dispatched',
+    on_site: 'On Site',
+    resolved: 'Resolved',
+    closed: 'Closed',
+  };
+  return `<span class="badge badge-${s || 'open'}">${labels[s] || s || 'Open'}</span>`;
+}
+
+function commissionBadge(level) {
+  const colors = { none: '#64748b', L1: '#60a5fa', L2: '#818cf8', L3: '#c084fc', L4: '#f472b6', L5: '#4ade80', complete: '#22c55e' };
+  const c = colors[level] || '#64748b';
+  return `<span style="color:${c};font-weight:600">${level || 'none'}</span>`;
+}
+
+function serial(unit) {
+  if (unit.job_number && unit.line_number != null) return `${unit.job_number}-${unit.line_number}`;
+  return unit.serial_number || '—';
+}
+
+function fmt(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleDateString();
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Nav click handlers
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate(a.dataset.page);
+    });
+  });
+
+  // Modal close
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  // Load dashboard
+  navigate('dashboard');
+});
