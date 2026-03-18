@@ -6,6 +6,7 @@ use chrono::NaiveDateTime;
 pub struct SiteContact {
     pub id: Uuid,
     pub site_id: Uuid,
+    pub contact_type: String,
     pub name: String,
     pub role: Option<String>,
     pub phone: Option<String>,
@@ -18,6 +19,7 @@ pub struct SiteContact {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSiteContact {
+    pub contact_type: Option<String>,
     pub name: String,
     pub role: Option<String>,
     pub phone: Option<String>,
@@ -27,6 +29,7 @@ pub struct CreateSiteContact {
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateSiteContact {
+    pub contact_type: Option<String>,
     pub name: Option<String>,
     pub role: Option<String>,
     pub phone: Option<String>,

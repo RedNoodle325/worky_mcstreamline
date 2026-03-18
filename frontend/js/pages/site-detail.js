@@ -261,23 +261,48 @@ async function renderSiteDetail(container, { id } = {}) {
   }
 
   // ── Contacts list ─────────────────────────────────────────────────────────
+  const contactTypeLabel = { site_contact: 'Site Contact', munters_employee: 'Munters', contractor: 'Contractor' };
+  const contactTypeColor = { site_contact: '#3b82f6', munters_employee: '#f97316', contractor: '#a855f7' };
+
+  function contactTypeBadge(type) {
+    const label = contactTypeLabel[type] || type;
+    const color = contactTypeColor[type] || '#64748b';
+    return `<span style="background:${color}22;color:${color};border:1px solid ${color}44;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700;text-transform:uppercase;white-space:nowrap">${escHtml(label)}</span>`;
+  }
+
   function renderContactsList(list) {
-    if (!list.length) return '<div style="color:var(--text3);font-size:13px">No contacts yet</div>';
-    return `<div class="table-wrap"><table>
-      <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th></th></tr></thead>
-      <tbody>
-        ${list.map(c => `<tr>
-          <td style="font-weight:500">${escHtml(c.name)}</td>
-          <td style="color:var(--text2);font-size:12px">${escHtml(c.role || '—')}</td>
-          <td style="font-size:12px">${c.phone ? `<a href="tel:${escHtml(c.phone)}">${escHtml(c.phone)}</a>` : '—'}</td>
-          <td style="font-size:12px">${c.email ? `<a href="mailto:${escHtml(c.email)}">${escHtml(c.email)}</a>` : '—'}</td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-sm btn-secondary" onclick="openContactForm('${c.id}')">Edit</button>
-            <button class="btn btn-sm btn-secondary" onclick="deleteContact('${c.id}')" style="margin-left:4px">✕</button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table></div>`;
+    if (!list.length) return '<div style="color:var(--text3);font-size:13px">No contacts added yet</div>';
+    // Group by type
+    const groups = [
+      { key: 'site_contact', label: 'Site Contacts' },
+      { key: 'munters_employee', label: 'Munters Employees' },
+      { key: 'contractor', label: 'Contractors' },
+    ];
+    let html = '';
+    for (const g of groups) {
+      const group = list.filter(c => (c.contact_type || 'site_contact') === g.key);
+      if (!group.length) continue;
+      const color = contactTypeColor[g.key];
+      html += `<div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:${color};letter-spacing:.05em;margin-bottom:4px">${g.label}</div>
+        ${group.map(c => `
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;color:var(--text)">${escHtml(c.name)}</div>
+              ${c.role ? `<div style="font-size:11px;color:var(--text3)">${escHtml(c.role)}</div>` : ''}
+            </div>
+            <div style="flex:1;min-width:0;font-size:12px">
+              ${c.phone ? `<div><a href="tel:${escHtml(c.phone)}">${escHtml(c.phone)}</a></div>` : ''}
+              ${c.email ? `<div style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="mailto:${escHtml(c.email)}">${escHtml(c.email)}</a></div>` : ''}
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0">
+              <button class="btn btn-sm btn-secondary" onclick="openContactForm('${c.id}')">Edit</button>
+              <button class="btn btn-sm btn-secondary" onclick="deleteContact('${c.id}')" style="color:var(--red)">✕</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }
+    return html;
   }
 
   // ── Forms list ────────────────────────────────────────────────────────────
@@ -464,31 +489,76 @@ async function renderSiteDetail(container, { id } = {}) {
     // ── Contacts inline form ──────────────────────────────────────────────────
     function inlineContactForm(existing) {
       const panelId = 'inline-contact-panel';
-      // Remove any existing panel
       document.getElementById(panelId)?.remove();
       const panel = document.createElement('div');
       panel.id = panelId;
       panel.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px';
+      const curType = existing?.contact_type || 'site_contact';
       panel.innerHTML = `
-        <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${existing ? 'Edit Contact' : 'Add Contact'}</div>
+        <div style="font-weight:600;margin-bottom:14px;color:var(--text);font-size:14px">${existing ? 'Edit Contact' : 'Add Contact'}</div>
         <form id="contact-form">
-          <div class="form-grid">
-            <div class="form-group full"><label>Name *</label><input name="name" required value="${escHtml(existing?.name||'')}"/></div>
-            <div class="form-group"><label>Role / Title</label><input name="role" value="${escHtml(existing?.role||'')}"/></div>
-            <div class="form-group"><label>Phone</label><input name="phone" value="${escHtml(existing?.phone||'')}"/></div>
-            <div class="form-group full"><label>Email</label><input name="email" type="email" value="${escHtml(existing?.email||'')}"/></div>
-            <div class="form-group full"><label>Notes</label><textarea name="notes" rows="2">${escHtml(existing?.notes||'')}</textarea></div>
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Contact Type *</label>
+            <div style="display:flex;gap:8px">
+              ${[['site_contact','Site Contact'],['munters_employee','Munters Employee'],['contractor','Contractor']].map(([val,lbl]) => {
+                const color = contactTypeColor[val];
+                return `<label style="flex:1;cursor:pointer">
+                  <input type="radio" name="contact_type" value="${val}" ${curType===val?'checked':''} style="display:none" class="ctype-radio">
+                  <div class="ctype-btn" data-val="${val}" style="text-align:center;border:2px solid ${curType===val?color:'var(--border)'};border-radius:8px;padding:8px 6px;font-size:12px;font-weight:600;color:${curType===val?color:'var(--text3)'};background:${curType===val?color+'18':'transparent'};transition:all .15s">
+                    ${lbl}
+                  </div>
+                </label>`;
+              }).join('')}
+            </div>
           </div>
-          <div class="form-actions" style="margin-top:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="grid-column:1/-1">
+              <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Name *</label>
+              <input name="name" required value="${escHtml(existing?.name||'')}" placeholder="Full name" style="width:100%;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Role / Title</label>
+              <input name="role" value="${escHtml(existing?.role||'')}" placeholder="e.g. Facility Manager" style="width:100%;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Phone</label>
+              <input name="phone" value="${escHtml(existing?.phone||'')}" placeholder="(555) 000-0000" style="width:100%;box-sizing:border-box"/>
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Email</label>
+              <input name="email" type="email" value="${escHtml(existing?.email||'')}" placeholder="name@company.com" style="width:100%;box-sizing:border-box"/>
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Notes</label>
+              <textarea name="notes" rows="2" placeholder="Any additional notes…" style="width:100%;box-sizing:border-box">${escHtml(existing?.notes||'')}</textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
             <button type="button" class="btn btn-secondary" onclick="document.getElementById('${panelId}')?.remove()">Cancel</button>
-            <button type="submit" class="btn btn-primary">${existing ? 'Save' : 'Add Contact'}</button>
+            <button type="submit" class="btn btn-primary">${existing ? 'Save Changes' : 'Add Contact'}</button>
           </div>
         </form>`;
       document.getElementById('contacts-list').after(panel);
+
+      // Radio button visual toggle
+      panel.querySelectorAll('.ctype-radio').forEach(radio => {
+        radio.addEventListener('change', () => {
+          panel.querySelectorAll('.ctype-btn').forEach(btn => {
+            const val = btn.dataset.val;
+            const color = contactTypeColor[val];
+            const active = val === radio.value;
+            btn.style.borderColor = active ? color : 'var(--border)';
+            btn.style.color = active ? color : 'var(--text3)';
+            btn.style.background = active ? color + '18' : 'transparent';
+          });
+        });
+      });
       panel.querySelector('#contact-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.target).entries());
+        const fd = new FormData(e.target);
+        const data = Object.fromEntries(fd.entries());
         Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
+        data.contact_type = data.contact_type || 'site_contact';
         try {
           if (existing) await API.site_contacts.update(siteId, existing.id, data);
           else await API.site_contacts.create(siteId, data);

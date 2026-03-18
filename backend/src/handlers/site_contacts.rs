@@ -29,10 +29,11 @@ pub async fn create_contact(
     Json(body): Json<CreateSiteContact>,
 ) -> Result<Json<SiteContact>> {
     let contact = sqlx::query_as::<_, SiteContact>(
-        r#"INSERT INTO public.site_contacts (site_id, name, role, phone, email, notes)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *"#
+        r#"INSERT INTO public.site_contacts (site_id, contact_type, name, role, phone, email, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *"#
     )
     .bind(site_id)
+    .bind(body.contact_type.as_deref().unwrap_or("site_contact"))
     .bind(&body.name)
     .bind(&body.role)
     .bind(&body.phone)
@@ -50,16 +51,18 @@ pub async fn update_contact(
 ) -> Result<Json<SiteContact>> {
     let contact = sqlx::query_as::<_, SiteContact>(
         r#"UPDATE public.site_contacts SET
-           name = COALESCE($3, name),
-           role = COALESCE($4, role),
-           phone = COALESCE($5, phone),
-           email = COALESCE($6, email),
-           notes = COALESCE($7, notes),
+           contact_type = COALESCE($3, contact_type),
+           name = COALESCE($4, name),
+           role = COALESCE($5, role),
+           phone = COALESCE($6, phone),
+           email = COALESCE($7, email),
+           notes = COALESCE($8, notes),
            updated_at = now()
            WHERE id = $1 AND site_id = $2 RETURNING *"#
     )
     .bind(contact_id)
     .bind(site_id)
+    .bind(&body.contact_type)
     .bind(&body.name)
     .bind(&body.role)
     .bind(&body.phone)
