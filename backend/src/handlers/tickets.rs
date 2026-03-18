@@ -122,3 +122,14 @@ pub async fn update_ticket(
     .ok_or_else(|| AppError::NotFound(format!("Ticket {} not found", id)))?;
     Ok(Json(ticket))
 }
+
+pub async fn delete_ticket(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>> {
+    sqlx::query("DELETE FROM public.issues WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await?;
+    Ok(Json(serde_json::json!({ "deleted": id })))
+}

@@ -31,6 +31,7 @@ const API = {
     get: (id) => apiFetch(`/units/${id}`),
     create: (data) => apiFetch('/units', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiFetch(`/units/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/units/${id}`, { method: 'DELETE' }),
   },
 
   // Tickets
@@ -39,6 +40,7 @@ const API = {
     get: (id) => apiFetch(`/tickets/${id}`),
     create: (data) => apiFetch('/tickets', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiFetch(`/tickets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/tickets/${id}`, { method: 'DELETE' }),
   },
 
   // Commissioning
@@ -53,6 +55,7 @@ const API = {
     get: (id) => apiFetch(`/contractors/${id}`),
     create: (data) => apiFetch('/contractors', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiFetch(`/contractors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/contractors/${id}`, { method: 'DELETE' }),
   },
 
   // BOM
@@ -90,7 +93,9 @@ const API = {
   // Warranty
   warranty: {
     list: () => apiFetch('/warranty'),
+    get: (id) => apiFetch(`/warranty/${id}`),
     create: (data) => apiFetch('/warranty', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiFetch(`/warranty/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiFetch(`/warranty/${id}`, { method: 'DELETE' }),
   },
 };

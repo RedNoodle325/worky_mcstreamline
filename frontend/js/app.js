@@ -1,21 +1,31 @@
 // ── App Router ────────────────────────────────────────────────────────────
 const PAGES = {
-  dashboard:     renderDashboard,
-  sites:         renderSites,
-  units:         renderUnits,
-  tickets:       renderTickets,
-  commissioning: renderCommissioning,
-  contractors:   renderContractors,
-  bom:           renderBom,
-  warranty:      renderWarranty,
-  'site-detail': renderSiteDetail,
-  'unit-detail': renderUnitDetail,
+  dashboard:           renderDashboard,
+  sites:               renderSites,
+  units:               renderUnits,
+  tickets:             renderTickets,
+  commissioning:       renderCommissioning,
+  contractors:         renderContractors,
+  bom:                 renderBom,
+  warranty:            renderWarranty,
+  'site-detail':       renderSiteDetail,
+  'site-form':         renderSiteForm,
+  'unit-detail':       renderUnitDetail,
+  'unit-form':         renderUnitForm,
+  'ticket-detail':     renderTicketDetail,
+  'contractor-detail': renderContractorDetail,
+  'warranty-detail':   renderWarrantyDetail,
 };
 
 // Map sub-pages to their parent nav item for active highlighting
 const PAGE_NAV = {
-  'site-detail': 'sites',
-  'unit-detail': 'units',
+  'site-detail':       'sites',
+  'site-form':         'sites',
+  'unit-detail':       'units',
+  'unit-form':         'units',
+  'ticket-detail':     'tickets',
+  'contractor-detail': 'contractors',
+  'warranty-detail':   'warranty',
 };
 
 let currentPage = 'dashboard';
@@ -113,8 +123,28 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Theme ──────────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const icon = document.getElementById('theme-icon');
+  const label = document.getElementById('theme-label');
+  if (icon) icon.textContent = theme === 'light' ? '☾' : '☀';
+  if (label) label.textContent = theme === 'light' ? 'Dark Mode' : 'Light Mode';
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply saved theme
+  const savedTheme = localStorage.getItem('munters-theme') || 'dark';
+  applyTheme(savedTheme);
+  // Theme toggle
+  document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem('munters-theme', next);
+  });
+
   // Nav click handlers
   document.querySelectorAll('.nav-links a').forEach(a => {
     a.addEventListener('click', (e) => {

@@ -1,16 +1,17 @@
 /* ── Reset & Base ──────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg: #0f1117;
-  --bg2: #181c27;
-  --bg3: #1e2333;
-  --border: #2a3050;
-  --accent: #2563eb;
-  --accent2: #1d4ed8;
-  --text: #e2e8f0;
-  --text2: #94a3b8;
-  --text3: #64748b;
+/* ── Munters Dark Theme (default) ──────────────── */
+:root, [data-theme="dark"] {
+  --bg: #0A1628;
+  --bg2: #0F2040;
+  --bg3: #162844;
+  --border: #1C3558;
+  --accent: #3D87E8;
+  --accent2: #2563EB;
+  --text: #E8F0FB;
+  --text2: #8FAFD4;
+  --text3: #4E7AAF;
   --green: #22c55e;
   --yellow: #eab308;
   --red: #ef4444;
@@ -18,12 +19,44 @@
   --purple: #a855f7;
 
   /* Status colors */
-  --status-open: #3b82f6;
+  --status-open: #3D87E8;
   --status-parts: #f97316;
   --status-dispatched: #a855f7;
   --status-onsite: #eab308;
   --status-resolved: #22c55e;
-  --status-closed: #64748b;
+  --status-closed: #4E7AAF;
+
+  /* Sidebar accent */
+  --sidebar-bg: #081220;
+  --sidebar-border: #142840;
+}
+
+/* ── Munters Light Theme ───────────────────────── */
+[data-theme="light"] {
+  --bg: #F0F4FA;
+  --bg2: #FFFFFF;
+  --bg3: #E4ECF6;
+  --border: #C4D4E8;
+  --accent: #3D87E8;
+  --accent2: #2563EB;
+  --text: #0D1F3C;
+  --text2: #2D5080;
+  --text3: #6B90B8;
+  --green: #16a34a;
+  --yellow: #ca8a04;
+  --red: #dc2626;
+  --orange: #ea580c;
+  --purple: #9333ea;
+
+  --status-open: #3D87E8;
+  --status-parts: #ea580c;
+  --status-dispatched: #9333ea;
+  --status-onsite: #ca8a04;
+  --status-resolved: #16a34a;
+  --status-closed: #6B90B8;
+
+  --sidebar-bg: #0D1F3C;
+  --sidebar-border: #1C3558;
 }
 
 html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
@@ -34,8 +67,8 @@ html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; backgrou
 #sidebar {
   width: 220px;
   min-width: 220px;
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -45,33 +78,47 @@ html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; backgrou
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 16px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 14px 14px;
+  border-bottom: 1px solid var(--sidebar-border);
 }
 
-.logo {
+.sidebar-logo {
   width: 32px; height: 32px;
-  background: var(--accent);
-  border-radius: 6px;
-  display: grid; place-items: center;
-  font-weight: 700; font-size: 16px; color: #fff;
   flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.sidebar-logo img { width: 32px; height: 32px; }
+
+.app-title { font-weight: 700; font-size: 13px; color: #8FAFD4; letter-spacing: 0.04em; flex: 1; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 14px;
+  border-top: 1px solid var(--sidebar-border);
 }
 
-.app-title { font-weight: 600; font-size: 14px; color: var(--text); }
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; background: none; border: 1px solid var(--sidebar-border);
+  border-radius: 6px; padding: 6px 10px;
+  color: #8FAFD4; font-size: 12px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.theme-toggle:hover { background: rgba(61,135,232,0.12); color: #fff; }
+.theme-toggle .toggle-icon { font-size: 14px; }
 
 .nav-links { list-style: none; padding: 8px 0; }
 .nav-links li a {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 16px;
-  color: var(--text2);
+  padding: 9px 14px;
+  color: #6B90B8;
   text-decoration: none;
   border-radius: 0;
   transition: background 0.15s, color 0.15s;
-  font-size: 13.5px;
+  font-size: 13px;
 }
-.nav-links li a:hover { background: var(--bg3); color: var(--text); }
-.nav-links li a.active { background: var(--bg3); color: #fff; border-left: 3px solid var(--accent); }
+.nav-links li a:hover { background: rgba(61,135,232,0.08); color: #C8DEFF; }
+.nav-links li a.active { background: rgba(61,135,232,0.15); color: #fff; border-left: 3px solid var(--accent); padding-left: 11px; }
 .nav-links .icon { font-size: 15px; width: 18px; text-align: center; }
 
 #content { flex: 1; overflow-y: auto; background: var(--bg); }
@@ -284,15 +331,15 @@ select option { background: var(--bg2); }
 /* ── Dashboard ───────────────────────────────── */
 .dash-header {
   display: flex; align-items: center; gap: 16px;
-  background: #1a2340;
+  background: var(--bg2);
   border-radius: 10px;
   padding: 18px 24px;
   margin-bottom: 20px;
-  border: 1px solid #2a3a60;
+  border: 1px solid var(--border);
 }
 .dash-header-logo {
   width: 36px; height: 36px;
-  background: #2563eb; border-radius: 6px;
+  background: var(--accent); border-radius: 6px;
   display: grid; place-items: center;
   font-weight: 800; font-size: 18px; color: #fff;
   flex-shrink: 0;
@@ -320,7 +367,7 @@ select option { background: var(--bg2); }
 .dash-site-name {
   font-size: 12px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.06em; color: #fff;
-  background: #1a2340; margin: -12px -14px 10px;
+  background: var(--accent2); margin: -12px -14px 10px;
   padding: 7px 14px; border-radius: 7px 7px 0 0;
   text-align: center;
 }
@@ -376,7 +423,7 @@ select option { background: var(--bg2); }
 .dash-progress-table th { padding: 5px 8px; color: var(--text3); font-size: 11px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border); }
 .dash-progress-table td { padding: 5px 8px; color: var(--text2); border-bottom: 1px solid var(--border); }
 .dash-progress-table tr:last-child td { border-bottom: none; }
-.dash-progress-section td { background: #1a2340; color: #7eb3ff; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.dash-progress-section td { background: var(--bg3); color: var(--accent); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
 .dash-progress-total td { color: var(--text); font-weight: 700; border-top: 1px solid var(--border); }
 
 /* Issue log */
@@ -401,6 +448,31 @@ select option { background: var(--bg2); }
 .dash-schedule-table td { padding: 7px 8px; color: var(--text2); border-bottom: 1px solid var(--border); }
 .dash-schedule-table tr:last-child td { border-bottom: none; }
 .dash-schedule-table tr:hover td { background: var(--bg3); }
+
+/* ── Light theme overrides ───────────────────── */
+[data-theme="light"] .badge-open { background: #dbeafe; color: #1d4ed8; }
+[data-theme="light"] .badge-parts_ordered { background: #ffedd5; color: #c2410c; }
+[data-theme="light"] .badge-tech_dispatched { background: #f3e8ff; color: #7e22ce; }
+[data-theme="light"] .badge-on_site { background: #fef9c3; color: #a16207; }
+[data-theme="light"] .badge-resolved { background: #dcfce7; color: #15803d; }
+[data-theme="light"] .badge-closed { background: #f1f5f9; color: #475569; }
+[data-theme="light"] .badge-complaint { background: #dbeafe; color: #1d4ed8; }
+[data-theme="light"] .badge-warranty { background: #f3e8ff; color: #7e22ce; }
+[data-theme="light"] .badge-pm { background: #dcfce7; color: #15803d; }
+[data-theme="light"] .badge-service_order { background: #ffedd5; color: #c2410c; }
+[data-theme="light"] .type-chiller { background: #e0f2fe; color: #0369a1; }
+[data-theme="light"] .type-air_handler { background: #d1fae5; color: #065f46; }
+[data-theme="light"] .type-indirect_cooling { background: #ede9fe; color: #4c1d95; }
+[data-theme="light"] .type-indirect_evaporative { background: #f5f3ff; color: #6d28d9; }
+[data-theme="light"] .type-sycool { background: #ffedd5; color: #9a3412; }
+[data-theme="light"] .commission-step { background: var(--bg3); }
+[data-theme="light"] .commission-step.done { background: #dcfce7; color: #15803d; border-color: #86efac; }
+[data-theme="light"] .btn-danger { background: #fee2e2; color: #991b1b; }
+[data-theme="light"] .btn-danger:hover { background: #fecaca; }
+[data-theme="light"] .btn-success { background: #dcfce7; color: #15803d; }
+[data-theme="light"] .btn-success:hover { background: #bbf7d0; }
+[data-theme="light"] .toast-success { background: #dcfce7; color: #15803d; border-color: #86efac; }
+[data-theme="light"] .toast-error { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 900px) {

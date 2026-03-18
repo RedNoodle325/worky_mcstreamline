@@ -19,6 +19,20 @@ pub async fn list_warranty_claims(State(pool): State<PgPool>) -> Result<Json<Vec
     Ok(Json(claims))
 }
 
+pub async fn get_warranty_claim(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<WarrantyClaim>> {
+    let claim = sqlx::query_as::<_, WarrantyClaim>(
+        "SELECT * FROM public.warranty_claims WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&pool)
+    .await?
+    .ok_or_else(|| AppError::NotFound(format!("Warranty claim {} not found", id)))?;
+    Ok(Json(claim))
+}
+
 pub async fn create_warranty_claim(
     State(pool): State<PgPool>,
     Json(body): Json<CreateWarrantyClaim>,
@@ -63,4 +77,15 @@ pub async fn update_warranty_claim(
     .await?
     .ok_or_else(|| AppError::NotFound(format!("Warranty claim {} not found", id)))?;
     Ok(Json(claim))
+}
+
+pub async fn delete_warranty_claim(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>> {
+    sqlx::query("DELETE FROM public.warranty_claims WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await?;
+    Ok(Json(serde_json::json!({ "deleted": id })))
 }

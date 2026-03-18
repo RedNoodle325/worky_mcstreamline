@@ -99,3 +99,14 @@ pub async fn update_contractor(
     .ok_or_else(|| AppError::NotFound(format!("Contractor {} not found", id)))?;
     Ok(Json(contractor))
 }
+
+pub async fn delete_contractor(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>> {
+    sqlx::query("DELETE FROM public.contractors WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await?;
+    Ok(Json(serde_json::json!({ "deleted": id })))
+}

@@ -10,7 +10,9 @@
   <div id="app">
     <nav id="sidebar">
       <div class="sidebar-header">
-        <div class="logo">M</div>
+        <div class="sidebar-logo">
+          <img src="/img/munters-mark.svg" alt="Munters" />
+        </div>
         <span class="app-title">PM Dashboard</span>
       </div>
       <ul class="nav-links">
@@ -39,6 +41,12 @@
           <span class="icon">⊛</span> Warranty
         </a></li>
       </ul>
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark theme">
+          <span class="toggle-icon" id="theme-icon">☀</span>
+          <span id="theme-label">Light Mode</span>
+        </button>
+      </div>
     </nav>
 
     <main id="content">
@@ -65,13 +73,18 @@
   <script src="/js/pages/dashboard.js"></script>
   <script src="/js/pages/sites.js"></script>
   <script src="/js/pages/site-detail.js"></script>
+  <script src="/js/pages/site-form.js"></script>
   <script src="/js/pages/units.js"></script>
   <script src="/js/pages/unit-detail.js"></script>
+  <script src="/js/pages/unit-form.js"></script>
   <script src="/js/pages/tickets.js"></script>
+  <script src="/js/pages/ticket-detail.js"></script>
   <script src="/js/pages/commissioning.js"></script>
   <script src="/js/pages/contractors.js"></script>
+  <script src="/js/pages/contractor-detail.js"></script>
   <script src="/js/pages/bom.js"></script>
   <script src="/js/pages/warranty.js"></script>
+  <script src="/js/pages/warranty-detail.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

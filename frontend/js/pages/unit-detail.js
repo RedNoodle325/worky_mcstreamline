@@ -202,42 +202,15 @@ async function renderUnitDetail(container, { id, backTo } = {}) {
     };
 
     window.openEditUnitModal = () => {
-      showUnitForm(unitData, siteList, async () => {
-        unit = await API.units.get(unitId);
-        renderPage();
-      });
+      navigate('unit-form', { id: unitId, backTo: backTo || 'units', backParams: backTo === 'site-detail' ? { id: unitData.site_id } : {} });
     };
 
     window.openNewTicketModal = () => {
-      openModal('New Ticket', `
-        <form id="ticket-form">
-          <div class="form-grid">
-            <div class="form-group full"><label>Title *</label><input name="title" required placeholder="Brief description…"/></div>
-            <div class="form-group full"><label>Description</label><textarea name="description" placeholder="Details…"></textarea></div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Create Ticket</button>
-          </div>
-        </form>`);
-
-      document.getElementById('ticket-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.target).entries());
-        Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
-        data.unit_id = unitId;
-        data.site_id = unitData.site_id;
-        try {
-          await API.tickets.create(data);
-          closeModal();
-          allTickets = await API.tickets.list();
-          const updatedUnitTickets = allTickets.filter(t => t.unit_id === unitId);
-          const tbody = container.querySelector('.card:last-child .table-wrap');
-          const fallback = container.querySelector('.card:last-child div[style*="No tickets"]');
-          const target = tbody || fallback;
-          if (target) target.outerHTML = renderTicketsTable(updatedUnitTickets);
-          toast('Ticket created');
-        } catch (err) { toast('Error: ' + err.message, 'error'); }
+      navigate('ticket-detail', {
+        backTo: 'unit-detail',
+        backParams: { id: unitId, backTo, backParams: backTo === 'site-detail' ? { id: unitData.site_id } : {} },
+        prefillSiteId: unitData.site_id,
+        prefillUnitId: unitId,
       });
     };
   }

@@ -50,15 +50,16 @@ async function renderUnits(container) {
     const tbody = document.getElementById('units-body');
     if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text3)">No units</td></tr>'; return; }
     tbody.innerHTML = data.map(u => `<tr>
-      <td><a onclick="navigate('unit-detail',{id:'${u.id}'})" style="font-family:monospace;cursor:pointer">${escHtml(serial(u))}</a></td>
+      <td><a onclick="navigate('unit-detail',{id:'${u.id}'})" style="font-family:monospace;cursor:pointer;font-weight:500">${escHtml(serial(u))}</a></td>
       <td>${unitTypeBadge(u.unit_type)}</td>
       <td>${escHtml(u.model || '—')}</td>
       <td>${escHtml(siteName(u.site_id))}</td>
       <td>${commissionBadge(u.commission_level)}</td>
       <td style="font-size:12px">${fmt(u.warranty_end_date)}</td>
-      <td>
+      <td style="white-space:nowrap">
         <button class="btn btn-sm btn-primary" onclick="navigate('unit-detail',{id:'${u.id}'})">Open</button>
-        <button class="btn btn-sm btn-secondary" onclick="editUnit('${u.id}')" style="margin-left:4px">Edit</button>
+        <button class="btn btn-sm btn-secondary" onclick="navigate('unit-form',{id:'${u.id}',backTo:'units'})" style="margin-left:4px">Edit</button>
+        <button class="btn btn-sm btn-secondary" onclick="deleteUnit('${u.id}','${escHtml(serial(u))}')" style="margin-left:4px;color:var(--red)">Delete</button>
       </td>
     </tr>`).join('');
   }
@@ -79,130 +80,13 @@ async function renderUnits(container) {
   document.getElementById('unit-search').addEventListener('input', filterUnits);
   document.getElementById('unit-type-filter').addEventListener('change', filterUnits);
   document.getElementById('unit-level-filter').addEventListener('change', filterUnits);
-  document.getElementById('add-unit-btn').addEventListener('click', () => showUnitForm(null, sites, load));
+  document.getElementById('add-unit-btn').addEventListener('click', () => navigate('unit-form', { backTo: 'units' }));
 
-  window.showUnitDetail = async (id) => {
-    const unit = units.find(u => u.id === id);
-    if (!unit) return;
-    let comm;
-    try { comm = await API.commissioning.get(id); } catch { comm = null; }
-
-    const levels = [
-      { n: 1, label: 'L1', desc: 'Delivery / Set in Place' },
-      { n: 2, label: 'L2', desc: 'Pre-Energization Inspections' },
-      { n: 3, label: 'L3', desc: 'Unit Startup' },
-      { n: 4, label: 'L4', desc: 'SOO / BMS P2P Verification' },
-      { n: 5, label: 'L5', desc: 'Integrated Systems Test' },
-    ];
-
-    const commHtml = comm ? `
-      <div style="margin-top:16px">
-        <div class="section-title">Commissioning Progress</div>
-        <div class="commission-track">
-          ${levels.map(l => {
-            const done = comm[`l${l.n}_completed`];
-            const date = comm[`l${l.n}_date`];
-            const by = comm[`l${l.n}_completed_by`];
-            return `<div class="commission-step ${done ? 'done' : ''}" title="${l.desc}${date?' — '+fmt(date):''}${by?' by '+by:''}">
-              <div class="step-check">${done ? '✓' : l.label}</div>
-              <div class="step-label">${l.label}</div>
-            </div>`;
-          }).join('')}
-        </div>
-        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-          ${levels.map(l => {
-            const done = comm[`l${l.n}_completed`];
-            return `<button class="btn btn-sm ${done ? 'btn-secondary' : 'btn-primary'}"
-              onclick="toggleCommLevel(${l.n},'${id}',${!done})">
-              ${done ? '↩ Undo' : '✓ Complete'} ${l.label}
-            </button>`;
-          }).join('')}
-        </div>
-      </div>` : '';
-
-    openModal(`Unit: ${serial(unit)}`, `
-      <div class="grid-2" style="gap:12px">
-        <div><div class="section-title">Serial</div><div style="font-family:monospace;font-size:16px;color:var(--text)">${escHtml(serial(unit))}</div></div>
-        <div><div class="section-title">Type</div>${unitTypeBadge(unit.unit_type)}</div>
-        <div><div class="section-title">Model</div><div style="color:var(--text2)">${escHtml(unit.model||'—')}</div></div>
-        <div><div class="section-title">Site</div><div style="color:var(--text2)">${escHtml(siteName(unit.site_id))}</div></div>
-        <div><div class="section-title">Warranty Start</div><div style="color:var(--text2)">${fmt(unit.warranty_start_date)}</div></div>
-        <div><div class="section-title">Warranty End</div><div style="color:var(--text2)">${fmt(unit.warranty_end_date)}</div></div>
-        ${unit.notes ? `<div class="full"><div class="section-title">Notes</div><div style="color:var(--text2);white-space:pre-wrap">${escHtml(unit.notes)}</div></div>` : ''}
-      </div>
-      ${commHtml}
-      <div class="form-actions">
-        <button class="btn btn-secondary" onclick="navigate('tickets');closeModal()">View Tickets</button>
-        <button class="btn btn-primary" onclick="editUnit('${unit.id}');closeModal()">Edit</button>
-      </div>`);
-
-    window.toggleCommLevel = async (level, unitId, completed) => {
-      try {
-        await API.commissioning.updateLevel(unitId, {
-          level, completed,
-          date: completed ? new Date().toISOString().split('T')[0] : null
-        });
-        toast(`L${level} ${completed ? 'completed' : 'reset'}`);
-        closeModal();
-        await load();
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-    };
-  };
-
-  window.editUnit = (id) => {
-    const unit = units.find(u => u.id === id) || {};
-    showUnitForm(unit, sites, load);
+  window.deleteUnit = async (id, name) => {
+    if (!confirm(`Delete unit "${name}"? This cannot be undone.`)) return;
+    try { await API.units.delete(id); toast('Unit deleted'); await load(); }
+    catch (e) { toast('Error: ' + e.message, 'error'); }
   };
 
   await load();
-}
-
-function showUnitForm(unit, sites, onSave) {
-  const editing = !!unit?.id;
-  openModal(editing ? `Edit Unit ${serial(unit)}` : 'New Unit', `
-    <form id="unit-form">
-      <div class="form-grid">
-        <div class="form-group"><label>Job Number *</label><input name="job_number" required value="${escHtml(unit?.job_number||'')}"/></div>
-        <div class="form-group"><label>Line Number *</label><input name="line_number" type="number" required value="${unit?.line_number||''}"/></div>
-        <div class="form-group"><label>Site *</label>
-          <select name="site_id" required>
-            <option value="">— Select Site —</option>
-            ${sites.map(s => `<option value="${s.id}" ${s.id===unit?.site_id?'selected':''}>${escHtml(s.name)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group"><label>Unit Type *</label>
-          <select name="unit_type" required>
-            <option value="">— Select Type —</option>
-            <option value="chiller" ${unit?.unit_type==='chiller'?'selected':''}>Chiller</option>
-            <option value="air_handler" ${unit?.unit_type==='air_handler'?'selected':''}>Air Handler</option>
-            <option value="indirect_cooling" ${unit?.unit_type==='indirect_cooling'?'selected':''}>Indirect Cooling</option>
-            <option value="indirect_evaporative" ${unit?.unit_type==='indirect_evaporative'?'selected':''}>Indirect Evaporative</option>
-            <option value="sycool" ${unit?.unit_type==='sycool'?'selected':''}>SyCool</option>
-          </select>
-        </div>
-        <div class="form-group full"><label>Model / Description</label><input name="model" value="${escHtml(unit?.model||'')}"/></div>
-        <div class="form-group"><label>Warranty Start</label><input type="date" name="warranty_start_date" value="${unit?.warranty_start_date||''}"/></div>
-        <div class="form-group"><label>Warranty End</label><input type="date" name="warranty_end_date" value="${unit?.warranty_end_date||''}"/></div>
-        <div class="form-group full"><label>Notes</label><textarea name="notes">${escHtml(unit?.notes||'')}</textarea></div>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">${editing ? 'Save' : 'Create Unit'}</button>
-      </div>
-    </form>`);
-
-  document.getElementById('unit-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = Object.fromEntries(fd.entries());
-    data.line_number = parseInt(data.line_number);
-    Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
-    try {
-      if (editing) await API.units.update(unit.id, data);
-      else await API.units.create(data);
-      toast(editing ? 'Unit updated' : 'Unit created');
-      closeModal();
-      onSave();
-    } catch (err) { toast('Error: ' + err.message, 'error'); }
-  });
 }

@@ -113,3 +113,14 @@ pub async fn update_unit(
     .ok_or_else(|| AppError::NotFound(format!("Unit {} not found", id)))?;
     Ok(Json(unit))
 }
+
+pub async fn delete_unit(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>> {
+    sqlx::query("DELETE FROM public.units WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await?;
+    Ok(Json(serde_json::json!({ "deleted": id })))
+}

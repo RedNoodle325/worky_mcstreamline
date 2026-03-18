@@ -29,15 +29,15 @@ pub fn build_router(pool: PgPool, frontend_dir: &str, upload_dir: &str) -> Route
         .route("/sites/:id/forms/:form_id", put(site_forms::update_form).delete(site_forms::delete_form))
         // Units
         .route("/units", get(units::list_units).post(units::create_unit))
-        .route("/units/:id", get(units::get_unit).put(units::update_unit))
+        .route("/units/:id", get(units::get_unit).put(units::update_unit).delete(units::delete_unit))
         .route("/units/:id/commissioning", get(commissioning::get_commissioning))
         .route("/units/:id/commissioning/level", put(commissioning::update_commissioning_level))
         // Tickets (issues)
         .route("/tickets", get(tickets::list_tickets).post(tickets::create_ticket))
-        .route("/tickets/:id", get(tickets::get_ticket).put(tickets::update_ticket))
+        .route("/tickets/:id", get(tickets::get_ticket).put(tickets::update_ticket).delete(tickets::delete_ticket))
         // Contractors
         .route("/contractors", get(contractors::list_contractors).post(contractors::create_contractor))
-        .route("/contractors/:id", get(contractors::get_contractor).put(contractors::update_contractor))
+        .route("/contractors/:id", get(contractors::get_contractor).put(contractors::update_contractor).delete(contractors::delete_contractor))
         // BOM
         .route("/bom", get(bom::list_bom_imports))
         .route("/bom/import", post(bom::import_bom))
@@ -45,7 +45,7 @@ pub fn build_router(pool: PgPool, frontend_dir: &str, upload_dir: &str) -> Route
         .route("/parts/search", get(bom::search_parts))
         // Warranty
         .route("/warranty", get(warranty::list_warranty_claims).post(warranty::create_warranty_claim))
-        .route("/warranty/:id", put(warranty::update_warranty_claim))
+        .route("/warranty/:id", get(warranty::get_warranty_claim).put(warranty::update_warranty_claim).delete(warranty::delete_warranty_claim))
         .with_state(pool);
 
     Router::new()

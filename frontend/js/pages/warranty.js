@@ -37,24 +37,28 @@ async function renderWarranty(container) {
   function unitSerial(id) { const u = units.find(u => u.id === id); return u ? serial(u) : '—'; }
 
   const statusColors = {
-    submitted: 'badge-open', in_review: 'badge-parts_ordered',
-    approved: 'badge-resolved', denied: 'badge-closed', closed: 'badge-closed',
+    submitted: '#3b82f6', in_review: '#f97316',
+    approved: '#22c55e', denied: '#ef4444', closed: '#64748b',
   };
 
   function renderTable(data) {
     const tbody = document.getElementById('warranty-body');
     if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text3)">No claims</td></tr>'; return; }
-    tbody.innerHTML = data.map(c => `<tr>
-      <td style="font-size:12px">${fmt(c.claim_date)}</td>
-      <td>${escHtml(siteName(c.site_id))}</td>
-      <td style="font-family:monospace;font-size:12px">${escHtml(unitSerial(c.unit_id))}</td>
-      <td style="font-family:monospace;font-size:12px">${escHtml(c.astea_request_id||'—')}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.description)}</td>
-      <td><span class="badge ${statusColors[c.status]||'badge-open'}">${escHtml(c.status||'submitted')}</span></td>
-      <td>
-        <button class="btn btn-sm btn-secondary" onclick="editWarrantyClaim('${c.id}')">Update</button>
-      </td>
-    </tr>`).join('');
+    tbody.innerHTML = data.map(c => {
+      const col = statusColors[c.status] || '#64748b';
+      return `<tr>
+        <td style="font-size:12px">${fmt(c.claim_date)}</td>
+        <td>${escHtml(siteName(c.site_id))}</td>
+        <td style="font-family:monospace;font-size:12px">${escHtml(unitSerial(c.unit_id))}</td>
+        <td style="font-family:monospace;font-size:12px">${escHtml(c.astea_request_id||'—')}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.description)}</td>
+        <td><span style="background:${col}22;color:${col};border:1px solid ${col}44;border-radius:99px;padding:1px 10px;font-size:11px;font-weight:600">${escHtml(c.status||'submitted')}</span></td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-primary" onclick="navigate('warranty-detail',{id:'${c.id}',backTo:'warranty'})">Open</button>
+          <button class="btn btn-sm btn-secondary" onclick="deleteClaim('${c.id}')" style="margin-left:4px;color:var(--red)">Delete</button>
+        </td>
+      </tr>`;
+    }).join('');
   }
 
   document.getElementById('warranty-status-filter').addEventListener('change', e => {
@@ -62,96 +66,13 @@ async function renderWarranty(container) {
     renderTable(v ? claims.filter(c => c.status === v) : claims);
   });
 
-  document.getElementById('add-warranty-btn').addEventListener('click', () => showWarrantyForm(null, sites, units, load));
+  document.getElementById('add-warranty-btn').addEventListener('click', () => navigate('warranty-detail', { backTo: 'warranty' }));
 
-  window.editWarrantyClaim = (id) => {
-    const c = claims.find(x => x.id === id);
-    if (c) showWarrantyUpdateForm(c, load);
+  window.deleteClaim = async (id) => {
+    if (!confirm('Delete this warranty claim? This cannot be undone.')) return;
+    try { await API.warranty.delete(id); toast('Claim deleted'); await load(); }
+    catch (e) { toast('Error: ' + e.message, 'error'); }
   };
 
   await load();
-}
-
-function showWarrantyForm(claim, sites, units, onSave) {
-  openModal('New Warranty Claim', `
-    <form id="warranty-form">
-      <div class="form-grid">
-        <div class="form-group"><label>Site *</label>
-          <select name="site_id" required>
-            <option value="">— Select Site —</option>
-            ${sites.map(s => `<option value="${s.id}">${escHtml(s.name)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group"><label>Unit *</label>
-          <select name="unit_id" required>
-            <option value="">— Select Unit —</option>
-            ${units.map(u => `<option value="${u.id}">${escHtml(serial(u))} – ${escHtml(u.unit_type||'')}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group full"><label>Astea Request ID</label>
-          <input name="astea_request_id" placeholder="CS260317XXXX@@1"/>
-        </div>
-        <div class="form-group full"><label>Description *</label>
-          <textarea name="description" required placeholder="Describe the warranty issue…"></textarea>
-        </div>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Submit Claim</button>
-      </div>
-    </form>`);
-
-  document.getElementById('warranty-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = Object.fromEntries(fd.entries());
-    Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
-    try {
-      await API.warranty.create(data);
-      toast('Warranty claim submitted');
-      closeModal(); onSave();
-    } catch (err) { toast('Error: ' + err.message, 'error'); }
-  });
-}
-
-function showWarrantyUpdateForm(claim, onSave) {
-  openModal('Update Warranty Claim', `
-    <form id="warranty-update-form">
-      <div class="form-grid">
-        <div class="form-group full"><label>Astea Request ID</label>
-          <input name="astea_request_id" value="${escHtml(claim.astea_request_id||'')}"/>
-        </div>
-        <div class="form-group"><label>Status</label>
-          <select name="status">
-            <option value="submitted" ${claim.status==='submitted'?'selected':''}>Submitted</option>
-            <option value="in_review" ${claim.status==='in_review'?'selected':''}>In Review</option>
-            <option value="approved" ${claim.status==='approved'?'selected':''}>Approved</option>
-            <option value="denied" ${claim.status==='denied'?'selected':''}>Denied</option>
-            <option value="closed" ${claim.status==='closed'?'selected':''}>Closed</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Closed Date</label>
-          <input type="date" name="closed_date" value="${claim.closed_date||''}"/>
-        </div>
-        <div class="form-group full"><label>Resolution Notes</label>
-          <textarea name="resolution">${escHtml(claim.resolution||'')}</textarea>
-        </div>
-      </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </div>
-    </form>`);
-
-  document.getElementById('warranty-update-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = Object.fromEntries(fd.entries());
-    Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
-    try {
-      await API.warranty.update(claim.id, data);
-      toast('Warranty claim updated');
-      closeModal(); onSave();
-    } catch (err) { toast('Error: ' + err.message, 'error'); }
-  });
 }

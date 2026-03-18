@@ -111,7 +111,19 @@ async function renderCommissioning(container) {
               <button class="btn btn-sm ${done?'btn-secondary':'btn-primary'}" onclick="commToggle('${u.id}',${l.n},${!done})">
                 ${done ? '↩' : '✓ ' + l.label}
               </button>
-              ${done ? `<button class="btn btn-sm btn-secondary" onclick="commUploadChecklist('${u.id}',${l.n})">📎</button>` : ''}
+              ${done ? `<button class="btn btn-sm btn-secondary" onclick="commShowUpload('${u.id}',${l.n},this)">📎 Attach</button>` : ''}
+            </div>
+            <div id="checklist-panel-${u.id}-${l.n}" style="display:none;padding:8px 0 8px 36px;border-bottom:1px solid var(--border)">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                <div class="form-group" style="margin:0;min-width:180px"><label>Completed By</label>
+                  <input id="cb-${u.id}-${l.n}" placeholder="Technician name…"/>
+                </div>
+                <div class="form-group" style="margin:0;min-width:180px"><label>Checklist File (label only)</label>
+                  <input id="cf-${u.id}-${l.n}" placeholder="filename.pdf"/>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="commSaveChecklist('${u.id}',${l.n})">Save</button>
+                <button class="btn btn-sm btn-secondary" onclick="commHideUpload('${u.id}',${l.n})">Cancel</button>
+              </div>
             </div>`;
           }).join('')}
         </div>
@@ -134,46 +146,28 @@ async function renderCommissioning(container) {
     } catch (e) { toast('Error: ' + e.message, 'error'); }
   };
 
-  window.commUploadChecklist = (unitId, level) => {
-    openModal(`Upload L${level} Checklist`, `
-      <p style="color:var(--text2);margin-bottom:16px">
-        Upload the completed L${level} checklist document (PDF, Word, etc.)
-      </p>
-      <form id="checklist-form">
-        <div class="form-group">
-          <label>Completed By</label>
-          <input name="completed_by" placeholder="Technician / Engineer name"/>
-        </div>
-        <div class="form-group" style="margin-top:12px">
-          <label>Checklist File</label>
-          <div class="file-drop" onclick="this.querySelector('input').click()" id="drop-zone">
-            <input type="file" name="file" accept=".pdf,.doc,.docx,.jpg,.png" onchange="document.getElementById('drop-label').textContent=this.files[0]?.name||'Choose file'"/>
-            <div id="drop-label" style="margin-top:8px">Click to choose file</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">PDF, Word, or image</div>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Checklist</button>
-        </div>
-      </form>`);
+  window.commShowUpload = (unitId, level, btn) => {
+    const panel = document.getElementById(`checklist-panel-${unitId}-${level}`);
+    if (panel) { panel.style.display = 'block'; btn.style.display = 'none'; }
+  };
 
-    document.getElementById('checklist-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const completed_by = fd.get('completed_by') || null;
-      const file = fd.get('file');
-      const checklist_filename = file?.name || null;
-      try {
-        commMap[unitId] = await API.commissioning.updateLevel(unitId, {
-          level, completed: true,
-          date: new Date().toISOString().split('T')[0],
-          completed_by, checklist_filename,
-        });
-        toast(`L${level} checklist saved`);
-        closeModal(); render();
-      } catch (err) { toast('Error: ' + err.message, 'error'); }
-    });
+  window.commHideUpload = (unitId, level) => {
+    const panel = document.getElementById(`checklist-panel-${unitId}-${level}`);
+    if (panel) panel.style.display = 'none';
+  };
+
+  window.commSaveChecklist = async (unitId, level) => {
+    const completed_by = document.getElementById(`cb-${unitId}-${level}`)?.value || null;
+    const checklist_filename = document.getElementById(`cf-${unitId}-${level}`)?.value || null;
+    try {
+      commMap[unitId] = await API.commissioning.updateLevel(unitId, {
+        level, completed: true,
+        date: new Date().toISOString().split('T')[0],
+        completed_by, checklist_filename,
+      });
+      toast(`L${level} checklist saved`);
+      render();
+    } catch (err) { toast('Error: ' + err.message, 'error'); }
   };
 
   await load();

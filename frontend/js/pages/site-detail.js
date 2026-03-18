@@ -54,7 +54,7 @@ async function renderSiteDetail(container, { id } = {}) {
             🖼 Logo
             <input type="file" id="logo-upload" accept="image/*" style="display:none" onchange="uploadLogo(this)">
           </label>
-          <button class="btn btn-secondary btn-sm" onclick="openEditSiteModal()">Edit Site</button>
+          <button class="btn btn-secondary btn-sm" onclick="navigate('site-form',{id:'${id}',backTo:'site-detail',backParams:{id:'${id}'}})">Edit Site</button>
           <button class="btn btn-secondary btn-sm" onclick="printSiteReport('${id}')">🖨 Report</button>
         </div>
       </div>
@@ -312,40 +312,41 @@ async function renderSiteDetail(container, { id } = {}) {
       } catch (e) { toast('Logo upload failed: ' + e.message, 'error'); }
     };
 
-    // Edit site
-    window.openEditSiteModal = () => showSiteForm(siteData, async () => {
-      try {
-        site = await API.sites.get(siteId);
-        renderPage();
-      } catch (e) { toast('Error: ' + e.message, 'error'); }
-    });
+    // Edit site — navigates to site-form page
+    window.openEditSiteModal = () => navigate('site-form', { id: siteId, backTo: 'site-detail', backParams: { id: siteId } });
 
-    // Contacts
-    window.openContactForm = (contactId) => {
-      const existing = contactId ? contactList.find(c => c.id === contactId) : null;
-      openModal(existing ? 'Edit Contact' : 'New Contact', `
+    // ── Contacts inline form ──────────────────────────────────────────────────
+    function inlineContactForm(existing) {
+      const panelId = 'inline-contact-panel';
+      // Remove any existing panel
+      document.getElementById(panelId)?.remove();
+      const panel = document.createElement('div');
+      panel.id = panelId;
+      panel.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px';
+      panel.innerHTML = `
+        <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${existing ? 'Edit Contact' : 'Add Contact'}</div>
         <form id="contact-form">
           <div class="form-grid">
-            <div class="form-group full"><label>Name *</label><input name="name" required value="${escHtml(existing?.name || '')}"/></div>
-            <div class="form-group"><label>Role / Title</label><input name="role" value="${escHtml(existing?.role || '')}"/></div>
-            <div class="form-group"><label>Phone</label><input name="phone" value="${escHtml(existing?.phone || '')}"/></div>
-            <div class="form-group full"><label>Email</label><input name="email" type="email" value="${escHtml(existing?.email || '')}"/></div>
-            <div class="form-group full"><label>Notes</label><textarea name="notes">${escHtml(existing?.notes || '')}</textarea></div>
+            <div class="form-group full"><label>Name *</label><input name="name" required value="${escHtml(existing?.name||'')}"/></div>
+            <div class="form-group"><label>Role / Title</label><input name="role" value="${escHtml(existing?.role||'')}"/></div>
+            <div class="form-group"><label>Phone</label><input name="phone" value="${escHtml(existing?.phone||'')}"/></div>
+            <div class="form-group full"><label>Email</label><input name="email" type="email" value="${escHtml(existing?.email||'')}"/></div>
+            <div class="form-group full"><label>Notes</label><textarea name="notes" rows="2">${escHtml(existing?.notes||'')}</textarea></div>
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <div class="form-actions" style="margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('${panelId}')?.remove()">Cancel</button>
             <button type="submit" class="btn btn-primary">${existing ? 'Save' : 'Add Contact'}</button>
           </div>
-        </form>`);
-
-      document.getElementById('contact-form').addEventListener('submit', async (e) => {
+        </form>`;
+      document.getElementById('contacts-list').after(panel);
+      panel.querySelector('#contact-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
         Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
         try {
-          if (existing) await API.site_contacts.update(siteId, contactId, data);
+          if (existing) await API.site_contacts.update(siteId, existing.id, data);
           else await API.site_contacts.create(siteId, data);
-          closeModal();
+          panel.remove();
           contacts = await API.site_contacts.list(siteId);
           contactList = contacts;
           document.getElementById('contacts-list').innerHTML = renderContactsList(contacts);
@@ -353,6 +354,11 @@ async function renderSiteDetail(container, { id } = {}) {
           toast(existing ? 'Contact updated' : 'Contact added');
         } catch (err) { toast('Error: ' + err.message, 'error'); }
       });
+      panel.querySelector('input').focus();
+    }
+
+    window.openContactForm = (contactId) => {
+      inlineContactForm(contactId ? contactList.find(c => c.id === contactId) : null);
     };
 
     window.deleteContact = async (contactId) => {
@@ -367,14 +373,19 @@ async function renderSiteDetail(container, { id } = {}) {
       } catch (e) { toast('Error: ' + e.message, 'error'); }
     };
 
-    // Form templates
-    window.openFormTemplateForm = (formId) => {
-      const existing = formId ? formList.find(f => f.id === formId) : null;
-      openModal(existing ? 'Edit Form Template' : 'New Form Template', `
+    // ── Form templates inline form ────────────────────────────────────────────
+    function inlineFormPanel(existing) {
+      const panelId = 'inline-form-panel';
+      document.getElementById(panelId)?.remove();
+      const panel = document.createElement('div');
+      panel.id = panelId;
+      panel.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px';
+      panel.innerHTML = `
+        <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${existing ? 'Edit Form Template' : 'Add Form Template'}</div>
         <form id="form-template-form">
           <div class="form-grid">
-            <div class="form-group full"><label>Name *</label><input name="name" required value="${escHtml(existing?.name || '')}"/></div>
-            <div class="form-group full"><label>Description</label><input name="description" value="${escHtml(existing?.description || '')}"/></div>
+            <div class="form-group full"><label>Name *</label><input name="name" required value="${escHtml(existing?.name||'')}"/></div>
+            <div class="form-group full"><label>Description</label><input name="description" value="${escHtml(existing?.description||'')}"/></div>
             <div class="form-group"><label>Category</label>
               <select name="category">
                 <option value="general" ${(existing?.category||'general')==='general'?'selected':''}>General</option>
@@ -384,22 +395,22 @@ async function renderSiteDetail(container, { id } = {}) {
                 <option value="checklist" ${existing?.category==='checklist'?'selected':''}>Checklist</option>
               </select>
             </div>
-            <div class="form-group full"><label>URL / Link</label><input name="url" type="url" value="${escHtml(existing?.url || '')}" placeholder="https://…"/></div>
+            <div class="form-group full"><label>URL / Link</label><input name="url" type="url" value="${escHtml(existing?.url||'')}" placeholder="https://…"/></div>
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <div class="form-actions" style="margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('${panelId}')?.remove()">Cancel</button>
             <button type="submit" class="btn btn-primary">${existing ? 'Save' : 'Add Form'}</button>
           </div>
-        </form>`);
-
-      document.getElementById('form-template-form').addEventListener('submit', async (e) => {
+        </form>`;
+      document.getElementById('forms-list').after(panel);
+      panel.querySelector('#form-template-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
         Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
         try {
-          if (existing) await API.site_forms.update(siteId, formId, data);
+          if (existing) await API.site_forms.update(siteId, existing.id, data);
           else await API.site_forms.create(siteId, data);
-          closeModal();
+          panel.remove();
           forms = await API.site_forms.list(siteId);
           formList = forms;
           document.getElementById('forms-list').innerHTML = renderFormsList(forms);
@@ -407,6 +418,11 @@ async function renderSiteDetail(container, { id } = {}) {
           toast(existing ? 'Form updated' : 'Form added');
         } catch (err) { toast('Error: ' + err.message, 'error'); }
       });
+      panel.querySelector('input').focus();
+    }
+
+    window.openFormTemplateForm = (formId) => {
+      inlineFormPanel(formId ? formList.find(f => f.id === formId) : null);
     };
 
     window.deleteFormTemplate = async (formId) => {
