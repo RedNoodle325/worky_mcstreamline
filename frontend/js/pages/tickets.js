@@ -6,8 +6,8 @@ async function renderTickets(container) {
     </div>
     <div class="card">
       <div class="toolbar">
-        <div class="search-bar"><input id="ticket-search" placeholder="Astea ID, description…"/></div>
-        <select id="ticket-status-filter" style="width:160px">
+        <div class="search-bar"><input id="ticket-search" placeholder="Request ID, summary…"/></div>
+        <select id="ticket-status-filter" style="width:150px">
           <option value="">All Statuses</option>
           <option value="open">Open</option>
           <option value="parts_ordered">Parts Ordered</option>
@@ -18,20 +18,18 @@ async function renderTickets(container) {
         </select>
         <select id="ticket-type-filter" style="width:160px">
           <option value="">All Types</option>
-          <option value="complaint">Complaint</option>
-          <option value="warranty">Warranty</option>
-          <option value="pm">PM</option>
-          <option value="service_order">Service Order</option>
+          <option value="cs_ticket">CS Ticket</option>
+          <option value="parts_order">Parts Order</option>
+          <option value="service_line">Service Line</option>
         </select>
         <div class="toolbar-spacer"></div>
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Astea Request ID</th><th>Title</th><th>Site</th><th>Unit</th>
-            <th>Type</th><th>Status</th><th>Parts</th><th>Tech</th><th>Opened</th><th>Actions</th>
+            <th>Request ID</th><th>Type</th><th>Summary</th><th>Site</th><th>Status</th><th>Opened</th><th>Actions</th>
           </tr></thead>
-          <tbody id="tickets-body"><tr><td colspan="10" style="color:var(--text3)">Loading…</td></tr></tbody>
+          <tbody id="tickets-body"><tr><td colspan="7" style="color:var(--text3)">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>`;
@@ -48,24 +46,34 @@ async function renderTickets(container) {
   function siteName(id) { return sites.find(s => s.id === id)?.name || '—'; }
   function unitSerial(id) { const u = units.find(u => u.id === id); return u ? serial(u) : '—'; }
 
+  const typeLabels = { cs_ticket: 'CS Ticket', parts_order: 'Parts Order', service_line: 'Service Line' };
+  const typeBadgeStyle = {
+    cs_ticket: 'background:#1e3a5f;color:#60a5fa',
+    parts_order: 'background:#431407;color:#fb923c',
+    service_line: 'background:#14532d;color:#4ade80',
+  };
+
   function renderTable(data) {
     const tbody = document.getElementById('tickets-body');
-    if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" style="color:var(--text3)">No tickets</td></tr>'; return; }
-    tbody.innerHTML = data.map(t => `<tr>
-      <td><a onclick="navigate('ticket-detail',{id:'${t.id}',backTo:'tickets'})" style="font-family:monospace;font-size:12px;cursor:pointer">${escHtml(t.astea_request_id || '—')}</a></td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.title || '—')}</td>
-      <td>${escHtml(siteName(t.site_id))}</td>
-      <td style="font-family:monospace;font-size:12px">${escHtml(unitSerial(t.unit_id))}</td>
-      <td><span class="badge badge-${t.ticket_type||'complaint'}">${escHtml(t.ticket_type||'complaint')}</span></td>
-      <td>${statusBadge(t.status)}</td>
-      <td style="text-align:center">${t.parts_ordered ? '<span style="color:var(--green)">✓</span>' : '—'}</td>
-      <td style="text-align:center">${t.tech_dispatched ? '<span style="color:var(--green)">✓</span>' : '—'}</td>
-      <td style="font-size:12px">${fmt(t.created_at)}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-primary" onclick="navigate('ticket-detail',{id:'${t.id}',backTo:'tickets'})">Open</button>
-        <button class="btn btn-sm btn-secondary" onclick="deleteTicket('${t.id}')" style="margin-left:4px;color:var(--red)">Delete</button>
-      </td>
-    </tr>`).join('');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text3)">No tickets</td></tr>'; return; }
+    tbody.innerHTML = data.map(t => {
+      const tStyle = typeBadgeStyle[t.ticket_type] || 'background:var(--bg3);color:var(--text2)';
+      const summary = t.ticket_type === 'service_line' ? (t.scope || t.title || '—')
+                    : t.ticket_type === 'parts_order' ? (t.unit_tag ? `Unit: ${t.unit_tag}` : t.title || '—')
+                    : (t.description || t.title || '—');
+      return `<tr>
+        <td><a onclick="navigate('ticket-detail',{id:'${t.id}',backTo:'tickets'})" style="font-family:monospace;font-size:12px;cursor:pointer">${escHtml(t.astea_request_id || '—')}</a></td>
+        <td><span class="badge" style="${tStyle}">${typeLabels[t.ticket_type]||t.ticket_type||'—'}</span></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${escHtml(summary)}</td>
+        <td style="font-size:12px">${escHtml(siteName(t.site_id))}</td>
+        <td>${statusBadge(t.status)}</td>
+        <td style="font-size:12px">${fmt(t.created_at)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-primary" onclick="navigate('ticket-detail',{id:'${t.id}',backTo:'tickets'})">Open</button>
+          <button class="btn btn-sm btn-secondary" onclick="deleteTicket('${t.id}')" style="margin-left:4px;color:var(--red)">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
   }
 
   function filterTickets() {

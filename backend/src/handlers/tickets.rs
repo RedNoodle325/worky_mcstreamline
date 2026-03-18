@@ -73,18 +73,27 @@ pub async fn create_ticket(
     let ticket = sqlx::query_as::<_, Ticket>(
         r#"INSERT INTO public.issues
            (site_id, unit_id, astea_request_id, ticket_line_number,
-            ticket_type, reported_by_type, title, description, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open')
+            ticket_type, reported_by_type, title, description, status,
+            unit_tag, unit_serial_number, parts_items,
+            scope, num_techs, service_start_date, service_end_date)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open',$9,$10,$11,$12,$13,$14,$15)
            RETURNING *"#,
     )
     .bind(body.site_id)
     .bind(body.unit_id)
     .bind(&body.astea_request_id)
     .bind(body.ticket_line_number.unwrap_or(1))
-    .bind(body.ticket_type.as_deref().unwrap_or("complaint"))
+    .bind(body.ticket_type.as_deref().unwrap_or("cs_ticket"))
     .bind(body.reported_by_type.as_deref().unwrap_or("technician"))
     .bind(&body.title)
     .bind(&body.description)
+    .bind(&body.unit_tag)
+    .bind(&body.unit_serial_number)
+    .bind(&body.parts_items)
+    .bind(&body.scope)
+    .bind(body.num_techs)
+    .bind(body.service_start_date)
+    .bind(body.service_end_date)
     .fetch_one(&pool)
     .await?;
     Ok(Json(ticket))
@@ -104,6 +113,13 @@ pub async fn update_ticket(
            resolution = COALESCE($6, resolution),
            title = COALESCE($7, title),
            description = COALESCE($8, description),
+           unit_tag = COALESCE($9, unit_tag),
+           unit_serial_number = COALESCE($10, unit_serial_number),
+           parts_items = COALESCE($11, parts_items),
+           scope = COALESCE($12, scope),
+           num_techs = COALESCE($13, num_techs),
+           service_start_date = COALESCE($14, service_start_date),
+           service_end_date = COALESCE($15, service_end_date),
            updated_at = now(),
            resolved_at = CASE WHEN $3 = 'resolved' AND resolved_at IS NULL THEN now() ELSE resolved_at END
            WHERE id = $1
@@ -117,6 +133,13 @@ pub async fn update_ticket(
     .bind(&body.resolution)
     .bind(&body.title)
     .bind(&body.description)
+    .bind(&body.unit_tag)
+    .bind(&body.unit_serial_number)
+    .bind(&body.parts_items)
+    .bind(&body.scope)
+    .bind(body.num_techs)
+    .bind(body.service_start_date)
+    .bind(body.service_end_date)
     .fetch_optional(&pool)
     .await?
     .ok_or_else(|| AppError::NotFound(format!("Ticket {} not found", id)))?;

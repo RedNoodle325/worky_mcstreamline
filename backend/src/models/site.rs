@@ -26,6 +26,8 @@ pub struct Site {
     pub notes: Option<String>,
     pub logo_url: Option<String>,
     pub logo_filename: Option<String>,
+    pub last_contact_date: Option<chrono::NaiveDate>,
+    pub techs_on_site: Option<bool>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }
@@ -66,4 +68,6 @@ pub struct UpdateSite {
     pub customer_contact_phone: Option<String>,
     pub customer_contact_email: Option<String>,
     pub notes: Option<String>,
+    pub last_contact_date: Option<chrono::NaiveDate>,
+    pub techs_on_site: Option<bool>,
 }

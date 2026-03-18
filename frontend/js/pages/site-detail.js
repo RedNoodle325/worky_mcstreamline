@@ -3,21 +3,22 @@ async function renderSiteDetail(container, { id } = {}) {
 
   container.innerHTML = '<div style="color:var(--text2);padding:40px;text-align:center">Loading…</div>';
 
-  let site, units, tickets, contacts, forms;
+  let site, allUnits, tickets, contacts, forms, contractors;
   try {
-    [site, units, tickets, contacts, forms] = await Promise.all([
+    [site, allUnits, tickets, contacts, forms, contractors] = await Promise.all([
       API.sites.get(id),
       API.units.list(),
       API.tickets.list(),
       API.site_contacts.list(id),
       API.site_forms.list(id),
+      API.contractors.list(),
     ]);
   } catch (e) {
     container.innerHTML = `<div style="color:var(--red);padding:40px">Error loading site: ${escHtml(e.message)}</div>`;
     return;
   }
 
-  const siteUnits = units.filter(u => u.site_id === id)
+  let siteUnits = allUnits.filter(u => u.site_id === id)
     .sort((a, b) => (a.line_number || 0) - (b.line_number || 0));
   const siteTickets = tickets.filter(t => t.site_id === id);
   const openTickets = siteTickets.filter(t => !['resolved', 'closed'].includes(t.status));
@@ -49,13 +50,16 @@ async function renderSiteDetail(container, { id } = {}) {
             <div class="page-subtitle">${escHtml([site.city, site.state].filter(Boolean).join(', ') || 'No address set')}</div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-sm ${site.techs_on_site ? 'btn-success' : 'btn-secondary'}" id="techs-toggle" title="Toggle technicians on site">
+            🔧 ${site.techs_on_site ? 'Techs On Site' : 'No Techs On Site'}
+          </button>
           <label class="btn btn-secondary btn-sm" style="cursor:pointer" title="Upload company logo">
             🖼 Logo
             <input type="file" id="logo-upload" accept="image/*" style="display:none" onchange="uploadLogo(this)">
           </label>
-          <button class="btn btn-secondary btn-sm" onclick="navigate('site-form',{id:'${id}',backTo:'site-detail',backParams:{id:'${id}'}})">Edit Site</button>
-          <button class="btn btn-secondary btn-sm" onclick="printSiteReport('${id}')">🖨 Report</button>
+          <button class="btn btn-secondary btn-sm" onclick="navigate('site-form',{id:'${id}',backTo:'site-detail',backParams:{id:'${id}'}})">Edit</button>
+          <button class="btn btn-secondary btn-sm" onclick="printSiteReport('${id}')">🖨</button>
         </div>
       </div>
 
@@ -88,6 +92,14 @@ async function renderSiteDetail(container, { id } = {}) {
               <div class="section-title">Notes</div>
               <div style="color:var(--text2);white-space:pre-wrap;font-size:12px">${escHtml(site.notes)}</div>
             </div>` : ''}
+            <div>
+              <div class="section-title">Last Contact</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:var(--text2)" id="last-contact-display">${site.last_contact_date ? fmt(site.last_contact_date) : '—'}</span>
+                <input type="date" id="last-contact-input" value="${site.last_contact_date ? site.last_contact_date.split('T')[0] : ''}" style="display:none;width:140px" />
+                <button class="btn btn-secondary btn-sm" id="last-contact-edit-btn">Edit</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="card" style="padding:0;overflow:hidden">
@@ -119,6 +131,24 @@ async function renderSiteDetail(container, { id } = {}) {
         </div>
       </div>
 
+      <!-- Units -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title">Units <span style="font-weight:400;color:var(--text3)">(${siteUnits.length})</span></div>
+          <button class="btn btn-sm btn-primary" onclick="navigate('unit-form',{siteId:'${id}',backTo:'site-detail',backParams:{id:'${id}'}})">+ New Unit</button>
+        </div>
+        <div id="units-list">${renderUnitsList(siteUnits, siteTickets)}</div>
+      </div>
+
+      <!-- Contractors -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title">Contractors</div>
+          <button class="btn btn-sm btn-secondary" onclick="navigate('contacts')">Manage All</button>
+        </div>
+        ${renderContractorsList(contractors)}
+      </div>
+
       <!-- Commission Snapshot -->
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -143,7 +173,51 @@ async function renderSiteDetail(container, { id } = {}) {
     `;
 
     // Attach event handlers
-    attachSiteDetailHandlers(id, site, contacts, forms, siteUnits, siteTickets);
+    attachSiteDetailHandlers(id, site, contacts, forms, siteUnits, siteTickets, contractors);
+  }
+
+  // ── Units list ─────────────────────────────────────────────────────────────
+  function renderUnitsList(unitList, ticketList) {
+    if (!unitList.length) return '<div style="color:var(--text3);font-size:13px">No units yet</div>';
+    return `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Tag / Job</th><th>Type</th><th>Model</th><th>Commission</th><th>Open Issues</th><th></th></tr></thead>
+      <tbody>
+        ${unitList.map(u => {
+          const openCount = ticketList.filter(t => t.unit_id === u.id && !['resolved','closed'].includes(t.status||'')).length;
+          return `<tr>
+            <td style="color:var(--text3)">${u.line_number||'—'}</td>
+            <td><a onclick="navigate('unit-detail',{id:'${u.id}',backTo:'site-detail',backParams:{id:'${id}'}})" style="cursor:pointer;font-family:monospace">${escHtml(serial(u))}</a></td>
+            <td>${unitTypeBadge(u.unit_type)}</td>
+            <td style="font-size:12px;color:var(--text2)">${escHtml(u.model||'—')}</td>
+            <td>${commissionBadge(u.commission_level||'none')}</td>
+            <td style="text-align:center">${openCount>0?`<span style="color:var(--red);font-weight:700">${openCount}</span>`:'<span style="color:var(--green)">✓</span>'}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-secondary" onclick="navigate('unit-detail',{id:'${u.id}',backTo:'site-detail',backParams:{id:'${id}'}})">View</button>
+              <button class="btn btn-sm btn-secondary" onclick="navigate('unit-form',{id:'${u.id}',backTo:'site-detail',backParams:{id:'${id}'}})" style="margin-left:4px">Edit</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`;
+  }
+
+  // ── Contractors list (read-only on site page) ───────────────────────────────
+  function renderContractorsList(list) {
+    if (!list.length) return `<div style="color:var(--text3);font-size:13px">No contractors yet. <a href="#" onclick="navigate('contacts')" style="color:var(--accent)">Add from Contacts</a></div>`;
+    const active = list.filter(c => c.active !== false);
+    return `<div class="table-wrap"><table>
+      <thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Certifications</th><th></th></tr></thead>
+      <tbody>
+        ${active.slice(0,8).map(c => `<tr>
+          <td>${escHtml(c.name||'—')}</td>
+          <td style="color:var(--text2)">${escHtml(c.company||'—')}</td>
+          <td style="font-size:12px">${c.phone?`<a href="tel:${escHtml(c.phone)}">${escHtml(c.phone)}</a>`:'—'}</td>
+          <td style="font-size:12px;color:var(--text2)">${escHtml(c.certifications||'—')}</td>
+          <td><button class="btn btn-sm btn-secondary" onclick="navigate('contractor-detail',{id:'${c.id}'})">Edit</button></td>
+        </tr>`).join('')}
+        ${active.length > 8 ? `<tr><td colspan="5" style="color:var(--text3);font-size:12px">+ ${active.length-8} more — <a onclick="navigate('contacts')" style="color:var(--accent);cursor:pointer">view all</a></td></tr>` : ''}
+      </tbody>
+    </table></div>`;
   }
 
   // ── Contacts list ─────────────────────────────────────────────────────────
@@ -296,7 +370,39 @@ async function renderSiteDetail(container, { id } = {}) {
   }
 
   // ── Event handlers ─────────────────────────────────────────────────────────
-  function attachSiteDetailHandlers(siteId, siteData, contactList, formList, unitList, ticketList) {
+  function attachSiteDetailHandlers(siteId, siteData, contactList, formList, unitList, ticketList, contractorList) {
+
+    // Techs on site toggle
+    document.getElementById('techs-toggle')?.addEventListener('click', async () => {
+      try {
+        const updated = await API.sites.update(siteId, { techs_on_site: !siteData.techs_on_site });
+        site = updated;
+        siteData.techs_on_site = updated.techs_on_site;
+        toast('Updated: ' + (updated.techs_on_site ? 'Techs on site' : 'No techs on site'));
+        renderPage();
+      } catch (e) { toast('Error: ' + e.message, 'error'); }
+    });
+
+    // Last contact date inline edit
+    document.getElementById('last-contact-edit-btn')?.addEventListener('click', function() {
+      const display = document.getElementById('last-contact-display');
+      const input = document.getElementById('last-contact-input');
+      if (input.style.display === 'none') {
+        input.style.display = 'inline-block';
+        display.style.display = 'none';
+        this.textContent = 'Save';
+      } else {
+        API.sites.update(siteId, { last_contact_date: input.value || null }).then(updated => {
+          site = updated;
+          siteData.last_contact_date = updated.last_contact_date;
+          display.textContent = updated.last_contact_date ? fmt(updated.last_contact_date) : '—';
+          input.style.display = 'none';
+          display.style.display = 'inline';
+          this.textContent = 'Edit';
+          toast('Last contact date saved');
+        }).catch(e => toast('Error: ' + e.message, 'error'));
+      }
+    });
 
     // Logo upload
     window.uploadLogo = async (input) => {
@@ -350,7 +456,7 @@ async function renderSiteDetail(container, { id } = {}) {
           contacts = await API.site_contacts.list(siteId);
           contactList = contacts;
           document.getElementById('contacts-list').innerHTML = renderContactsList(contacts);
-          attachSiteDetailHandlers(siteId, siteData, contacts, formList, unitList, ticketList);
+          attachSiteDetailHandlers(siteId, siteData, contacts, formList, unitList, ticketList, contractorList);
           toast(existing ? 'Contact updated' : 'Contact added');
         } catch (err) { toast('Error: ' + err.message, 'error'); }
       });
@@ -414,7 +520,7 @@ async function renderSiteDetail(container, { id } = {}) {
           forms = await API.site_forms.list(siteId);
           formList = forms;
           document.getElementById('forms-list').innerHTML = renderFormsList(forms);
-          attachSiteDetailHandlers(siteId, siteData, contactList, forms, unitList, ticketList);
+          attachSiteDetailHandlers(siteId, siteData, contactList, forms, unitList, ticketList, contractorList);
           toast(existing ? 'Form updated' : 'Form added');
         } catch (err) { toast('Error: ' + err.message, 'error'); }
       });

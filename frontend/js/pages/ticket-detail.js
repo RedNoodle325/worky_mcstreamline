@@ -12,38 +12,115 @@ async function renderTicketDetail(container, { id, backTo = 'tickets', backParam
   }
 
   const back = () => navigate(backTo, backParams);
-  const siteName = (sid) => sites.find(s => s.id === sid)?.name || '—';
-  const unitSerial = (uid) => { const u = units.find(u => u.id === uid); return u ? serial(u) : '—'; };
+
+  // Parts items state (for parts_order type)
+  let partsItems = [];
+  if (editing && ticket.parts_items) {
+    try { partsItems = Array.isArray(ticket.parts_items) ? ticket.parts_items : JSON.parse(ticket.parts_items); }
+    catch { partsItems = []; }
+  }
+
+  function siteUnits(siteId) {
+    return units.filter(u => u.site_id === siteId);
+  }
+
+  function renderTypeFields(ticketType, siteId) {
+    const su = siteUnits(siteId || ticket.site_id || prefillSiteId || '');
+    if (ticketType === 'cs_ticket') {
+      return `
+        <div class="form-group"><label>Unit (optional)</label>
+          <select name="unit_id">
+            <option value="">— No specific unit —</option>
+            ${su.map(u => `<option value="${u.id}" ${u.id===(ticket.unit_id||prefillUnitId||'')?'selected':''}>${escHtml(serial(u))} – ${escHtml(u.tag||u.unit_type||'')}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group full"><label>Description *</label>
+          <textarea name="description" rows="5" required>${escHtml(ticket.description||'')}</textarea>
+        </div>`;
+    }
+    if (ticketType === 'parts_order') {
+      return `
+        <div class="form-group"><label>Unit Tag</label>
+          <input name="unit_tag" placeholder="e.g. AHU-01" value="${escHtml(ticket.unit_tag||'')}"/>
+        </div>
+        <div class="form-group"><label>Serial Number</label>
+          <input name="unit_serial_number" placeholder="Serial #" value="${escHtml(ticket.unit_serial_number||'')}"/>
+        </div>
+        <div class="form-group full">
+          <label>Parts List</label>
+          <div id="parts-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+            ${partsItems.map((p,i) => partsRow(p,i)).join('')}
+            ${partsItems.length===0 ? partsRow({part_no:'',description:'',qty:1},0) : ''}
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="add-part-btn">+ Add Part</button>
+        </div>`;
+    }
+    if (ticketType === 'service_line') {
+      return `
+        <div class="form-group full"><label>Scope of Work *</label>
+          <textarea name="scope" rows="4" required>${escHtml(ticket.scope||'')}</textarea>
+        </div>
+        <div class="form-group"><label>Number of Technicians</label>
+          <input name="num_techs" type="number" min="1" max="50" value="${ticket.num_techs||1}"/>
+        </div>
+        <div class="form-group"><label></label></div>
+        <div class="form-group"><label>Start Date</label>
+          <input name="service_start_date" type="date" value="${ticket.service_start_date?ticket.service_start_date.split('T')[0]:''}"/>
+        </div>
+        <div class="form-group"><label>End Date</label>
+          <input name="service_end_date" type="date" value="${ticket.service_end_date?ticket.service_end_date.split('T')[0]:''}"/>
+        </div>`;
+    }
+    return '';
+  }
+
+  function partsRow(p, i) {
+    return `<div class="parts-row" style="display:grid;grid-template-columns:1fr 2fr 70px 32px;gap:6px;align-items:center">
+      <input placeholder="Part #" value="${escHtml(p.part_no||'')}" data-field="part_no" data-idx="${i}" class="part-input" />
+      <input placeholder="Description" value="${escHtml(p.description||'')}" data-field="description" data-idx="${i}" class="part-input" />
+      <input placeholder="Qty" type="number" min="1" value="${p.qty||1}" data-field="qty" data-idx="${i}" class="part-input" style="text-align:center" />
+      <button type="button" class="btn btn-sm" onclick="this.closest('.parts-row').remove();syncPartsFromDOM()" style="background:var(--red)22;color:var(--red);padding:4px 6px">✕</button>
+    </div>`;
+  }
+
+  function syncPartsFromDOM() {
+    partsItems = [];
+    document.querySelectorAll('.parts-row').forEach(row => {
+      partsItems.push({
+        part_no: row.querySelector('[data-field="part_no"]')?.value || '',
+        description: row.querySelector('[data-field="description"]')?.value || '',
+        qty: parseInt(row.querySelector('[data-field="qty"]')?.value) || 1,
+      });
+    });
+  }
+  window.syncPartsFromDOM = syncPartsFromDOM;
+
+  const currentType = ticket.ticket_type || 'cs_ticket';
+  const currentSiteId = ticket.site_id || prefillSiteId || '';
 
   function renderPage() {
+    const type = ticket.ticket_type || 'cs_ticket';
+    const typeLabels = { cs_ticket: 'CS Ticket', parts_order: 'Parts Order', service_line: 'Service Line' };
+
     container.innerHTML = `
-      <div class="page-header" style="margin-bottom:24px">
+      <div class="page-header" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;gap:12px">
           <button class="btn btn-secondary btn-sm" id="back-btn">← Back</button>
           <div>
-            <h1 style="margin:0;font-family:monospace">${editing ? escHtml(ticket.astea_request_id || 'Ticket') : 'New Ticket'}</h1>
-            ${editing ? `<div class="page-subtitle">${statusBadge(ticket.status)} <span style="margin-left:8px;color:var(--text2)">${escHtml(ticket.title||'')}</span></div>` : ''}
+            <h1 style="margin:0">${editing ? escHtml(ticket.astea_request_id||'Ticket') : 'New Ticket'}</h1>
+            ${editing ? `<div class="page-subtitle">${statusBadge(ticket.status)} <span class="badge" style="background:var(--bg3);color:var(--text2);margin-left:6px">${typeLabels[type]||type}</span></div>` : ''}
           </div>
         </div>
-        ${editing ? `<button class="btn btn-sm" id="delete-ticket-btn" style="background:var(--red)22;color:var(--red);border:1px solid var(--red)44">Delete Ticket</button>` : ''}
+        ${editing ? `<button class="btn btn-sm" id="delete-ticket-btn" style="background:var(--red)22;color:var(--red);border:1px solid var(--red)44">Delete</button>` : ''}
       </div>
 
       ${editing ? `
-      <!-- Status panel -->
       <div class="card" style="margin-bottom:16px">
-        <div class="card-title" style="margin-bottom:12px">Quick Status Update</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:10px">Status</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${['open','parts_ordered','tech_dispatched','on_site','resolved','closed'].map(s =>
             `<button class="btn btn-sm ${ticket.status===s?'btn-primary':'btn-secondary'} status-btn" data-status="${s}">${s.replace(/_/g,' ')}</button>`
           ).join('')}
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-sm ${ticket.parts_ordered?'btn-primary':'btn-secondary'}" id="toggle-parts">
-            ${ticket.parts_ordered?'✓ ':''} Parts Ordered
-          </button>
-          <button class="btn btn-sm ${ticket.tech_dispatched?'btn-primary':'btn-secondary'}" id="toggle-tech">
-            ${ticket.tech_dispatched?'✓ ':''} Tech Dispatched
-          </button>
         </div>
       </div>` : ''}
 
@@ -51,60 +128,39 @@ async function renderTicketDetail(container, { id, backTo = 'tickets', backParam
         <div class="card" style="margin-bottom:16px">
           <div class="card-title" style="margin-bottom:16px">Ticket Details</div>
           <div class="form-grid">
-            <div class="form-group"><label>Astea Request ID</label>
-              <input name="astea_request_id" placeholder="CS260317XXXX@@1" value="${escHtml(ticket.astea_request_id||'')}"/>
-            </div>
-            <div class="form-group"><label>Line Number</label>
-              <input name="ticket_line_number" type="number" min="1" max="100" value="${ticket.ticket_line_number||1}"/>
-            </div>
-            <div class="form-group"><label>Site *</label>
-              <select name="site_id" required>
-                <option value="">— Select Site —</option>
-                ${sites.map(s => `<option value="${s.id}" ${s.id===(ticket.site_id||prefillSiteId||'')?'selected':''}>${escHtml(s.name)}</option>`).join('')}
-              </select>
-            </div>
-            <div class="form-group"><label>Unit (optional)</label>
-              <select name="unit_id">
-                <option value="">— No specific unit —</option>
-                ${units.map(u => `<option value="${u.id}" ${u.id===(ticket.unit_id||prefillUnitId||'')?'selected':''}>${escHtml(serial(u))} – ${escHtml(u.unit_type||'')}</option>`).join('')}
-              </select>
+            <div class="form-group"><label>Request ID</label>
+              <input name="astea_request_id" placeholder="e.g. CS2603170028@@1" value="${escHtml(ticket.astea_request_id||'')}"/>
             </div>
             <div class="form-group"><label>Ticket Type</label>
-              <select name="ticket_type">
-                <option value="complaint" ${(ticket.ticket_type||'complaint')==='complaint'?'selected':''}>Complaint</option>
-                <option value="service_order" ${ticket.ticket_type==='service_order'?'selected':''}>Service Order</option>
-                <option value="warranty" ${ticket.ticket_type==='warranty'?'selected':''}>Warranty</option>
-                <option value="pm" ${ticket.ticket_type==='pm'?'selected':''}>Preventive Maintenance</option>
+              <select name="ticket_type" id="ticket-type-select">
+                <option value="cs_ticket" ${type==='cs_ticket'?'selected':''}>CS Ticket — Customer Support</option>
+                <option value="parts_order" ${type==='parts_order'?'selected':''}>Parts Order</option>
+                <option value="service_line" ${type==='service_line'?'selected':''}>Service Line</option>
               </select>
             </div>
-            <div class="form-group"><label>Reported By</label>
-              <select name="reported_by_type">
-                <option value="technician" ${(ticket.reported_by_type||'technician')==='technician'?'selected':''}>Technician</option>
-                <option value="site_representative" ${ticket.reported_by_type==='site_representative'?'selected':''}>Site Representative</option>
-                <option value="internal" ${ticket.reported_by_type==='internal'?'selected':''}>Internal</option>
+            <div class="form-group"><label>Site *</label>
+              <select name="site_id" id="site-select" required>
+                <option value="">— Select Site —</option>
+                ${sites.map(s => `<option value="${s.id}" ${s.id===currentSiteId?'selected':''}>${escHtml(s.name)}</option>`).join('')}
               </select>
             </div>
-            <div class="form-group full"><label>Title *</label>
-              <input name="title" required value="${escHtml(ticket.title||'')}" placeholder="Brief description of the issue"/>
+            <div class="form-group"><label>Title / Summary</label>
+              <input name="title" value="${escHtml(ticket.title||'')}" placeholder="Brief summary"/>
             </div>
-            <div class="form-group full"><label>Description</label>
-              <textarea name="description" rows="4">${escHtml(ticket.description||'')}</textarea>
-            </div>
-            <div class="form-group full"><label>Resolution Notes</label>
-              <textarea name="resolution" rows="3">${escHtml(ticket.resolution||'')}</textarea>
-            </div>
+          </div>
+        </div>
+
+        <div class="card" id="type-fields-card" style="margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:16px" id="type-fields-label">${typeLabels[type]||type}</div>
+          <div class="form-grid" id="type-fields">
+            ${renderTypeFields(type, currentSiteId)}
           </div>
         </div>
 
         ${editing ? `
         <div class="card" style="margin-bottom:16px">
-          <div class="card-title" style="margin-bottom:12px">Record Info</div>
-          <div class="grid-2">
-            <div><div class="section-title">Site</div><div style="color:var(--text2)">${escHtml(siteName(ticket.site_id))}</div></div>
-            <div><div class="section-title">Unit</div><div style="font-family:monospace;color:var(--text2)">${escHtml(unitSerial(ticket.unit_id))}</div></div>
-            <div><div class="section-title">Opened</div><div style="color:var(--text2)">${fmt(ticket.created_at)}</div></div>
-            <div><div class="section-title">Last Updated</div><div style="color:var(--text2)">${fmt(ticket.updated_at)}</div></div>
-          </div>
+          <div class="card-title" style="margin-bottom:10px">Resolution Notes</div>
+          <textarea name="resolution" rows="3" style="width:100%">${escHtml(ticket.resolution||'')}</textarea>
         </div>` : ''}
 
         <div class="form-actions" style="padding:0 0 32px">
@@ -115,6 +171,28 @@ async function renderTicketDetail(container, { id, backTo = 'tickets', backParam
 
     document.getElementById('back-btn').addEventListener('click', back);
     document.getElementById('cancel-btn').addEventListener('click', back);
+
+    // Type switcher — re-render type-specific fields
+    document.getElementById('ticket-type-select').addEventListener('change', function() {
+      const newType = this.value;
+      ticket.ticket_type = newType;
+      const labels = { cs_ticket: 'CS Ticket — Customer Support', parts_order: 'Parts Order', service_line: 'Service Line' };
+      document.getElementById('type-fields-label').textContent = labels[newType]||newType;
+      const siteId = document.getElementById('site-select').value;
+      document.getElementById('type-fields').innerHTML = renderTypeFields(newType, siteId);
+      bindPartsBtn();
+    });
+
+    // Site change — re-render unit dropdown in CS ticket type
+    document.getElementById('site-select').addEventListener('change', function() {
+      const typeEl = document.getElementById('ticket-type-select');
+      if (typeEl && typeEl.value === 'cs_ticket') {
+        const siteId = this.value;
+        document.getElementById('type-fields').innerHTML = renderTypeFields('cs_ticket', siteId);
+      }
+    });
+
+    bindPartsBtn();
 
     if (editing) {
       document.getElementById('delete-ticket-btn').addEventListener('click', async () => {
@@ -128,36 +206,29 @@ async function renderTicketDetail(container, { id, backTo = 'tickets', backParam
           try {
             await API.tickets.update(id, { status: btn.dataset.status });
             ticket.status = btn.dataset.status;
-            toast('Status updated: ' + btn.dataset.status.replace(/_/g,' '));
+            toast('Status: ' + btn.dataset.status.replace(/_/g,' '));
             renderPage();
           } catch (e) { toast('Error: ' + e.message, 'error'); }
         });
-      });
-
-      document.getElementById('toggle-parts').addEventListener('click', async () => {
-        try {
-          await API.tickets.update(id, { parts_ordered: !ticket.parts_ordered });
-          ticket.parts_ordered = !ticket.parts_ordered;
-          toast('Parts ordered: ' + (ticket.parts_ordered ? 'yes' : 'no'));
-          renderPage();
-        } catch (e) { toast('Error: ' + e.message, 'error'); }
-      });
-
-      document.getElementById('toggle-tech').addEventListener('click', async () => {
-        try {
-          await API.tickets.update(id, { tech_dispatched: !ticket.tech_dispatched });
-          ticket.tech_dispatched = !ticket.tech_dispatched;
-          toast('Tech dispatched: ' + (ticket.tech_dispatched ? 'yes' : 'no'));
-          renderPage();
-        } catch (e) { toast('Error: ' + e.message, 'error'); }
       });
     }
 
     document.getElementById('ticket-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(e.target).entries());
-      data.ticket_line_number = parseInt(data.ticket_line_number) || 1;
+      const fd = new FormData(e.target);
+      const data = Object.fromEntries(fd.entries());
+      const tType = data.ticket_type || ticket.ticket_type || 'cs_ticket';
+
+      // Collect parts items for parts_order
+      if (tType === 'parts_order') {
+        syncPartsFromDOM();
+        data.parts_items = partsItems;
+      }
+      // num_techs as int
+      if (data.num_techs) data.num_techs = parseInt(data.num_techs);
+      // Clear empty strings to null
       Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
+
       try {
         if (editing) {
           await API.tickets.update(id, data);
@@ -169,6 +240,19 @@ async function renderTicketDetail(container, { id, backTo = 'tickets', backParam
           navigate('tickets');
         }
       } catch (err) { toast('Error: ' + err.message, 'error'); }
+    });
+  }
+
+  function bindPartsBtn() {
+    document.getElementById('add-part-btn')?.addEventListener('click', () => {
+      syncPartsFromDOM();
+      partsItems.push({ part_no: '', description: '', qty: 1 });
+      const list = document.getElementById('parts-list');
+      if (list) {
+        const div = document.createElement('div');
+        div.innerHTML = partsRow({part_no:'',description:'',qty:1}, partsItems.length-1);
+        list.appendChild(div.firstElementChild);
+      }
     });
   }
 

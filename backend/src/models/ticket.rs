@@ -2,16 +2,15 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::NaiveDateTime;
 
-// ticket_type: complaint | service_order | warranty | pm
+// ticket_type: cs_ticket | parts_order | service_line
 // status: open | parts_ordered | tech_dispatched | on_site | resolved | closed
-// reported_by_type: technician | site_representative | internal
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Ticket {
     pub id: Uuid,
     pub site_id: Option<Uuid>,
     pub unit_id: Option<Uuid>,
-    pub astea_request_id: Option<String>, // e.g. CS2603170028@@1
+    pub astea_request_id: Option<String>,
     pub ticket_line_number: Option<i32>,
     pub ticket_type: Option<String>,
     pub reported_by_type: Option<String>,
@@ -21,6 +20,15 @@ pub struct Ticket {
     pub parts_ordered: Option<bool>,
     pub tech_dispatched: Option<bool>,
     pub resolution: Option<String>,
+    // Parts order fields
+    pub unit_tag: Option<String>,
+    pub unit_serial_number: Option<String>,
+    pub parts_items: Option<serde_json::Value>,
+    // Service line fields
+    pub scope: Option<String>,
+    pub num_techs: Option<i32>,
+    pub service_start_date: Option<chrono::NaiveDate>,
+    pub service_end_date: Option<chrono::NaiveDate>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
     pub resolved_at: Option<NaiveDateTime>,
@@ -36,6 +44,13 @@ pub struct CreateTicket {
     pub reported_by_type: Option<String>,
     pub title: String,
     pub description: Option<String>,
+    pub unit_tag: Option<String>,
+    pub unit_serial_number: Option<String>,
+    pub parts_items: Option<serde_json::Value>,
+    pub scope: Option<String>,
+    pub num_techs: Option<i32>,
+    pub service_start_date: Option<chrono::NaiveDate>,
+    pub service_end_date: Option<chrono::NaiveDate>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -47,4 +62,11 @@ pub struct UpdateTicket {
     pub resolution: Option<String>,
     pub title: Option<String>,
     pub description: Option<String>,
+    pub unit_tag: Option<String>,
+    pub unit_serial_number: Option<String>,
+    pub parts_items: Option<serde_json::Value>,
+    pub scope: Option<String>,
+    pub num_techs: Option<i32>,
+    pub service_start_date: Option<chrono::NaiveDate>,
+    pub service_end_date: Option<chrono::NaiveDate>,
 }

@@ -2,30 +2,24 @@
 const PAGES = {
   dashboard:           renderDashboard,
   sites:               renderSites,
-  units:               renderUnits,
   tickets:             renderTickets,
-  commissioning:       renderCommissioning,
-  contractors:         renderContractors,
-  bom:                 renderBom,
-  warranty:            renderWarranty,
+  contacts:            renderContacts,
   'site-detail':       renderSiteDetail,
   'site-form':         renderSiteForm,
   'unit-detail':       renderUnitDetail,
   'unit-form':         renderUnitForm,
   'ticket-detail':     renderTicketDetail,
   'contractor-detail': renderContractorDetail,
-  'warranty-detail':   renderWarrantyDetail,
 };
 
 // Map sub-pages to their parent nav item for active highlighting
 const PAGE_NAV = {
   'site-detail':       'sites',
   'site-form':         'sites',
-  'unit-detail':       'units',
-  'unit-form':         'units',
+  'unit-detail':       'sites',
+  'unit-form':         'sites',
   'ticket-detail':     'tickets',
-  'contractor-detail': 'contractors',
-  'warranty-detail':   'warranty',
+  'contractor-detail': 'contacts',
 };
 
 let currentPage = 'dashboard';

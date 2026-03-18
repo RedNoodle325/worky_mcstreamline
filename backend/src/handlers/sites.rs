@@ -88,6 +88,8 @@ pub async fn update_site(
            customer_contact_phone = COALESCE($14, customer_contact_phone),
            customer_contact_email = COALESCE($15, customer_contact_email),
            notes = COALESCE($16, notes),
+           last_contact_date = COALESCE($17, last_contact_date),
+           techs_on_site = COALESCE($18, techs_on_site),
            updated_at = now()
            WHERE id = $1
            RETURNING *"#,
@@ -108,6 +110,8 @@ pub async fn update_site(
     .bind(&body.customer_contact_phone)
     .bind(&body.customer_contact_email)
     .bind(&body.notes)
+    .bind(body.last_contact_date)
+    .bind(body.techs_on_site)
     .fetch_optional(&pool)
     .await?
     .ok_or_else(|| AppError::NotFound(format!("Site {} not found", id)))?;
