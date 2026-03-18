@@ -66,6 +66,14 @@ const API = {
     searchParts: (q) => apiFetch(`/parts/search?q=${encodeURIComponent(q)}`),
   },
 
+  // Site job numbers
+  site_job_numbers: {
+    list: (siteId) => apiFetch(`/sites/${siteId}/job-numbers`),
+    create: (siteId, data) => apiFetch(`/sites/${siteId}/job-numbers`, { method: 'POST', body: JSON.stringify(data) }),
+    update: (siteId, id, data) => apiFetch(`/sites/${siteId}/job-numbers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (siteId, id) => apiFetch(`/sites/${siteId}/job-numbers/${id}`, { method: 'DELETE' }),
+  },
+
   // Site contacts
   site_contacts: {
     list: (siteId) => apiFetch(`/sites/${siteId}/contacts`),

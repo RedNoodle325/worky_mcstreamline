@@ -43,6 +43,9 @@ async function renderSiteForm(container, { id, backTo = 'sites', backParams = {}
       <div class="card" style="margin-bottom:16px">
         <div class="card-title" style="margin-bottom:16px">Shipping Address</div>
         <div class="form-grid">
+          <div class="form-group full"><label>Attention / Name Line * <span style="font-weight:400;color:var(--text3);font-size:11px">e.g. QTS C/O MUNTERS</span></label><input name="shipping_name" required value="${escHtml(site.shipping_name||'')}" placeholder="CUSTOMER C/O MUNTERS"/></div>
+          <div class="form-group"><label>Point of Contact</label><input name="shipping_contact_name" value="${escHtml(site.shipping_contact_name||'')}" placeholder="Contact name"/></div>
+          <div class="form-group"><label>Contact Phone</label><input name="shipping_contact_phone" value="${escHtml(site.shipping_contact_phone||'')}" placeholder="(555) 000-0000"/></div>
           <div class="form-group full"><label>Street</label><input name="shipping_address_street" value="${escHtml(site.shipping_address_street||'')}"/></div>
           <div class="form-group"><label>City</label><input name="shipping_address_city" value="${escHtml(site.shipping_address_city||'')}"/></div>
           <div class="form-group"><label>State</label><input name="shipping_address_state" value="${escHtml(site.shipping_address_state||'')}"/></div>

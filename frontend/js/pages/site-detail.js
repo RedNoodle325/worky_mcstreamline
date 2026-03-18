@@ -3,15 +3,16 @@ async function renderSiteDetail(container, { id } = {}) {
 
   container.innerHTML = '<div style="color:var(--text2);padding:40px;text-align:center">Loading…</div>';
 
-  let site, allUnits, tickets, contacts, forms, contractors;
+  let site, allUnits, tickets, contacts, forms, contractors, jobNumbers;
   try {
-    [site, allUnits, tickets, contacts, forms, contractors] = await Promise.all([
+    [site, allUnits, tickets, contacts, forms, contractors, jobNumbers] = await Promise.all([
       API.sites.get(id),
       API.units.list(),
       API.tickets.list(),
       API.site_contacts.list(id),
       API.site_forms.list(id),
       API.contractors.list(),
+      API.site_job_numbers.list(id),
     ]);
   } catch (e) {
     container.innerHTML = `<div style="color:var(--red);padding:40px">Error loading site: ${escHtml(e.message)}</div>`;
@@ -69,12 +70,21 @@ async function renderSiteDetail(container, { id } = {}) {
           <div class="card-title">Site Information</div>
           <div class="grid-2" style="gap:8px;margin-top:8px">
             <div>
-              <div class="section-title">Site Address</div>
-              <div style="color:var(--text2)">${escHtml(addr || '—')}</div>
+              <div class="section-title">Shipping Address</div>
+              ${site.shipping_name
+                ? `<div style="font-weight:600;color:var(--text)">${escHtml(site.shipping_name)}</div>`
+                : `<div style="color:var(--red);font-size:12px">⚠ No shipping name set</div>`}
+              ${site.shipping_contact_name || site.shipping_contact_phone
+                ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">
+                     ${site.shipping_contact_name ? escHtml(site.shipping_contact_name) : ''}
+                     ${site.shipping_contact_phone ? `<a href="tel:${escHtml(site.shipping_contact_phone)}" style="margin-left:6px">${escHtml(site.shipping_contact_phone)}</a>` : ''}
+                   </div>`
+                : ''}
+              <div style="color:var(--text2);margin-top:2px">${escHtml([site.shipping_address_street, site.shipping_address_city, site.shipping_address_state, site.shipping_address_zip].filter(Boolean).join(', ') || '—')}</div>
             </div>
             <div>
-              <div class="section-title">Shipping Address</div>
-              <div style="color:var(--text2)">${escHtml([site.shipping_address_street, site.shipping_address_city, site.shipping_address_state, site.shipping_address_zip].filter(Boolean).join(', ') || '—')}</div>
+              <div class="section-title">Site Address</div>
+              <div style="color:var(--text2)">${escHtml(addr || '—')}</div>
             </div>
             <div>
               <div class="section-title">Access Requirements</div>
@@ -131,11 +141,26 @@ async function renderSiteDetail(container, { id } = {}) {
         </div>
       </div>
 
+      <!-- Job Numbers -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="card-title">Job Numbers</div>
+          <button class="btn btn-sm btn-primary" onclick="openJobNumberForm(null)">+ Add</button>
+        </div>
+        <div id="job-numbers-list">${renderJobNumbersList(jobNumbers)}</div>
+      </div>
+
       <!-- Units -->
       <div class="card" style="margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div class="card-title">Units <span style="font-weight:400;color:var(--text3)">(${siteUnits.length})</span></div>
-          <button class="btn btn-sm btn-primary" onclick="navigate('unit-form',{siteId:'${id}',backTo:'site-detail',backParams:{id:'${id}'}})">+ New Unit</button>
+          <div style="display:flex;gap:8px">
+            <label class="btn btn-sm btn-secondary" style="cursor:pointer" title="Import units from Astea CSV">
+              ↑ Import CSV
+              <input type="file" id="unit-csv-import" accept=".csv,text/csv" style="display:none" onchange="importUnitsFromCSV(this)">
+            </label>
+            <button class="btn btn-sm btn-primary" onclick="navigate('unit-form',{siteId:'${id}',backTo:'site-detail',backParams:{id:'${id}'}})">+ New Unit</button>
+          </div>
         </div>
         <div id="units-list">${renderUnitsList(siteUnits, siteTickets)}</div>
       </div>
@@ -173,7 +198,7 @@ async function renderSiteDetail(container, { id } = {}) {
     `;
 
     // Attach event handlers
-    attachSiteDetailHandlers(id, site, contacts, forms, siteUnits, siteTickets, contractors);
+    attachSiteDetailHandlers(id, site, contacts, forms, siteUnits, siteTickets, contractors, jobNumbers);
   }
 
   // ── Units list ─────────────────────────────────────────────────────────────
@@ -199,6 +224,21 @@ async function renderSiteDetail(container, { id } = {}) {
         }).join('')}
       </tbody>
     </table></div>`;
+  }
+
+  // ── Job numbers list ───────────────────────────────────────────────────────
+  function renderJobNumbersList(list) {
+    if (!list.length) return '<div style="color:var(--text3);font-size:13px">No job numbers added yet</div>';
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${list.map(j => `
+        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px">
+          ${j.is_primary ? `<span style="color:var(--accent);font-size:10px;font-weight:700;text-transform:uppercase">PRIMARY</span>` : ''}
+          <span style="font-family:monospace;font-weight:600;color:var(--text)">${escHtml(j.job_number)}</span>
+          ${j.description ? `<span style="font-size:11px;color:var(--text3)">${escHtml(j.description)}</span>` : ''}
+          <button class="btn btn-sm btn-secondary" style="padding:1px 6px;font-size:11px" onclick="openJobNumberForm('${j.id}')">✎</button>
+          <button class="btn btn-sm btn-secondary" style="padding:1px 6px;font-size:11px;color:var(--red)" onclick="deleteJobNumber('${j.id}')">✕</button>
+        </div>`).join('')}
+    </div>`;
   }
 
   // ── Contractors list (read-only on site page) ───────────────────────────────
@@ -370,7 +410,7 @@ async function renderSiteDetail(container, { id } = {}) {
   }
 
   // ── Event handlers ─────────────────────────────────────────────────────────
-  function attachSiteDetailHandlers(siteId, siteData, contactList, formList, unitList, ticketList, contractorList) {
+  function attachSiteDetailHandlers(siteId, siteData, contactList, formList, unitList, ticketList, contractorList, jobNumberList) {
 
     // Techs on site toggle
     document.getElementById('techs-toggle')?.addEventListener('click', async () => {
@@ -456,7 +496,7 @@ async function renderSiteDetail(container, { id } = {}) {
           contacts = await API.site_contacts.list(siteId);
           contactList = contacts;
           document.getElementById('contacts-list').innerHTML = renderContactsList(contacts);
-          attachSiteDetailHandlers(siteId, siteData, contacts, formList, unitList, ticketList, contractorList);
+          attachSiteDetailHandlers(siteId, siteData, contacts, formList, unitList, ticketList, contractorList, jobNumberList);
           toast(existing ? 'Contact updated' : 'Contact added');
         } catch (err) { toast('Error: ' + err.message, 'error'); }
       });
@@ -474,7 +514,7 @@ async function renderSiteDetail(container, { id } = {}) {
         contacts = await API.site_contacts.list(siteId);
         contactList = contacts;
         document.getElementById('contacts-list').innerHTML = renderContactsList(contacts);
-        attachSiteDetailHandlers(siteId, siteData, contacts, formList, unitList, ticketList);
+        attachSiteDetailHandlers(siteId, siteData, contacts, formList, unitList, ticketList, contractorList, jobNumberList);
         toast('Contact deleted');
       } catch (e) { toast('Error: ' + e.message, 'error'); }
     };
@@ -520,7 +560,7 @@ async function renderSiteDetail(container, { id } = {}) {
           forms = await API.site_forms.list(siteId);
           formList = forms;
           document.getElementById('forms-list').innerHTML = renderFormsList(forms);
-          attachSiteDetailHandlers(siteId, siteData, contactList, forms, unitList, ticketList, contractorList);
+          attachSiteDetailHandlers(siteId, siteData, contactList, forms, unitList, ticketList, contractorList, jobNumberList);
           toast(existing ? 'Form updated' : 'Form added');
         } catch (err) { toast('Error: ' + err.message, 'error'); }
       });
@@ -538,9 +578,218 @@ async function renderSiteDetail(container, { id } = {}) {
         forms = await API.site_forms.list(siteId);
         formList = forms;
         document.getElementById('forms-list').innerHTML = renderFormsList(forms);
-        attachSiteDetailHandlers(siteId, siteData, contactList, forms, unitList, ticketList);
+        attachSiteDetailHandlers(siteId, siteData, contactList, forms, unitList, ticketList, contractorList, jobNumberList);
         toast('Form deleted');
       } catch (e) { toast('Error: ' + e.message, 'error'); }
+    };
+
+    // ── Job numbers inline form ───────────────────────────────────────────────
+    function inlineJobNumberPanel(existing) {
+      const panelId = 'inline-job-number-panel';
+      document.getElementById(panelId)?.remove();
+      const panel = document.createElement('div');
+      panel.id = panelId;
+      panel.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px';
+      panel.innerHTML = `
+        <div style="font-weight:600;margin-bottom:12px;color:var(--text)">${existing ? 'Edit Job Number' : 'Add Job Number'}</div>
+        <form id="job-number-form">
+          <div class="form-grid">
+            <div class="form-group"><label>Job Number *</label><input name="job_number" required value="${escHtml(existing?.job_number||'')}" placeholder="e.g. 22366582"/></div>
+            <div class="form-group"><label>Description</label><input name="description" value="${escHtml(existing?.description||'')}" placeholder="e.g. Phase 1 REL06"/></div>
+            <div class="form-group full"><label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" name="is_primary" ${existing?.is_primary?'checked':''} style="width:auto"/>
+              Primary Job Number
+            </label></div>
+          </div>
+          <div class="form-actions" style="margin-top:8px">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('${panelId}')?.remove()">Cancel</button>
+            <button type="submit" class="btn btn-primary">${existing ? 'Save' : 'Add'}</button>
+          </div>
+        </form>`;
+      document.getElementById('job-numbers-list').after(panel);
+      panel.querySelector('#job-number-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const data = {
+          job_number: fd.get('job_number'),
+          description: fd.get('description') || null,
+          is_primary: fd.get('is_primary') === 'on',
+        };
+        try {
+          if (existing) await API.site_job_numbers.update(siteId, existing.id, data);
+          else await API.site_job_numbers.create(siteId, data);
+          panel.remove();
+          jobNumbers = await API.site_job_numbers.list(siteId);
+          jobNumberList = jobNumbers;
+          document.getElementById('job-numbers-list').innerHTML = renderJobNumbersList(jobNumbers);
+          attachSiteDetailHandlers(siteId, siteData, contactList, formList, unitList, ticketList, contractorList, jobNumbers);
+          toast(existing ? 'Job number updated' : 'Job number added');
+        } catch (err) { toast('Error: ' + err.message, 'error'); }
+      });
+      panel.querySelector('input').focus();
+    }
+
+    window.openJobNumberForm = (jobId) => {
+      inlineJobNumberPanel(jobId ? jobNumberList.find(j => j.id === jobId) : null);
+    };
+
+    window.deleteJobNumber = async (jobId) => {
+      if (!confirm('Delete this job number?')) return;
+      try {
+        await API.site_job_numbers.delete(siteId, jobId);
+        jobNumbers = await API.site_job_numbers.list(siteId);
+        jobNumberList = jobNumbers;
+        document.getElementById('job-numbers-list').innerHTML = renderJobNumbersList(jobNumbers);
+        attachSiteDetailHandlers(siteId, siteData, contactList, formList, unitList, ticketList, contractorList, jobNumbers);
+        toast('Job number deleted');
+      } catch (e) { toast('Error: ' + e.message, 'error'); }
+    };
+
+    // ── Astea CSV import ──────────────────────────────────────────────────────
+    window.importUnitsFromCSV = async (input) => {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+
+      const text = await file.text();
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) { toast('CSV appears empty', 'error'); return; }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+      const idx = (name) => headers.indexOf(name);
+      const col = (row, name) => {
+        const i = idx(name);
+        if (i < 0) return '';
+        return row[i]?.trim().replace(/^"|"$/g, '') || '';
+      };
+
+      // Parse rows into objects grouped by serial_no (unit number)
+      const rows = lines.slice(1).filter(l => l.trim()).map(line => {
+        // Simple CSV split — handles unquoted fields
+        const parts = line.split(',');
+        return parts;
+      });
+
+      // Group by serial_no; each unit = one serial_no, may have COND and EVAP rows
+      const bySerial = {};
+      for (const row of rows) {
+        const bpartId = col(row, 'bpart_id');       // e.g. 22366582-COND
+        const serialNo = col(row, 'serial_no');     // e.g. 22366582-0001
+        const installDate = col(row, 'install_date');
+        const descr = col(row, 'descr');
+        const status = col(row, 'status');
+
+        if (!serialNo) continue;
+
+        if (!bySerial[serialNo]) bySerial[serialNo] = { serialNo, rows: [] };
+        bySerial[serialNo].rows.push({ bpartId, installDate, descr, status });
+      }
+
+      const units = Object.values(bySerial).map(({ serialNo, rows }) => {
+        // Extract line number from serial (last 4 digits after last -)
+        const linePart = serialNo.split('-').pop();
+        const lineNumber = parseInt(linePart, 10) || null;
+
+        // Use COND row for model/install date (shipped from VA), fallback to first row
+        const condRow = rows.find(r => r.bpartId.endsWith('-COND'));
+        const firstRow = rows[0];
+        const mainRow = condRow || firstRow;
+
+        // Parse install date
+        let installDate = null;
+        const rawDate = mainRow.installDate;
+        if (rawDate) {
+          const d = new Date(rawDate);
+          if (!isNaN(d)) installDate = d.toISOString().split('T')[0];
+        }
+
+        // Model from descr (take the model part before the comma)
+        const descr = mainRow.descr || '';
+        const model = descr.split(',')[0].trim();
+
+        // Job number from bpart_id prefix (e.g. "22366582" from "22366582-COND")
+        const jobNumber = mainRow.bpartId.split('-').slice(0, -1).join('-') || null;
+
+        return {
+          site_id: siteId,
+          serial_number: serialNo,
+          line_number: lineNumber,
+          model: model || null,
+          job_number: jobNumber,
+          install_date: installDate,
+          unit_type: 'evaporative_cooler',
+          status: 'installed',
+        };
+      });
+
+      if (!units.length) { toast('No units found in CSV', 'error'); return; }
+
+      // Show preview modal
+      const existing = new Set(unitList.map(u => u.serial_number));
+      const toImport = units.filter(u => !existing.has(u.serial_number));
+      const skipped = units.length - toImport.length;
+
+      const modalId = 'csv-import-modal';
+      document.getElementById(modalId)?.remove();
+      const modal = document.createElement('div');
+      modal.id = modalId;
+      modal.style.cssText = 'position:fixed;inset:0;background:#0009;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px';
+      modal.innerHTML = `
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:680px;width:100%;max-height:80vh;overflow-y:auto">
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">Import Units from Astea CSV</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:16px">
+            Found <strong>${units.length}</strong> unique serial numbers.
+            ${skipped > 0 ? `<span style="color:var(--orange)"> ${skipped} already exist and will be skipped.</span>` : ''}
+            <strong style="color:var(--green)">${toImport.length} will be imported.</strong>
+          </div>
+          ${toImport.length === 0 ? '<div style="color:var(--text3)">Nothing new to import.</div>' : `
+          <div style="max-height:300px;overflow-y:auto;margin-bottom:16px">
+            <table style="width:100%;font-size:12px;border-collapse:collapse">
+              <thead><tr style="background:var(--bg3)">
+                <th style="padding:4px 8px;text-align:left">Serial No</th>
+                <th style="padding:4px 8px;text-align:left">Line #</th>
+                <th style="padding:4px 8px;text-align:left">Job #</th>
+                <th style="padding:4px 8px;text-align:left">Model</th>
+                <th style="padding:4px 8px;text-align:left">Install Date</th>
+              </tr></thead>
+              <tbody>
+                ${toImport.map(u => `<tr style="border-top:1px solid var(--border)">
+                  <td style="padding:4px 8px;font-family:monospace">${escHtml(u.serial_number)}</td>
+                  <td style="padding:4px 8px;color:var(--text2)">${u.line_number ?? '—'}</td>
+                  <td style="padding:4px 8px;color:var(--text2);font-family:monospace">${escHtml(u.job_number||'—')}</td>
+                  <td style="padding:4px 8px;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.model||'—')}</td>
+                  <td style="padding:4px 8px;color:var(--text2)">${u.install_date||'—'}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('${modalId}')?.remove()">Cancel</button>
+            <button class="btn btn-primary" id="confirm-import-btn">Import ${toImport.length} Units</button>
+          </div>`}
+          ${toImport.length === 0 ? `<div class="form-actions"><button class="btn btn-secondary" onclick="document.getElementById('${modalId}')?.remove()">Close</button></div>` : ''}
+        </div>`;
+      document.body.appendChild(modal);
+
+      document.getElementById('confirm-import-btn')?.addEventListener('click', async () => {
+        const btn = document.getElementById('confirm-import-btn');
+        btn.disabled = true;
+        btn.textContent = 'Importing…';
+        let imported = 0, failed = 0;
+        for (const u of toImport) {
+          try { await API.units.create(u); imported++; }
+          catch (e) { failed++; console.warn('Failed to import', u.serial_number, e); }
+        }
+        modal.remove();
+        // Refresh units
+        const newAllUnits = await API.units.list();
+        siteUnits = newAllUnits.filter(u => u.site_id === siteId)
+          .sort((a, b) => (a.line_number || 0) - (b.line_number || 0));
+        document.getElementById('units-list').innerHTML = renderUnitsList(siteUnits, siteTickets);
+        attachSiteDetailHandlers(siteId, siteData, contactList, formList, siteUnits, ticketList, contractorList, jobNumberList);
+        toast(`Imported ${imported} units${failed > 0 ? `, ${failed} failed` : ''}`, failed > 0 ? 'error' : 'success');
+      });
     };
   }
 }

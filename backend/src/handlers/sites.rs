@@ -40,10 +40,11 @@ pub async fn create_site(
     let site = sqlx::query_as::<_, Site>(
         r#"INSERT INTO public.sites
            (name, address, city, state, zip_code,
+            shipping_name, shipping_contact_name, shipping_contact_phone,
             shipping_address_street, shipping_address_city, shipping_address_state, shipping_address_zip,
             access_requirements, required_paperwork, orientation_info,
             customer_contact_phone, customer_contact_email, notes)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
            RETURNING *"#,
     )
     .bind(&body.name)
@@ -51,6 +52,9 @@ pub async fn create_site(
     .bind(&body.city)
     .bind(&body.state)
     .bind(&body.zip_code)
+    .bind(&body.shipping_name)
+    .bind(&body.shipping_contact_name)
+    .bind(&body.shipping_contact_phone)
     .bind(&body.shipping_address_street)
     .bind(&body.shipping_address_city)
     .bind(&body.shipping_address_state)
@@ -78,18 +82,21 @@ pub async fn update_site(
            city = COALESCE($4, city),
            state = COALESCE($5, state),
            zip_code = COALESCE($6, zip_code),
-           shipping_address_street = COALESCE($7, shipping_address_street),
-           shipping_address_city = COALESCE($8, shipping_address_city),
-           shipping_address_state = COALESCE($9, shipping_address_state),
-           shipping_address_zip = COALESCE($10, shipping_address_zip),
-           access_requirements = COALESCE($11, access_requirements),
-           required_paperwork = COALESCE($12, required_paperwork),
-           orientation_info = COALESCE($13, orientation_info),
-           customer_contact_phone = COALESCE($14, customer_contact_phone),
-           customer_contact_email = COALESCE($15, customer_contact_email),
-           notes = COALESCE($16, notes),
-           last_contact_date = COALESCE($17, last_contact_date),
-           techs_on_site = COALESCE($18, techs_on_site),
+           shipping_name = COALESCE($7, shipping_name),
+           shipping_contact_name = COALESCE($8, shipping_contact_name),
+           shipping_contact_phone = COALESCE($9, shipping_contact_phone),
+           shipping_address_street = COALESCE($10, shipping_address_street),
+           shipping_address_city = COALESCE($11, shipping_address_city),
+           shipping_address_state = COALESCE($12, shipping_address_state),
+           shipping_address_zip = COALESCE($13, shipping_address_zip),
+           access_requirements = COALESCE($14, access_requirements),
+           required_paperwork = COALESCE($15, required_paperwork),
+           orientation_info = COALESCE($16, orientation_info),
+           customer_contact_phone = COALESCE($17, customer_contact_phone),
+           customer_contact_email = COALESCE($18, customer_contact_email),
+           notes = COALESCE($19, notes),
+           last_contact_date = COALESCE($20, last_contact_date),
+           techs_on_site = COALESCE($21, techs_on_site),
            updated_at = now()
            WHERE id = $1
            RETURNING *"#,
@@ -100,6 +107,9 @@ pub async fn update_site(
     .bind(&body.city)
     .bind(&body.state)
     .bind(&body.zip_code)
+    .bind(&body.shipping_name)
+    .bind(&body.shipping_contact_name)
+    .bind(&body.shipping_contact_phone)
     .bind(&body.shipping_address_street)
     .bind(&body.shipping_address_city)
     .bind(&body.shipping_address_state)

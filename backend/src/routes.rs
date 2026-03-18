@@ -7,7 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
 use crate::handlers::{
-    bom, commissioning, contractors, site_contacts, site_forms, sites, tickets, units, warranty,
+    bom, commissioning, contractors, site_contacts, site_forms, site_job_numbers, sites, tickets, units, warranty,
 };
 
 pub fn build_router(pool: PgPool, frontend_dir: &str, upload_dir: &str) -> Router {
@@ -24,6 +24,9 @@ pub fn build_router(pool: PgPool, frontend_dir: &str, upload_dir: &str) -> Route
         // Site contacts
         .route("/sites/:id/contacts", get(site_contacts::list_contacts).post(site_contacts::create_contact))
         .route("/sites/:id/contacts/:contact_id", put(site_contacts::update_contact).delete(site_contacts::delete_contact))
+        // Site job numbers
+        .route("/sites/:id/job-numbers", get(site_job_numbers::list_job_numbers).post(site_job_numbers::create_job_number))
+        .route("/sites/:id/job-numbers/:job_id", put(site_job_numbers::update_job_number).delete(site_job_numbers::delete_job_number))
         // Site form templates
         .route("/sites/:id/forms", get(site_forms::list_forms).post(site_forms::create_form))
         .route("/sites/:id/forms/:form_id", put(site_forms::update_form).delete(site_forms::delete_form))
