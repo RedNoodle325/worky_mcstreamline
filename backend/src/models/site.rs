@@ -24,6 +24,8 @@ pub struct Site {
     pub customer_contact_phone: Option<String>,
     pub customer_contact_email: Option<String>,
     pub notes: Option<String>,
+    pub logo_url: Option<String>,
+    pub logo_filename: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }

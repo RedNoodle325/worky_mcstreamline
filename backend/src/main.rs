@@ -34,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
     let frontend_dir = std::env::var("FRONTEND_DIR")
         .unwrap_or_else(|_| "../frontend".to_string());
 
-    let app = routes::build_router(pool, &frontend_dir);
+    let app = routes::build_router(pool, &frontend_dir, &config.upload_dir);
 
     let addr: SocketAddr = format!("{}:{}", config.host, config.port).parse()?;
     tracing::info!("Server listening on http://{}", addr);

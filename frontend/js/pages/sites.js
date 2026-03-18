@@ -33,14 +33,15 @@ async function renderSites(container) {
     const tbody = document.getElementById('sites-body');
     if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text3)">No sites yet</td></tr>'; return; }
     tbody.innerHTML = data.map(s => `<tr>
-      <td><a onclick="showSiteDetail('${s.id}')">${escHtml(s.name)}</a></td>
+      <td><a onclick="navigate('site-detail',{id:'${s.id}'})" style="cursor:pointer">${escHtml(s.name)}</a></td>
       <td>${escHtml([s.city, s.state].filter(Boolean).join(', ') || '—')}</td>
       <td style="font-size:12px">${escHtml([s.shipping_address_street, s.shipping_address_city].filter(Boolean).join(', ') || '—')}</td>
       <td style="font-size:12px">${escHtml(s.customer_contact_phone || s.customer_contact_email || '—')}</td>
       <td style="font-size:12px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.access_requirements || '—')}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-secondary" onclick="editSite('${s.id}')">Edit</button>
-        <button class="btn btn-sm btn-secondary" onclick="printSiteReport('${s.id}')" style="margin-left:4px">🖨 Report</button>
+        <button class="btn btn-sm btn-primary" onclick="navigate('site-detail',{id:'${s.id}'})">Open</button>
+        <button class="btn btn-sm btn-secondary" onclick="editSite('${s.id}')" style="margin-left:4px">Edit</button>
+        <button class="btn btn-sm btn-secondary" onclick="printSiteReport('${s.id}')" style="margin-left:4px">🖨</button>
       </td>
     </tr>`).join('');
   }

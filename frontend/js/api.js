@@ -63,6 +63,30 @@ const API = {
     searchParts: (q) => apiFetch(`/parts/search?q=${encodeURIComponent(q)}`),
   },
 
+  // Site contacts
+  site_contacts: {
+    list: (siteId) => apiFetch(`/sites/${siteId}/contacts`),
+    create: (siteId, data) => apiFetch(`/sites/${siteId}/contacts`, { method: 'POST', body: JSON.stringify(data) }),
+    update: (siteId, id, data) => apiFetch(`/sites/${siteId}/contacts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (siteId, id) => apiFetch(`/sites/${siteId}/contacts/${id}`, { method: 'DELETE' }),
+  },
+
+  // Site form templates
+  site_forms: {
+    list: (siteId) => apiFetch(`/sites/${siteId}/forms`),
+    create: (siteId, data) => apiFetch(`/sites/${siteId}/forms`, { method: 'POST', body: JSON.stringify(data) }),
+    update: (siteId, id, data) => apiFetch(`/sites/${siteId}/forms/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (siteId, id) => apiFetch(`/sites/${siteId}/forms/${id}`, { method: 'DELETE' }),
+  },
+
+  // Logo upload
+  logo: {
+    upload: (siteId, formData) => fetch(API_BASE + `/sites/${siteId}/logo`, { method: 'POST', body: formData }).then(async r => {
+      if (!r.ok) { const e = await r.json().catch(() => ({ error: r.statusText })); throw new Error(e.error); }
+      return r.json();
+    }),
+  },
+
   // Warranty
   warranty: {
     list: () => apiFetch('/warranty'),

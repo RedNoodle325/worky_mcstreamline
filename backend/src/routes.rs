@@ -7,10 +7,10 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
 use crate::handlers::{
-    bom, commissioning, contractors, sites, tickets, units, warranty,
+    bom, commissioning, contractors, site_contacts, site_forms, sites, tickets, units, warranty,
 };
 
-pub fn build_router(pool: PgPool, frontend_dir: &str) -> Router {
+pub fn build_router(pool: PgPool, frontend_dir: &str, upload_dir: &str) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -20,6 +20,13 @@ pub fn build_router(pool: PgPool, frontend_dir: &str) -> Router {
         // Sites
         .route("/sites", get(sites::list_sites).post(sites::create_site))
         .route("/sites/:id", get(sites::get_site).put(sites::update_site).delete(sites::delete_site))
+        .route("/sites/:id/logo", post(sites::upload_logo))
+        // Site contacts
+        .route("/sites/:id/contacts", get(site_contacts::list_contacts).post(site_contacts::create_contact))
+        .route("/sites/:id/contacts/:contact_id", put(site_contacts::update_contact).delete(site_contacts::delete_contact))
+        // Site form templates
+        .route("/sites/:id/forms", get(site_forms::list_forms).post(site_forms::create_form))
+        .route("/sites/:id/forms/:form_id", put(site_forms::update_form).delete(site_forms::delete_form))
         // Units
         .route("/units", get(units::list_units).post(units::create_unit))
         .route("/units/:id", get(units::get_unit).put(units::update_unit))
@@ -43,6 +50,7 @@ pub fn build_router(pool: PgPool, frontend_dir: &str) -> Router {
 
     Router::new()
         .nest("/api", api)
+        .nest_service("/uploads", ServeDir::new(upload_dir))
         .fallback_service(ServeDir::new(frontend_dir))
         .layer(cors)
 }

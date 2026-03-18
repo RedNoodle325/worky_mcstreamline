@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Multipart, Path, State},
     Json,
 };
 use sqlx::PgPool;
@@ -123,4 +123,49 @@ pub async fn delete_site(
         .execute(&pool)
         .await?;
     Ok(Json(serde_json::json!({ "deleted": id })))
+}
+
+pub async fn upload_logo(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    mut multipart: Multipart,
+) -> Result<Json<Site>> {
+    let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "./uploads".to_string());
+    let logos_dir = format!("{}/logos", upload_dir);
+    std::fs::create_dir_all(&logos_dir).map_err(|e| AppError::Internal(e.into()))?;
+
+    let mut logo_url: Option<String> = None;
+
+    while let Some(field) = multipart.next_field().await.map_err(|e| AppError::Internal(anyhow::anyhow!(e)))? {
+        if field.name().unwrap_or("") != "logo" { continue; }
+
+        let content_type = field.content_type().unwrap_or("image/png").to_string();
+        let ext = match content_type.as_str() {
+            "image/jpeg" | "image/jpg" => "jpg",
+            "image/gif" => "gif",
+            "image/svg+xml" => "svg",
+            "image/webp" => "webp",
+            _ => "png",
+        };
+
+        let filename = format!("{}.{}", id, ext);
+        let filepath = format!("{}/{}", logos_dir, filename);
+        let bytes = field.bytes().await.map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
+        std::fs::write(&filepath, &bytes).map_err(|e| AppError::Internal(e.into()))?;
+        logo_url = Some(format!("/uploads/logos/{}", filename));
+        break;
+    }
+
+    let url = logo_url.ok_or_else(|| AppError::BadRequest("No 'logo' field in upload".to_string()))?;
+
+    let site = sqlx::query_as::<_, Site>(
+        "UPDATE public.sites SET logo_url = $2, updated_at = now() WHERE id = $1 RETURNING *"
+    )
+    .bind(id)
+    .bind(&url)
+    .fetch_optional(&pool)
+    .await?
+    .ok_or_else(|| AppError::NotFound(format!("Site {} not found", id)))?;
+
+    Ok(Json(site))
 }

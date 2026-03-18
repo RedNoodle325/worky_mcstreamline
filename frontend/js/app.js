@@ -8,23 +8,34 @@ const PAGES = {
   contractors:   renderContractors,
   bom:           renderBom,
   warranty:      renderWarranty,
+  'site-detail': renderSiteDetail,
+  'unit-detail': renderUnitDetail,
+};
+
+// Map sub-pages to their parent nav item for active highlighting
+const PAGE_NAV = {
+  'site-detail': 'sites',
+  'unit-detail': 'units',
 };
 
 let currentPage = 'dashboard';
+let currentParams = {};
 
-function navigate(page) {
+function navigate(page, params = {}) {
   currentPage = page;
+  currentParams = params;
 
-  // Update nav
+  // Update nav — highlight parent section for sub-pages
+  const navPage = PAGE_NAV[page] || page;
   document.querySelectorAll('.nav-links a').forEach(a => {
-    a.classList.toggle('active', a.dataset.page === page);
+    a.classList.toggle('active', a.dataset.page === navPage);
   });
 
   // Render page
   const container = document.getElementById('page-container');
   container.innerHTML = '<div style="color:var(--text2);padding:40px;text-align:center">Loading…</div>';
   const fn = PAGES[page];
-  if (fn) fn(container);
+  if (fn) fn(container, params);
 }
 
 // ── Modal helpers ─────────────────────────────────────────────────────────

@@ -50,15 +50,15 @@ async function renderUnits(container) {
     const tbody = document.getElementById('units-body');
     if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text3)">No units</td></tr>'; return; }
     tbody.innerHTML = data.map(u => `<tr>
-      <td><a onclick="showUnitDetail('${u.id}')" style="font-family:monospace">${escHtml(serial(u))}</a></td>
+      <td><a onclick="navigate('unit-detail',{id:'${u.id}'})" style="font-family:monospace;cursor:pointer">${escHtml(serial(u))}</a></td>
       <td>${unitTypeBadge(u.unit_type)}</td>
       <td>${escHtml(u.model || '—')}</td>
       <td>${escHtml(siteName(u.site_id))}</td>
       <td>${commissionBadge(u.commission_level)}</td>
       <td style="font-size:12px">${fmt(u.warranty_end_date)}</td>
       <td>
-        <button class="btn btn-sm btn-secondary" onclick="showUnitDetail('${u.id}')">Detail</button>
-        <button class="btn btn-sm btn-secondary" onclick="editUnit('${u.id}')">Edit</button>
+        <button class="btn btn-sm btn-primary" onclick="navigate('unit-detail',{id:'${u.id}'})">Open</button>
+        <button class="btn btn-sm btn-secondary" onclick="editUnit('${u.id}')" style="margin-left:4px">Edit</button>
       </td>
     </tr>`).join('');
   }
