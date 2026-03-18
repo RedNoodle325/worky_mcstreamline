@@ -38,8 +38,9 @@ async function renderSites(container) {
       <td style="font-size:12px">${escHtml([s.shipping_address_street, s.shipping_address_city].filter(Boolean).join(', ') || '—')}</td>
       <td style="font-size:12px">${escHtml(s.customer_contact_phone || s.customer_contact_email || '—')}</td>
       <td style="font-size:12px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.access_requirements || '—')}</td>
-      <td>
+      <td style="white-space:nowrap">
         <button class="btn btn-sm btn-secondary" onclick="editSite('${s.id}')">Edit</button>
+        <button class="btn btn-sm btn-secondary" onclick="printSiteReport('${s.id}')" style="margin-left:4px">🖨 Report</button>
       </td>
     </tr>`).join('');
   }
@@ -78,6 +79,7 @@ async function renderSites(container) {
       </div>
       <div class="form-actions">
         <button class="btn btn-secondary" onclick="editSite('${site.id}');closeModal()">Edit</button>
+        <button class="btn btn-secondary" onclick="printSiteReport('${site.id}')">🖨 Print Report</button>
         <button class="btn btn-primary" onclick="navigate('units');closeModal()">View Units</button>
       </div>`);
   };
