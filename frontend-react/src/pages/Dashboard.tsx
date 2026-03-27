@@ -22,6 +22,22 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: 'In Progress',
 }
 
+const SITE_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  normal:        { label: 'Normal',        color: '#16a34a' },
+  open_issues:   { label: 'Open Issues',   color: '#d97706' },
+  techs_onsite:  { label: 'Techs on Site', color: '#2563eb' },
+  emergency:     { label: 'Emergency',     color: '#dc2626' },
+}
+
+const PHASE_BADGE: Record<string, { label: string; color: string }> = {
+  production_shipping: { label: 'Production & Shipping', color: '#6366f1' },
+  commissioning_l2:    { label: 'L2 Pre-Energization',   color: '#f97316' },
+  commissioning_l3:    { label: 'L3 Startup',            color: '#eab308' },
+  commissioning_l4:    { label: 'L4 SOO/TAB/BMS',        color: '#3b82f6' },
+  commissioning_l5:    { label: 'L5 IST',                color: '#06b6d4' },
+  pre_commissioning:   { label: 'Pre-Commissioning',     color: '#6366f1' },
+}
+
 function StatCard({
   label, value, color, onClick,
 }: {
@@ -272,11 +288,33 @@ export function Dashboard() {
             const hasOpenTicket = serviceTickets.some(
               t => t.site_id === site.id && (t.status === 'open' || t.status === 'in_progress')
             )
-            const warrantyStatus = site.warranty_status || ''
-            const warrantyColor =
-              warrantyStatus === 'active' ? '#16a34a' :
-              warrantyStatus === 'expired' ? '#dc2626' :
-              warrantyStatus === 'expiring_soon' ? '#d97706' : undefined
+
+            const statusCfg = SITE_STATUS_CONFIG[site.site_status || 'normal'] || SITE_STATUS_CONFIG.normal
+
+            const phase = site.lifecycle_phase || 'production_shipping'
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            let warrantyLabel = ''
+            let warrantyColor = ''
+            if (phase === 'warranty' || phase === 'extended_warranty') {
+              const endDateStr = site.extended_warranty_end || site.warranty_end_date
+              const endDate = endDateStr ? new Date(endDateStr) : null
+              const days = endDate ? Math.round((endDate.getTime() - today.getTime()) / 86400000) : null
+              const prefix = phase === 'extended_warranty' ? 'Ext. ' : ''
+              warrantyLabel = days != null
+                ? `${prefix}Warranty · ${days >= 0 ? days + 'd left' : 'expired'}`
+                : `${prefix}Warranty`
+              warrantyColor = (days != null && days < 0) ? '#dc2626' : '#16a34a'
+            } else if (phase === 'out_of_warranty') {
+              warrantyLabel = 'Out of Warranty'
+              warrantyColor = '#dc2626'
+            } else if (PHASE_BADGE[phase]) {
+              warrantyLabel = PHASE_BADGE[phase].label
+              warrantyColor = PHASE_BADGE[phase].color
+            }
+
+            const lastContact = site.last_contact_date
+              ? new Date(site.last_contact_date + 'T00:00:00').toLocaleDateString()
+              : null
 
             return (
               <div
@@ -285,67 +323,76 @@ export function Dashboard() {
                 className="card"
                 style={{
                   cursor: 'pointer', padding: 0, overflow: 'hidden',
-                  borderLeft: `4px solid ${warrantyColor || 'var(--border)'}`,
+                  borderLeft: `4px solid ${statusCfg.color}`,
                 }}
               >
+                {/* Status header */}
                 <div style={{
-                  padding: '12px 14px',
-                  borderBottom: '1px solid var(--border)',
+                  background: `${statusCfg.color}1a`,
+                  borderBottom: `2px solid ${statusCfg.color}55`,
+                  padding: '10px 14px',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {site.name || '—'}
-                  </div>
-                  {site.logo_url && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      background: '#fff', borderRadius: 6, padding: '3px 6px', height: 30,
-                    }}>
-                      <img
-                        src={site.logo_url}
-                        style={{ height: 22, maxWidth: 72, objectFit: 'contain' }}
-                        onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
-                        alt=""
-                      />
+                      display: 'inline-block', width: 10, height: 10, borderRadius: '50%',
+                      background: statusCfg.color, flexShrink: 0,
+                    }} />
+                    <span style={{ fontWeight: 700, fontSize: 13, color: statusCfg.color }}>
+                      {statusCfg.label}
                     </span>
-                  )}
-                </div>
-
-                <div style={{ padding: '10px 14px' }}>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-                    {site.status && (
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {site.techs_on_site && (
                       <span style={{
-                        fontSize: 11, fontWeight: 600,
-                        background: 'var(--bg3)', color: 'var(--text2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 99, padding: '2px 8px',
+                        background: '#2563eb1a', color: '#2563eb',
+                        border: '1px solid #2563eb55', borderRadius: 99,
+                        padding: '1px 7px', fontSize: 11, fontWeight: 600,
+                      }}>🔧 On Site</span>
+                    )}
+                    {site.logo_url && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        background: '#fff', borderRadius: 6, padding: '3px 6px', height: 30,
                       }}>
-                        {site.status}
+                        <img
+                          src={site.logo_url}
+                          style={{ height: 22, maxWidth: 72, objectFit: 'contain' }}
+                          onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
+                          alt=""
+                        />
                       </span>
                     )}
-                    {warrantyStatus && warrantyColor && (
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div style={{ padding: '12px 14px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {site.name || '—'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                    {warrantyLabel && (
                       <span style={{
                         background: `${warrantyColor}1a`, color: warrantyColor,
                         border: `1px solid ${warrantyColor}55`,
-                        borderRadius: 99, padding: '2px 8px',
-                        fontSize: 11, fontWeight: 600,
+                        borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 600,
                       }}>
-                        {warrantyStatus.replace(/_/g, ' ')}
+                        {warrantyLabel}
                       </span>
                     )}
                     {hasOpenTicket && (
                       <span style={{
                         background: 'var(--red)22', color: 'var(--red)',
                         border: '1px solid var(--red)44',
-                        borderRadius: 99, padding: '2px 8px',
-                        fontSize: 11, fontWeight: 600,
+                        borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 600,
                       }}>
-                        Open Ticket
+                        🎫 Open Ticket
                       </span>
                     )}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                    {[site.city, site.state].filter(Boolean).join(', ') || '—'}
+                    {lastContact ? `📞 ${lastContact}` : 'No contact logged'}
                   </div>
                 </div>
               </div>

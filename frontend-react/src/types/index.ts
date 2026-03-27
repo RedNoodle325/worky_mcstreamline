@@ -4,6 +4,7 @@ export interface Site {
   id: string
   name: string
   project_name?: string
+  project_number?: string
   address?: string
   city?: string
   state?: string
@@ -12,6 +13,8 @@ export interface Site {
   region?: string
   status?: string
   warranty_status?: string
+  site_status?: string
+  lifecycle_phase?: string
   site_type?: string
   owner?: string
   shipping_name?: string
@@ -19,6 +22,10 @@ export interface Site {
   job_number?: string
   astea_site_id?: string
   logo_url?: string
+  last_contact_date?: string
+  techs_on_site?: boolean
+  warranty_end_date?: string
+  extended_warranty_end?: string
   created_at?: string
   updated_at?: string
 }
