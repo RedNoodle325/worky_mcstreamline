@@ -27,15 +27,15 @@ cp backend/.env.example backend/.env
 
 Edit `backend/.env`:
 
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | Supabase Postgres connection string (from Supabase Dashboard → Settings → Database → Connection string) |
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_ANON_KEY` | Your Supabase anon/public key |
-| `HOST` | Bind address — use `127.0.0.1` for local, `0.0.0.0` to accept external connections |
-| `PORT` | Port to listen on (default: `3000`) |
-| `FRONTEND_DIR` | Path to the built frontend files (see step 2) |
-| `UPLOAD_DIR` | Writable directory for uploaded files (default: `./uploads`) |
+| Variable            | Description                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`      | Supabase Postgres connection string (from Supabase Dashboard → Settings → Database → Connection string) |
+| `SUPABASE_URL`      | Your Supabase project URL                                                                               |
+| `SUPABASE_ANON_KEY` | Your Supabase anon/public key                                                                           |
+| `HOST`              | Bind address — use `127.0.0.1` for local, `0.0.0.0` to accept external connections                      |
+| `PORT`              | Port to listen on (default: `3000`)                                                                     |
+| `FRONTEND_DIR`      | Path to the built frontend files (see step 2)                                                           |
+| `UPLOAD_DIR`        | Writable directory for uploaded files (default: `./uploads`)                                            |
 
 ---
 
@@ -80,6 +80,7 @@ FRONTEND_DIR=/absolute/path/to/frontend-react-dist ./target/release/worky_backen
 ```
 
 The server starts on `http://<HOST>:<PORT>`. It serves:
+
 - The React app at `/`
 - API endpoints at `/api/*`
 - Uploaded files at `/uploads/*`
