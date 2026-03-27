@@ -384,7 +384,7 @@ async function renderSchedule(params = {}) {
       data-job-id="${job.id}">
       <div class="job-card-top">
         <span class="pri-badge" style="background:${pri.bg};color:${pri.color}">${pri.label}</span>
-        <span class="job-card-name">${escHtml(job.name || 'Untitled Job')}</span>
+        <span class="job-card-name">${escHtml(job.job_name || job.name || 'Untitled Job')}</span>
         <span class="edit-ui" onclick="event.stopPropagation();schedOpenJobModal('${job.id}')"
           style="cursor:pointer;color:var(--text3);font-size:14px;padding:0 2px;line-height:1" title="Edit job">✏</span>
       </div>
@@ -488,7 +488,7 @@ async function renderSchedule(params = {}) {
     panel.innerHTML = `
       <div class="panel-header">
         <div>
-          <div class="panel-title">${escHtml(job.name || 'Job')}</div>
+          <div class="panel-title">${escHtml(job.job_name || job.name || 'Job')}</div>
           ${site ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${escHtml(site.name)}</div>` : ''}
         </div>
         <button class="btn btn-sm btn-secondary edit-ui" onclick="schedOpenJobModal('${job.id}')" style="font-size:11px">✏ Edit</button>
@@ -620,7 +620,7 @@ async function renderSchedule(params = {}) {
 
     const formHtml = `
       <form id="sched-job-form" style="max-height:70vh;overflow-y:auto;padding-right:4px">
-        ${fld('Job Name *', inp('name', job?.name, 'Enter job name', true))}
+        ${fld('Job Name *', inp('name', job?.job_name || job?.name, 'Enter job name', true))}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           ${fld('Site', sel('site_id', siteOptions))}
           ${fld('Job Type', sel('job_type', typeOptions))}
@@ -649,6 +649,7 @@ async function renderSchedule(params = {}) {
       const fd = new FormData(form);
       const data = {};
       fd.forEach((v, k) => { data[k] = v === '' ? null : v; });
+      if (data.name !== undefined) { data.job_name = data.name; delete data.name; }
       if (data.priority) data.priority = parseInt(data.priority, 10);
 
       try {

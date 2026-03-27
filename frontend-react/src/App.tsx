@@ -27,6 +27,7 @@ import { BOM } from './pages/BOM'
 import { Warranty } from './pages/Warranty'
 import { WarrantyDetail } from './pages/WarrantyDetail'
 import { Report } from './pages/Report'
+import { EditModeProvider } from './contexts/EditModeContext'
 
 // Global toast context so pages can call toast() without prop drilling
 type ToastFn = (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -95,7 +96,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppWithToast />
+        <EditModeProvider>
+          <AppWithToast />
+        </EditModeProvider>
       </AuthProvider>
     </ThemeProvider>
   )

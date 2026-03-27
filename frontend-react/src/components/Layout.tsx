@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { useEditMode } from '../contexts/EditModeContext'
 import { useState } from 'react'
 
 const NAV = [
@@ -18,6 +19,7 @@ const NAV = [
 export function Layout() {
   const { logout, user } = useAuth()
   const { theme, toggle } = useTheme()
+  const { editMode, toggleEditMode } = useEditMode()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -61,6 +63,10 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-footer">
+          <button className="theme-toggle" onClick={toggleEditMode} style={{ marginBottom: 4 }}>
+            <span className="toggle-icon">{editMode ? '✏️' : '👁'}</span>
+            {editMode ? 'Editing' : 'View Mode'}
+          </button>
           <button className="theme-toggle" onClick={toggle}>
             <span className="toggle-icon">{theme === 'dark' ? '☀' : '🌙'}</span>
             {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
