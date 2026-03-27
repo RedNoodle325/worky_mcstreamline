@@ -37,6 +37,9 @@ async function renderContractorDetail(container, { id, backTo = 'contractors', b
           <div class="form-group"><label>Contact Name</label>
             <input name="contact_name" value="${escHtml(c.contact_name||'')}"/>
           </div>
+          <div class="form-group"><label>Title / Role</label>
+            <input name="title" value="${escHtml(c.title||'')}"/>
+          </div>
           <div class="form-group"><label>Region / Area</label>
             <input name="region" value="${escHtml(c.region||'')}"/>
           </div>

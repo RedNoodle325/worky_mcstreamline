@@ -7,6 +7,7 @@ pub struct Contractor {
     pub id: Uuid,
     pub company_name: String,
     pub contact_name: Option<String>,
+    pub title: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
     pub region: Option<String>,
@@ -20,6 +21,7 @@ pub struct Contractor {
 pub struct CreateContractor {
     pub company_name: String,
     pub contact_name: Option<String>,
+    pub title: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
     pub region: Option<String>,
@@ -31,6 +33,7 @@ pub struct CreateContractor {
 pub struct UpdateContractor {
     pub company_name: Option<String>,
     pub contact_name: Option<String>,
+    pub title: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
     pub region: Option<String>,

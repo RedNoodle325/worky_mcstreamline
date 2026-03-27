@@ -25,3 +25,7 @@ thiserror = "1"
 regex = "1"
 pdf-extract = "0.7"
 tempfile = "3"
+csv = "1"
+bcrypt = "0.15"
+jsonwebtoken = "9"
+quick-xml = { version = "0.31", features = ["serialize"] }

@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::NaiveDateTime;
 
-// ticket_type: cs_ticket | parts_order | service_line
-// status: open | parts_ordered | tech_dispatched | on_site | resolved | closed
+// ticket_type: cs_ticket | parts_order | service_line | commissioning_issue
+// status: open | parts_ordered | tech_dispatched | on_site | resolved | closed | in_progress | ready_to_inspect | work_complete
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Ticket {
@@ -17,9 +17,14 @@ pub struct Ticket {
     pub title: Option<String>,
     pub description: Option<String>,
     pub status: Option<String>,
+    pub priority: Option<String>,
     pub parts_ordered: Option<bool>,
     pub tech_dispatched: Option<bool>,
     pub resolution: Option<String>,
+    pub reported_by: Option<String>,
+    pub resolution_notes: Option<String>,
+    pub reported_date: Option<NaiveDateTime>,
+    pub closed_date: Option<NaiveDateTime>,
     // Parts order fields
     pub unit_tag: Option<String>,
     pub unit_serial_number: Option<String>,
@@ -29,9 +34,36 @@ pub struct Ticket {
     pub num_techs: Option<i32>,
     pub service_start_date: Option<chrono::NaiveDate>,
     pub service_end_date: Option<chrono::NaiveDate>,
+    // CxAlloy commissioning fields
+    pub cxalloy_issue_id: Option<String>,
+    pub cx_zone: Option<String>,
+    pub cx_issue_type: Option<String>,
+    pub cx_source: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
     pub resolved_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CxAlloyIssuePayload {
+    pub cxalloy_issue_id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub unit_tag: Option<String>,
+    pub priority: Option<String>,
+    pub status: Option<String>,
+    pub reported_by: Option<String>,
+    pub resolution_notes: Option<String>,
+    pub closed_date: Option<String>,
+    pub reported_date: Option<String>,
+    pub cx_zone: Option<String>,
+    pub cx_issue_type: Option<String>,
+    pub cx_source: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CxAlloyImportBody {
+    pub issues: Vec<CxAlloyIssuePayload>,
 }
 
 #[derive(Debug, Deserialize)]

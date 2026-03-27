@@ -20,15 +20,22 @@ const AuthContext = createContext<AuthContextValue>({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
-    const stored = localStorage.getItem('auth_user')
-    return stored ? JSON.parse(stored) : null
+    try {
+      const stored = localStorage.getItem('auth_user')
+      if (!stored || stored === 'undefined' || stored === 'null') return null
+      return JSON.parse(stored)
+    } catch { return null }
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!getToken()) { setLoading(false); return }
     API.auth.me()
-      .then(u => { setUser(u as AuthUser); localStorage.setItem('auth_user', JSON.stringify(u)) })
+      .then(u => {
+        const authUser: AuthUser = { id: '', email: (u as {email:string}).email, name: (u as {display_name?:string}).display_name }
+        setUser(authUser)
+        localStorage.setItem('auth_user', JSON.stringify(authUser))
+      })
       .catch(() => { clearToken(); setUser(null) })
       .finally(() => setLoading(false))
   }, [])
@@ -36,8 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const res = await API.auth.login(email, password)
     setToken(res.token)
-    setUser(res.user)
-    localStorage.setItem('auth_user', JSON.stringify(res.user))
+    const u: AuthUser = { id: '', email: res.email, name: res.display_name }
+    setUser(u)
+    localStorage.setItem('auth_user', JSON.stringify(u))
   }
 
   const logout = () => {

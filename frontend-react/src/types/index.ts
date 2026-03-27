@@ -286,7 +286,8 @@ export interface AuthUser {
 
 export interface LoginResponse {
   token: string
-  user: AuthUser
+  email: string
+  display_name?: string
 }
 
 // ── API response shapes ───────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ async function renderTickets(container) {
   container.innerHTML = `
     <div class="page-header">
       <div><h1>Tickets</h1><div class="page-subtitle">Customer complaints &amp; service orders (Astea)</div></div>
-      <button class="btn btn-primary" id="add-ticket-btn">+ New Ticket</button>
+      <span class="edit-ui"><button class="btn btn-primary" id="add-ticket-btn">+ New Ticket</button></span>
     </div>
     <div class="card">
       <div class="toolbar">
