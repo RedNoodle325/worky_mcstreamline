@@ -3,13 +3,20 @@ const PAGES = {
   dashboard:           renderDashboard,
   sites:               renderSites,
   tickets:             renderTickets,
+  issues:              renderIssues,
+  'service-tickets':   renderServiceTickets,
   contacts:            renderContacts,
+  notes:               renderNotes,
+  todos:               renderTodos,
   'site-detail':       renderSiteDetail,
   'site-form':         renderSiteForm,
   'unit-detail':       renderUnitDetail,
   'unit-form':         renderUnitForm,
   'ticket-detail':     renderTicketDetail,
   'contractor-detail': renderContractorDetail,
+  'campaign-detail':   renderCampaignDetail,
+  schedule:            renderSchedule,
+  msow:                renderMSOW,
 };
 
 // Map sub-pages to their parent nav item for active highlighting
@@ -18,14 +25,22 @@ const PAGE_NAV = {
   'site-form':         'sites',
   'unit-detail':       'sites',
   'unit-form':         'sites',
-  'ticket-detail':     'tickets',
+  'ticket-detail':     'issues',
   'contractor-detail': 'contacts',
+  'campaign-detail':   'sites',
 };
 
 let currentPage = 'dashboard';
 let currentParams = {};
 
-function navigate(page, params = {}) {
+const WRITE_PAGES = new Set(['site-form', 'unit-form']);
+
+async function navigate(page, params = {}) {
+  // Form pages require authentication — silently block if not logged in
+  if (WRITE_PAGES.has(page) && !isAuthenticated()) {
+    return;
+  }
+
   currentPage = page;
   currentParams = params;
 
@@ -117,6 +132,28 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Edit mode ─────────────────────────────────────────────────────────────
+function isEditMode() {
+  return localStorage.getItem('munters-edit-mode') !== 'off';
+}
+
+function toggleEditMode() {
+  localStorage.setItem('munters-edit-mode', isEditMode() ? 'off' : 'on');
+  applyEditMode();
+  toast(isEditMode() ? 'Edit mode on' : 'View mode — edits disabled');
+}
+
+function applyEditMode() {
+  const editing = isEditMode() && isAuthenticated();
+  document.body.classList.toggle('read-only', !editing);
+  const btn   = document.getElementById('edit-mode-btn');
+  const icon  = document.getElementById('edit-mode-icon');
+  const label = document.getElementById('edit-mode-label');
+  if (btn)   btn.style.display   = isAuthenticated() ? '' : 'none';
+  if (icon)  icon.textContent    = editing ? '✏️' : '👁';
+  if (label) label.textContent   = editing ? 'Editing' : 'View Mode';
+}
+
 // ── Theme ──────────────────────────────────────────────────────────────────
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
@@ -127,11 +164,16 @@ function applyTheme(theme) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  // Apply saved theme
+function initApp() {
+  applyAuthState();
+  applyEditMode();
+  navigate('dashboard');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Apply saved theme before auth check so login page looks right
   const savedTheme = localStorage.getItem('munters-theme') || 'dark';
   applyTheme(savedTheme);
-  // Theme toggle
   document.getElementById('theme-toggle')?.addEventListener('click', () => {
     const current = document.documentElement.dataset.theme || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
@@ -144,15 +186,40 @@ document.addEventListener('DOMContentLoaded', () => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       navigate(a.dataset.page);
+      // Close sidebar on mobile after nav
+      closeMobileSidebar();
     });
   });
 
+  // Mobile sidebar toggle
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+  function openMobileSidebar() {
+    document.getElementById('sidebar')?.classList.add('open');
+    sidebarOverlay?.classList.add('open');
+  }
+  function closeMobileSidebar() {
+    document.getElementById('sidebar')?.classList.remove('open');
+    sidebarOverlay?.classList.remove('open');
+  }
+  window.closeMobileSidebar = closeMobileSidebar;
+
+  mobileMenuBtn?.addEventListener('click', openMobileSidebar);
+  sidebarCloseBtn?.addEventListener('click', closeMobileSidebar);
+  sidebarOverlay?.addEventListener('click', closeMobileSidebar);
+
+  // Logout button
+  document.getElementById('auth-logout-btn')?.addEventListener('click', () => logout());
+
   // Modal close
-  document.getElementById('modal-close').addEventListener('click', closeModal);
-  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  document.getElementById('modal-close')?.addEventListener('click', closeModal);
+  document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
     if (e.target === document.getElementById('modal-overlay')) closeModal();
   });
 
-  // Load dashboard
-  navigate('dashboard');
+  // Bootstrap auth — shows login/setup page if not authenticated
+  const authed = await bootstrapAuth();
+  if (authed) initApp();
 });

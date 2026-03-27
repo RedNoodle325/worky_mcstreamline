@@ -2,7 +2,7 @@ async function renderSites(container) {
   container.innerHTML = `
     <div class="page-header">
       <div><h1>Sites</h1><div class="page-subtitle">Customer sites and locations</div></div>
-      <button class="btn btn-primary" id="add-site-btn">+ New Site</button>
+      <span class="edit-ui"><button class="btn btn-primary" id="add-site-btn">+ New Site</button></span>
     </div>
     <div class="card">
       <div class="toolbar">
@@ -38,8 +38,8 @@ async function renderSites(container) {
       <td style="font-size:12px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(s.access_requirements || '—')}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm btn-primary" onclick="navigate('site-detail',{id:'${s.id}'})">Open</button>
-        <button class="btn btn-sm btn-secondary" onclick="navigate('site-form',{id:'${s.id}',backTo:'sites'})" style="margin-left:4px">Edit</button>
-        <button class="btn btn-sm btn-secondary" onclick="deleteSite('${s.id}','${escHtml(s.name)}')" style="margin-left:4px;color:var(--red)">Delete</button>
+        <button class="btn btn-sm btn-secondary edit-ui" onclick="navigate('site-form',{id:'${s.id}',backTo:'sites'})" style="margin-left:4px">Edit</button>
+        <button class="btn btn-sm btn-secondary edit-ui" onclick="deleteSite('${s.id}','${escHtml(s.name)}')" style="margin-left:4px;color:var(--red)">Delete</button>
       </td>
     </tr>`).join('');
   }

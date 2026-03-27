@@ -11,7 +11,6 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
     return;
   }
 
-  // Pre-select siteId if coming from a site page
   const preselectedSite = siteId || unit.site_id || '';
   const back = () => navigate(backTo, backParams);
 
@@ -20,7 +19,7 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
       <div style="display:flex;align-items:center;gap:12px">
         <button class="btn btn-secondary btn-sm" id="back-btn">← Back</button>
         <div>
-          <h1 style="margin:0">${editing ? `Edit Unit ${escHtml(serial(unit))}` : 'New Unit'}</h1>
+          <h1 style="margin:0">${editing ? `Edit Unit ${escHtml(unit.serial_number || serial(unit) || '')}` : 'New Unit'}</h1>
           ${editing ? `<div class="page-subtitle">${unitTypeBadge(unit.unit_type)} ${escHtml(unit.model||'')}</div>` : ''}
         </div>
       </div>
@@ -28,43 +27,87 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
     </div>
 
     <form id="unit-form" style="max-width:900px">
+
+      <!-- Identification -->
       <div class="card" style="margin-bottom:16px">
         <div class="card-title" style="margin-bottom:16px">Unit Identification</div>
         <div class="form-grid">
-          <div class="form-group"><label>Job Number *</label><input name="job_number" required value="${escHtml(unit.job_number||'')}" ${editing?'readonly style="opacity:.6"':''}/></div>
-          <div class="form-group"><label>Line Number *</label><input name="line_number" type="number" required value="${unit.line_number||''}" ${editing?'readonly style="opacity:.6"':''}/></div>
-          <div class="form-group full"><label>Site *</label>
-            <select name="site_id" required>
+          <div class="form-group full">
+            <label>Site *</label>
+            <select name="site_id" required ${editing ? 'disabled' : ''}>
               <option value="">— Select Site —</option>
-              ${sites.map(s => `<option value="${s.id}" ${s.id===preselectedSite?'selected':''}>${escHtml(s.name)}</option>`).join('')}
+              ${sites.map(s => `<option value="${s.id}" ${s.id===preselectedSite?'selected':''}>${escHtml(s.project_name || s.name || s.project_number)}</option>`).join('')}
             </select>
           </div>
-          <div class="form-group"><label>Unit Type *</label>
+          <div class="form-group">
+            <label>Serial Number *</label>
+            <input name="serial_number" required value="${escHtml(unit.serial_number||'')}"
+                   placeholder="e.g. 22366582-0001-COND"
+                   style="font-family:var(--font-mono,monospace)"
+                   ${editing ? 'readonly style="opacity:.6;font-family:var(--font-mono,monospace)"' : ''}/>
+          </div>
+          <div class="form-group">
+            <label>Unit Type *</label>
             <select name="unit_type" required>
               <option value="">— Select Type —</option>
-              <option value="chiller" ${unit.unit_type==='chiller'?'selected':''}>Chiller</option>
-              <option value="air_handler" ${unit.unit_type==='air_handler'?'selected':''}>Air Handler</option>
-              <option value="indirect_cooling" ${unit.unit_type==='indirect_cooling'?'selected':''}>Indirect Cooling</option>
+              <option value="condenser"            ${unit.unit_type==='condenser'?'selected':''}>Condenser</option>
+              <option value="evaporator"           ${unit.unit_type==='evaporator'?'selected':''}>Evaporator</option>
+              <option value="chiller"              ${unit.unit_type==='chiller'?'selected':''}>Chiller</option>
+              <option value="air_handler"          ${unit.unit_type==='air_handler'?'selected':''}>Air Handler</option>
+              <option value="indirect_cooling"     ${unit.unit_type==='indirect_cooling'?'selected':''}>Indirect Cooling</option>
               <option value="indirect_evaporative" ${unit.unit_type==='indirect_evaporative'?'selected':''}>Indirect Evaporative</option>
-              <option value="sycool" ${unit.unit_type==='sycool'?'selected':''}>SyCool</option>
+              <option value="sycool"               ${unit.unit_type==='sycool'?'selected':''}>SyCool</option>
             </select>
           </div>
-          <div class="form-group"><label>Commission Level</label>
-            <select name="commission_level">
-              <option value="none" ${(unit.commission_level||'none')==='none'?'selected':''}>None</option>
-              <option value="L1" ${unit.commission_level==='L1'?'selected':''}>L1</option>
-              <option value="L2" ${unit.commission_level==='L2'?'selected':''}>L2</option>
-              <option value="L3" ${unit.commission_level==='L3'?'selected':''}>L3</option>
-              <option value="L4" ${unit.commission_level==='L4'?'selected':''}>L4</option>
-              <option value="L5" ${unit.commission_level==='L5'?'selected':''}>L5</option>
-              <option value="complete" ${unit.commission_level==='complete'?'selected':''}>Complete</option>
-            </select>
+          <div class="form-group">
+            <label>Job Number</label>
+            <input name="job_number" value="${escHtml(unit.job_number||'')}"
+                   placeholder="e.g. 22366582"
+                   style="font-family:var(--font-mono,monospace)"/>
           </div>
-          <div class="form-group full"><label>Model</label><input name="model" value="${escHtml(unit.model||'')}" placeholder="e.g. AHU-5000"/></div>
-          <div class="form-group full"><label>Description</label><input name="description" value="${escHtml(unit.description||'')}"/></div>
+          <div class="form-group">
+            <label>Line Number</label>
+            <input name="line_number" type="number" min="1" value="${unit.line_number||''}"/>
+          </div>
+          <div class="form-group">
+            <label>Manufacturer</label>
+            <input name="manufacturer" value="${escHtml(unit.manufacturer||'')}" placeholder="e.g. Munters"/>
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input name="model" value="${escHtml(unit.model||'')}" placeholder="e.g. SYS500C"/>
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <input name="description" value="${escHtml(unit.description||'')}"/>
+          </div>
+          <div class="form-group full">
+            <label>Location on Site</label>
+            <input name="location_in_site" value="${escHtml(unit.location_in_site||'')}" placeholder="e.g. VA: BUENA VISTA"/>
+          </div>
         </div>
       </div>
 
+      <!-- Commission & Status -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:16px">Commission & Status</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Commission Level <span style="font-weight:400;color:var(--text3);font-size:11px">(unit-level: L2 & L3 only)</span></label>
+            <select name="commission_level">
+              <option value="none" ${(unit.commission_level||'none')==='none'||unit.commission_level==='L1'?'selected':''}>Not Started</option>
+              <option value="l2"   ${unit.commission_level==='l2'||unit.commission_level==='L2'?'selected':''}>L2 – Pre-Energization Complete</option>
+              <option value="l3"   ${unit.commission_level==='l3'||unit.commission_level==='L3'||unit.commission_level==='complete'||unit.commission_level==='L4'||unit.commission_level==='L5'?'selected':''}>L3 – Startup Complete (Commissioned)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Install Date</label>
+            <input type="date" name="install_date" value="${unit.install_date||''}"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warranty -->
       <div class="card" style="margin-bottom:16px">
         <div class="card-title" style="margin-bottom:16px">Warranty</div>
         <div class="form-grid">
@@ -73,6 +116,31 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
         </div>
       </div>
 
+      <!-- RFE (Retrofit Field Enhancement) -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:4px">Retrofit Field Enhancement (RFE)</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Track component upgrade retrofits performed on this unit</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>RFE Job Number</label>
+            <input name="rfe_job_number" value="${escHtml(unit.rfe_job_number||'')}" placeholder="e.g. J-12345"/>
+          </div>
+          <div class="form-group">
+            <label>RFE WO / Line</label>
+            <input name="rfe_wo_number" value="${escHtml(unit.rfe_wo_number||'')}" placeholder="e.g. WO-98765 / Line 3"/>
+          </div>
+          <div class="form-group">
+            <label>RFE Date</label>
+            <input type="date" name="rfe_date" value="${unit.rfe_date||''}"/>
+          </div>
+          <div class="form-group full">
+            <label>RFE Description</label>
+            <textarea name="rfe_description" rows="2" placeholder="Describe the components upgraded or work performed">${escHtml(unit.rfe_description||'')}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
       <div class="card" style="margin-bottom:16px">
         <div class="card-title" style="margin-bottom:16px">Notes</div>
         <div class="form-grid">
@@ -91,7 +159,7 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
 
   if (editing) {
     document.getElementById('delete-unit-btn').addEventListener('click', async () => {
-      if (!confirm(`Delete unit ${serial(unit)}? This cannot be undone.`)) return;
+      if (!confirm(`Delete unit ${unit.serial_number || serial(unit)}? This cannot be undone.`)) return;
       try {
         await API.units.delete(id);
         toast('Unit deleted');
@@ -103,8 +171,16 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
   document.getElementById('unit-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
-    if (!editing) data.line_number = parseInt(data.line_number);
+
+    // Always coerce numeric fields — FormData gives strings for everything
+    if (data.line_number !== '' && data.line_number != null) {
+      data.line_number = parseInt(data.line_number, 10);
+    }
+    // Remove disabled fields (select with disabled attr isn't submitted but guard anyway)
+    if (editing) delete data.site_id;
+
     Object.keys(data).forEach(k => { if (data[k] === '') data[k] = null; });
+
     try {
       if (editing) {
         await API.units.update(id, data);
@@ -113,7 +189,9 @@ async function renderUnitForm(container, { id, siteId, backTo = 'units', backPar
       } else {
         const created = await API.units.create(data);
         toast('Unit created');
-        navigate('unit-detail', { id: created.id, backTo: data.site_id ? 'site-detail' : 'units', backParams: data.site_id ? { id: data.site_id } : {} });
+        const dest = created.site_id ? 'site-detail' : 'units';
+        const params = created.site_id ? { id: created.site_id } : {};
+        navigate('unit-detail', { id: created.id, backTo: dest, backParams: params });
       }
     } catch (err) { toast('Error: ' + err.message, 'error'); }
   });

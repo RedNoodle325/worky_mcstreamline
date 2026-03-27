@@ -39,12 +39,13 @@ pub async fn create_contractor(
 ) -> Result<Json<Contractor>> {
     let contractor = sqlx::query_as::<_, Contractor>(
         r#"INSERT INTO public.contractors
-           (company_name, contact_name, email, phone, region, notes)
-           VALUES ($1,$2,$3,$4,$5,$6)
+           (company_name, contact_name, title, email, phone, region, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)
            RETURNING *"#,
     )
     .bind(&body.company_name)
     .bind(&body.contact_name)
+    .bind(&body.title)
     .bind(&body.email)
     .bind(&body.phone)
     .bind(&body.region)
@@ -77,11 +78,12 @@ pub async fn update_contractor(
         r#"UPDATE public.contractors SET
            company_name = COALESCE($2, company_name),
            contact_name = COALESCE($3, contact_name),
-           email = COALESCE($4, email),
-           phone = COALESCE($5, phone),
-           region = COALESCE($6, region),
-           notes = COALESCE($7, notes),
-           is_active = COALESCE($8, is_active),
+           title = COALESCE($4, title),
+           email = COALESCE($5, email),
+           phone = COALESCE($6, phone),
+           region = COALESCE($7, region),
+           notes = COALESCE($8, notes),
+           is_active = COALESCE($9, is_active),
            updated_at = now()
            WHERE id = $1
            RETURNING *"#,
@@ -89,6 +91,7 @@ pub async fn update_contractor(
     .bind(id)
     .bind(&body.company_name)
     .bind(&body.contact_name)
+    .bind(&body.title)
     .bind(&body.email)
     .bind(&body.phone)
     .bind(&body.region)

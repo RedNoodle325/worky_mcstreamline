@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     error::{AppError, Result},
-    models::ticket::{CreateTicket, Ticket, UpdateTicket},
+    models::ticket::{CreateTicket, CxAlloyImportBody, Ticket, UpdateTicket},
 };
 
 #[derive(Deserialize)]
@@ -155,4 +155,57 @@ pub async fn delete_ticket(
         .execute(&pool)
         .await?;
     Ok(Json(serde_json::json!({ "deleted": id })))
+}
+
+pub async fn import_cxalloy_issues(
+    State(pool): State<PgPool>,
+    Path(site_id): Path<Uuid>,
+    Json(body): Json<CxAlloyImportBody>,
+) -> Result<Json<serde_json::Value>> {
+    let mut imported: i64 = 0;
+    let mut skipped: i64 = 0;
+
+    for issue in &body.issues {
+        let rows = sqlx::query(
+            r#"INSERT INTO public.issues
+               (site_id, cxalloy_issue_id, title, description, unit_tag, priority, status,
+                reported_by, resolution_notes, closed_date, reported_date,
+                cx_zone, cx_issue_type, cx_source, ticket_type)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,
+                       $10::TIMESTAMPTZ, $11::TIMESTAMPTZ,
+                       $12,$13,$14,'commissioning_issue')
+               ON CONFLICT (cxalloy_issue_id) DO UPDATE SET
+                 title            = EXCLUDED.title,
+                 description      = EXCLUDED.description,
+                 unit_tag         = EXCLUDED.unit_tag,
+                 priority         = EXCLUDED.priority,
+                 status           = EXCLUDED.status,
+                 resolution_notes = EXCLUDED.resolution_notes,
+                 closed_date      = EXCLUDED.closed_date,
+                 cx_zone          = EXCLUDED.cx_zone,
+                 cx_issue_type    = EXCLUDED.cx_issue_type,
+                 cx_source        = EXCLUDED.cx_source"#,
+        )
+        .bind(site_id)
+        .bind(&issue.cxalloy_issue_id)
+        .bind(&issue.title)
+        .bind(&issue.description)
+        .bind(&issue.unit_tag)
+        .bind(&issue.priority)
+        .bind(&issue.status)
+        .bind(&issue.reported_by)
+        .bind(&issue.resolution_notes)
+        .bind(&issue.closed_date)
+        .bind(&issue.reported_date)
+        .bind(&issue.cx_zone)
+        .bind(&issue.cx_issue_type)
+        .bind(&issue.cx_source)
+        .execute(&pool)
+        .await?
+        .rows_affected();
+
+        if rows > 0 { imported += 1; } else { skipped += 1; }
+    }
+
+    Ok(Json(serde_json::json!({ "imported": imported, "skipped": skipped })))
 }
