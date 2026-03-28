@@ -19,7 +19,7 @@ RUN rm -rf src
 
 # Build the real binary
 COPY backend/ ./
-RUN touch src/main.rs && cargo build --release
+RUN touch src/main.rs && SQLX_OFFLINE=true cargo build --release
 
 # Stage 3: Runtime image
 FROM debian:bookworm-slim
