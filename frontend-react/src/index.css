@@ -5,60 +5,60 @@
 
 /* ── Dark Theme (default) ───────────────────────── */
 :root, [data-theme="dark"] {
-  --bg: #0D0F17;
-  --bg2: #13151F;
-  --bg3: #1A1D2B;
-  --border: #252836;
-  --accent: #6366F1;
-  --accent2: #4F46E5;
-  --text: #E8E9F5;
-  --text2: #8B90B8;
-  --text3: #4A4F73;
+  --bg: #060B18;
+  --bg2: #0C1428;
+  --bg3: #121E38;
+  --border: #1A2E52;
+  --accent: #C9A227;
+  --accent2: #B8911F;
+  --text: #F0F4FF;
+  --text2: #7A9AC8;
+  --text3: #3A5A8A;
   --green: #22c55e;
-  --yellow: #eab308;
+  --yellow: #C9A227;
   --red: #ef4444;
   --orange: #f97316;
-  --purple: #a855f7;
+  --purple: #7C3AED;
 
   /* Status colors */
-  --status-open: #6366F1;
+  --status-open: #C9A227;
   --status-parts: #f97316;
-  --status-dispatched: #a855f7;
-  --status-onsite: #eab308;
+  --status-dispatched: #7C3AED;
+  --status-onsite: #C9A227;
   --status-resolved: #22c55e;
-  --status-closed: #4A4F73;
+  --status-closed: #3A5A8A;
 
   /* Sidebar */
-  --sidebar-bg: #090B12;
-  --sidebar-border: #1A1D2B;
+  --sidebar-bg: #030912;
+  --sidebar-border: #111E38;
 }
 
 /* ── Light Theme ────────────────────────────────── */
 [data-theme="light"] {
-  --bg: #F4F5FA;
+  --bg: #F0F2F8;
   --bg2: #FFFFFF;
-  --bg3: #ECEEF7;
-  --border: #D4D8EE;
-  --accent: #6366F1;
-  --accent2: #4F46E5;
-  --text: #0F1024;
-  --text2: #3D4270;
-  --text3: #7B82B0;
+  --bg3: #E4E9F5;
+  --border: #C8D3E8;
+  --accent: #B8911F;
+  --accent2: #9A7918;
+  --text: #06111F;
+  --text2: #2A4A7A;
+  --text3: #6A88B8;
   --green: #16a34a;
-  --yellow: #ca8a04;
+  --yellow: #B8911F;
   --red: #dc2626;
   --orange: #ea580c;
-  --purple: #9333ea;
+  --purple: #6D28D9;
 
-  --status-open: #6366F1;
+  --status-open: #B8911F;
   --status-parts: #ea580c;
-  --status-dispatched: #9333ea;
-  --status-onsite: #ca8a04;
+  --status-dispatched: #6D28D9;
+  --status-onsite: #B8911F;
   --status-resolved: #16a34a;
-  --status-closed: #7B82B0;
+  --status-closed: #6A88B8;
 
-  --sidebar-bg: #0D0F17;
-  --sidebar-border: #252836;
+  --sidebar-bg: #030912;
+  --sidebar-border: #111E38;
 }
 
 html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; -webkit-font-smoothing: antialiased; }
@@ -123,7 +123,7 @@ body.read-only .edit-ui { display: none !important; }
   cursor: pointer; transition: background 0.12s, color 0.12s;
   font-family: inherit;
 }
-.sidebar-action-btn:hover { background: rgba(99,102,241,0.1); color: var(--text2); }
+.sidebar-action-btn:hover { background: rgba(201,162,39,0.1); color: #C9A227; }
 
 .sidebar-user {
   display: flex; align-items: center; gap: 8px;
@@ -159,10 +159,10 @@ body.read-only .edit-ui { display: none !important; }
   font-size: 13.5px;
   font-weight: 500;
 }
-.nav-links li a:hover { background: rgba(99,102,241,0.08); color: var(--text2); }
-.nav-links li a.active { background: rgba(99,102,241,0.18); color: #fff; }
+.nav-links li a:hover { background: rgba(201,162,39,0.08); color: #C9A227; }
+.nav-links li a.active { background: rgba(201,162,39,0.15); color: #C9A227; border-left: 2px solid #C9A227; padding-left: 8px; }
 .nav-links li a.active svg { opacity: 1; }
-.nav-links li a svg { opacity: 0.6; flex-shrink: 0; }
+.nav-links li a svg { opacity: 0.5; flex-shrink: 0; }
 
 #content { flex: 1; overflow-y: auto; background: var(--bg); }
 #page-container { padding: 24px; max-width: 1400px; }
@@ -172,7 +172,7 @@ body.read-only .edit-ui { display: none !important; }
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 24px;
 }
-.page-header h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
+.page-header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
 .page-subtitle { font-size: 13px; color: var(--text3); margin-top: 3px; }
 
 /* ── Cards ───────────────────────────────────── */
@@ -184,8 +184,8 @@ body.read-only .edit-ui { display: none !important; }
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-[data-theme="dark"] .card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
-[data-theme="dark"] .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.5); border-color: rgba(99,102,241,0.2); }
+[data-theme="dark"] .card { box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+[data-theme="dark"] .card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.6); border-color: rgba(201,162,39,0.25); }
 .card-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
 
 /* ── Stat Grid ───────────────────────────────── */
@@ -261,7 +261,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.15);
 }
 textarea { resize: vertical; min-height: 80px; }
 select option { background: var(--bg2); }
