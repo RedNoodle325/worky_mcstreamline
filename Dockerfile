@@ -7,7 +7,7 @@ COPY frontend-react/ ./
 RUN bun run build
 
 # Stage 2: Build Rust backend
-FROM rust:1.86-slim AS backend-builder
+FROM rust:1.88-slim AS backend-builder
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/backend
 
