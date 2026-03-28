@@ -97,7 +97,7 @@ export function Layout() {
         >
           <Menu size={20} />
         </button>
-        <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: 'var(--text)', letterSpacing: '0.1em' }}>Zak's Office</span>
+        <span style={{ fontFamily: "'Righteous', sans-serif", fontSize: 18, color: '#FFE81A', letterSpacing: '0.08em' }}>Zak's Office</span>
         <button
           onClick={() => navigate(-1)}
           style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 13, cursor: 'pointer', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}
