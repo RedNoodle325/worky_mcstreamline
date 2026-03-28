@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   LayoutDashboard, Building2, Ticket, AlertTriangle,
   Users, FileText, CheckSquare, Calendar, Sun, Moon,
-  Eye, Pencil, LogOut, Menu, X, ChevronLeft,
+  Eye, Pencil, LogOut, Menu, ChevronLeft,
 } from 'lucide-react'
 
 const NAV = [
