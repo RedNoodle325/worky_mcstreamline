@@ -8,6 +8,7 @@ RUN bun run build
 
 # Stage 2: Build Rust backend
 FROM rust:1.88-slim AS backend-builder
+ENV SQLX_OFFLINE=true
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/backend
 
