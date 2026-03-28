@@ -39,7 +39,7 @@ export function Layout() {
       >
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <span className="sidebar-logo-m">⊠ Munters</span>
+            <span className="sidebar-logo-m">Zak's Office</span>
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export function Layout() {
         >
           ☰
         </button>
-        <span style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>Munters</span>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>Zak's Office</span>
         <button
           onClick={() => navigate(-1)}
           style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 13, cursor: 'pointer', marginLeft: 'auto' }}

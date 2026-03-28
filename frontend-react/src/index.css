@@ -1,17 +1,17 @@
 /* ── Reset & Base ──────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Munters Dark Theme (default) ──────────────── */
+/* ── Dark Theme (default) ───────────────────────── */
 :root, [data-theme="dark"] {
-  --bg: #0A1628;
-  --bg2: #0F2040;
-  --bg3: #162844;
-  --border: #1C3558;
-  --accent: #3D87E8;
-  --accent2: #2563EB;
-  --text: #E8F0FB;
-  --text2: #8FAFD4;
-  --text3: #4E7AAF;
+  --bg: #0D0F17;
+  --bg2: #13151F;
+  --bg3: #1A1D2B;
+  --border: #252836;
+  --accent: #6366F1;
+  --accent2: #4F46E5;
+  --text: #E8E9F5;
+  --text2: #8B90B8;
+  --text3: #4A4F73;
   --green: #22c55e;
   --yellow: #eab308;
   --red: #ef4444;
@@ -19,44 +19,44 @@
   --purple: #a855f7;
 
   /* Status colors */
-  --status-open: #3D87E8;
+  --status-open: #6366F1;
   --status-parts: #f97316;
   --status-dispatched: #a855f7;
   --status-onsite: #eab308;
   --status-resolved: #22c55e;
-  --status-closed: #4E7AAF;
+  --status-closed: #4A4F73;
 
-  /* Sidebar accent */
-  --sidebar-bg: #081220;
-  --sidebar-border: #142840;
+  /* Sidebar */
+  --sidebar-bg: #090B12;
+  --sidebar-border: #1A1D2B;
 }
 
-/* ── Munters Light Theme ───────────────────────── */
+/* ── Light Theme ────────────────────────────────── */
 [data-theme="light"] {
-  --bg: #F0F4FA;
+  --bg: #F4F5FA;
   --bg2: #FFFFFF;
-  --bg3: #E4ECF6;
-  --border: #C4D4E8;
-  --accent: #3D87E8;
-  --accent2: #2563EB;
-  --text: #0D1F3C;
-  --text2: #2D5080;
-  --text3: #6B90B8;
+  --bg3: #ECEEF7;
+  --border: #D4D8EE;
+  --accent: #6366F1;
+  --accent2: #4F46E5;
+  --text: #0F1024;
+  --text2: #3D4270;
+  --text3: #7B82B0;
   --green: #16a34a;
   --yellow: #ca8a04;
   --red: #dc2626;
   --orange: #ea580c;
   --purple: #9333ea;
 
-  --status-open: #3D87E8;
+  --status-open: #6366F1;
   --status-parts: #ea580c;
   --status-dispatched: #9333ea;
   --status-onsite: #ca8a04;
   --status-resolved: #16a34a;
-  --status-closed: #6B90B8;
+  --status-closed: #7B82B0;
 
-  --sidebar-bg: #0D1F3C;
-  --sidebar-border: #1C3558;
+  --sidebar-bg: #0D0F17;
+  --sidebar-border: #252836;
 }
 
 html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
@@ -113,7 +113,7 @@ body.read-only .edit-ui { display: none !important; }
   color: #8FAFD4; font-size: 12px; cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.theme-toggle:hover { background: rgba(61,135,232,0.12); color: #fff; }
+.theme-toggle:hover { background: rgba(99,102,241,0.12); color: #fff; }
 .theme-toggle .toggle-icon { font-size: 14px; }
 
 .nav-links { list-style: none; padding: 8px 0; }
@@ -126,8 +126,8 @@ body.read-only .edit-ui { display: none !important; }
   transition: background 0.15s, color 0.15s;
   font-size: 13px;
 }
-.nav-links li a:hover { background: rgba(61,135,232,0.08); color: #C8DEFF; }
-.nav-links li a.active { background: rgba(61,135,232,0.15); color: #fff; border-left: 3px solid var(--accent); padding-left: 11px; }
+.nav-links li a:hover { background: rgba(99,102,241,0.08); color: #C8CBFF; }
+.nav-links li a.active { background: rgba(99,102,241,0.15); color: #fff; border-left: 3px solid var(--accent); padding-left: 11px; }
 .nav-links .icon { font-size: 15px; width: 18px; text-align: center; }
 
 #content { flex: 1; overflow-y: auto; background: var(--bg); }

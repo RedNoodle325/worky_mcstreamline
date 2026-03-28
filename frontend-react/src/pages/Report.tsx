@@ -220,10 +220,10 @@ function buildReportHtml(data: ReportData, weeklyNotes: string): string {
 <body>
   <!-- HEADER -->
   <div style="background:#1e3a5f;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:14px;border-bottom:3px solid #2563eb">
-    <div style="width:32px;height:32px;background:#2563eb;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0">M</div>
+    <div style="width:32px;height:32px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0">Z</div>
     <div>
       <div style="font-size:15px;font-weight:800;letter-spacing:.04em">ALL SITES STATUS REPORT</div>
-      <div style="font-size:10px;color:#93c5fd;margin-top:2px">Munters Field Services · ${today}</div>
+      <div style="font-size:10px;color:#a5b4fc;margin-top:2px">Zak's Office · ${today}</div>
     </div>
     <div style="flex:1"></div>
     <div style="text-align:right;font-size:10px;color:#93c5fd">Week of: <strong style="color:#fff">${fmtShort(noteCutoff)} – ${fmtShort(now)}</strong></div>
