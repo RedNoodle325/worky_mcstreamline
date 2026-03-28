@@ -18,7 +18,6 @@ import { Issues } from './pages/Issues'
 import { Notes } from './pages/Notes'
 import { Todos } from './pages/Todos'
 import { Schedule } from './pages/Schedule'
-import { MSOW } from './pages/MSOW'
 import { Tickets } from './pages/Tickets'
 import { TicketDetail } from './pages/TicketDetail'
 import { Contractors } from './pages/Contractors'
@@ -64,7 +63,6 @@ function AuthGate() {
         <Route path="/notes" element={<Notes />} />
         <Route path="/todos" element={<Todos />} />
         <Route path="/schedule" element={<Schedule />} />
-        <Route path="/msow" element={<MSOW />} />
         <Route path="/tickets" element={<Tickets />} />
         <Route path="/tickets/:id" element={<TicketDetail />} />
         <Route path="/contractors" element={<Contractors />} />

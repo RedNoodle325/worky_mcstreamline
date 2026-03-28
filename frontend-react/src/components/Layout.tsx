@@ -13,7 +13,6 @@ const NAV = [
   { to: '/notes',       label: 'Notes',      icon: '📝' },
   { to: '/todos',       label: 'To-Do',      icon: '✅' },
   { to: '/schedule',    label: 'Schedule',   icon: '📅' },
-  { to: '/msow',        label: 'MSOW',       icon: '📄' },
 ]
 
 export function Layout() {
