@@ -12,6 +12,7 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool> {
         .await?;
     tracing::info!("Database connection pool created");
 
+    sqlx::migrate!("./migrations").run(&pool).await?;
     run_migrations(&pool).await?;
 
     Ok(pool)
