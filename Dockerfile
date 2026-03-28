@@ -8,6 +8,8 @@ RUN bun run build
 
 # Stage 2: Build Rust backend
 FROM rust:1.88-slim AS backend-builder
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/backend
 
@@ -19,7 +21,7 @@ RUN rm -rf src
 
 # Build the real binary
 COPY backend/ ./
-RUN touch src/main.rs && SQLX_OFFLINE=true cargo build --release
+RUN touch src/main.rs && cargo build --release
 
 # Stage 3: Runtime image
 FROM debian:bookworm-slim
