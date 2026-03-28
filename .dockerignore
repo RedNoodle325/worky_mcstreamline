@@ -1,0 +1,5 @@
+backend/target/
+frontend-react/node_modules/
+frontend-react-dist/
+.git/
+*.md
