@@ -122,7 +122,7 @@ export function Dashboard() {
       }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>
-            PM Dashboard
+            Dashboard
           </h1>
         </div>
 
