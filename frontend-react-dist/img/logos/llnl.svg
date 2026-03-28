@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40">
+  <rect width="160" height="40" fill="#003366" rx="4"/>
+  <text x="12" y="16" font-family="Arial,sans-serif" font-size="9" font-weight="bold" fill="#FFD700" letter-spacing="1">LAWRENCE LIVERMORE</text>
+  <text x="12" y="29" font-family="Arial,sans-serif" font-size="9" font-weight="bold" fill="white" letter-spacing="1">NATIONAL LABORATORY</text>
+</svg>
