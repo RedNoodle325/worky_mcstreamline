@@ -43,7 +43,7 @@ export function Layout() {
         {/* Logo */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="sidebar-logo-mark">Z</div>
+            <div className="sidebar-logo-mark">🏀</div>
             <span className="sidebar-logo-m">Zak's Office</span>
           </div>
         </div>
@@ -97,7 +97,7 @@ export function Layout() {
         >
           <Menu size={20} />
         </button>
-        <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', letterSpacing: '-0.02em' }}>Zak's Office</span>
+        <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: 'var(--text)', letterSpacing: '0.1em' }}>Zak's Office</span>
         <button
           onClick={() => navigate(-1)}
           style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 13, cursor: 'pointer', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}
