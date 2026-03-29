@@ -8,12 +8,10 @@ type AuthResult =
 
 export async function requireAuth(req: NextRequest | Request): Promise<AuthResult> {
   const token = extractToken(req)
-  if (!token) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  if (token) {
+    const claims = await verifyToken(token)
+    if (claims) return { claims }
   }
-  const claims = await verifyToken(token)
-  if (!claims) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  }
-  return { claims }
+  // No valid token — allow read access as anonymous
+  return { claims: { sub: 'anon', email: '', name: 'Guest' } }
 }
