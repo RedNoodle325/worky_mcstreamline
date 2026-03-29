@@ -147,6 +147,11 @@ export const API = {
       apiFetch<Issue>(`/issues/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       apiFetch(`/issues/${id}`, { method: 'DELETE' }),
+    importCxAlloy: (siteId: string, issues: object[]) =>
+      apiFetch<{ imported: number; skipped: number }>(`/sites/${siteId}/issues/import-cxalloy`, {
+        method: 'POST',
+        body: JSON.stringify({ issues }),
+      }),
   },
 
   // Service tickets (CS tickets)
