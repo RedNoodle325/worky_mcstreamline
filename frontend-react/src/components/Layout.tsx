@@ -4,14 +4,13 @@ import { useTheme } from '../contexts/ThemeContext'
 import { useEditMode } from '../contexts/EditModeContext'
 import { useState } from 'react'
 import {
-  LayoutDashboard, Building2, Ticket, AlertTriangle,
+  LayoutDashboard, Ticket, AlertTriangle,
   Users, FileText, CheckSquare, Calendar, Sun, Moon,
   Eye, Pencil, LogOut, Menu, ChevronLeft,
 } from 'lucide-react'
 
 const NAV = [
   { to: '/',           label: 'Dashboard',  Icon: LayoutDashboard, end: true },
-  { to: '/sites',      label: 'Sites',       Icon: Building2 },
   { to: '/cs-tickets', label: 'CS Tickets',  Icon: Ticket },
   { to: '/issues',     label: 'Issues',      Icon: AlertTriangle },
   { to: '/contacts',   label: 'Contacts',    Icon: Users },
