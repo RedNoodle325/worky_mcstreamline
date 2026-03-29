@@ -15,7 +15,7 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: 'In Progress',
 }
 
-// ── Scoreboard digit ──────────────────────────────────────────────────────────
+// ── Stat digit ────────────────────────────────────────────────────────────────
 function ScoreDigit({ value, label, color, onClick }: {
   value: number; label: string; color: string; onClick?: () => void
 }) {
@@ -25,22 +25,21 @@ function ScoreDigit({ value, label, color, onClick }: {
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         cursor: onClick ? 'pointer' : 'default',
-        padding: '8px 20px',
-        borderLeft: '1px solid #ffffff18',
+        padding: '8px 24px',
+        borderLeft: '1px solid var(--border)',
       }}
     >
       <div style={{
-        fontFamily: "'Bebas Neue', 'Righteous', monospace",
-        fontSize: 42, lineHeight: 1, fontWeight: 900,
+        fontFamily: "'Inter', system-ui, sans-serif",
+        fontSize: 36, lineHeight: 1, fontWeight: 700,
         color,
-        textShadow: `0 0 20px ${color}88, 0 0 40px ${color}44`,
-        letterSpacing: 2,
+        letterSpacing: -1,
       }}>
-        {String(value).padStart(2, '0')}
+        {value}
       </div>
       <div style={{
-        fontSize: 9, fontWeight: 800, letterSpacing: 2,
-        color: '#ffffff55', textTransform: 'uppercase', marginTop: 2,
+        fontSize: 10, fontWeight: 600, letterSpacing: 1,
+        color: 'var(--text3)', textTransform: 'uppercase', marginTop: 3,
       }}>
         {label}
       </div>
@@ -107,135 +106,111 @@ export function Dashboard() {
 
   return (
     <div>
-      {/* ── 90s Scoreboard Header ── */}
+      {/* ── Dashboard Header ── */}
       <div style={{
-        background: 'linear-gradient(180deg, #0a0010 0%, #120020 100%)',
-        border: '2px solid #FF2D88',
+        background: 'var(--bg2)',
+        border: '1px solid var(--border)',
         borderRadius: 10,
         marginBottom: 16,
         overflow: 'hidden',
-        boxShadow: '0 0 30px #FF2D8840, inset 0 0 40px #00000080',
+        position: 'relative',
       }}>
-        {/* Top stripe */}
-        <div style={{
-          height: 3,
-          background: 'linear-gradient(90deg, #FF2D88, #FFE81A, #00D4FF, #9B30FF, #FF2D88)',
-        }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+        <div style={{ height: 3, background: 'var(--accent)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px' }}>
           {/* Branding */}
-          <div style={{ padding: '12px 20px 12px 0', borderRight: '1px solid #ffffff18' }}>
+          <div style={{ padding: '14px 24px 14px 0', borderRight: '1px solid var(--border)' }}>
             <div style={{
-              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-              fontSize: 11, letterSpacing: 3, color: '#FF2D88', fontWeight: 900,
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontSize: 16, fontWeight: 700, letterSpacing: -0.3, color: 'var(--text)',
             }}>
-              WORKY
+              Worky McStreamline
             </div>
-            <div style={{
-              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-              fontSize: 22, letterSpacing: 2, color: '#FFE81A', lineHeight: 1, fontWeight: 900,
-            }}>
-              MCSTREAMLINE
-            </div>
-            <div style={{ fontSize: 9, color: '#ffffff44', letterSpacing: 2, marginTop: 2 }}>
-              FIELD OPS · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+              Field Ops · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
           </div>
 
-          {/* Score digits */}
+          {/* Stats */}
           <div style={{ display: 'flex', flex: 1, justifyContent: 'center' }}>
-            <ScoreDigit value={sites.length} label="Sites" color="#00D4FF" />
+            <ScoreDigit value={sites.length} label="Sites" color="var(--cyan)" />
             <ScoreDigit
               value={openIssues} label="Issues"
-              color={openIssues > 0 ? '#FFE81A' : '#4a4a4a'}
+              color={openIssues > 0 ? 'var(--yellow)' : 'var(--text3)'}
               onClick={() => navigate('/issues')}
-            />
-            <ScoreDigit
-              value={openTickets} label="CS Tickets"
-              color={openTickets > 0 ? '#FF7A1A' : '#4a4a4a'}
-              onClick={() => navigate('/service-tickets')}
             />
             {emergencyCount > 0 && (
               <ScoreDigit
                 value={emergencyCount} label="Emergency"
-                color="#FF2D88"
+                color="var(--red)"
                 onClick={() => navigate('/issues')}
               />
             )}
           </div>
 
-          {/* Period / clock decoration */}
+          {/* Clock */}
           <div style={{
-            padding: '12px 0 12px 20px',
-            borderLeft: '1px solid #ffffff18',
-            textAlign: 'center',
+            padding: '14px 0 14px 24px',
+            borderLeft: '1px solid var(--border)',
+            textAlign: 'right',
           }}>
             <div style={{
-              fontFamily: "'Bebas Neue', monospace",
-              fontSize: 28, color: '#FF2D8888', lineHeight: 1,
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontSize: 20, fontWeight: 600, color: 'var(--text2)', lineHeight: 1,
             }}>
               {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </div>
-            <div style={{ fontSize: 9, color: '#ffffff33', letterSpacing: 2, marginTop: 2 }}>
-              LOCAL TIME
+            <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 3 }}>
+              Local time
             </div>
           </div>
         </div>
-
-        {/* Bottom stripe */}
-        <div style={{
-          height: 2,
-          background: 'linear-gradient(90deg, #9B30FF, #00D4FF, #FFE81A, #FF2D88)',
-        }} />
       </div>
 
       {/* ── Two-column: Site Issues Board + To-Do ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
 
-        {/* Site Issues Scoreboard */}
+        {/* Site Issues Board */}
         <div style={{
-          background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
-          border: '2px solid #FFE81A',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
           borderRadius: 10,
           overflow: 'hidden',
-          boxShadow: '0 0 24px #FFE81A40, inset 0 0 30px #00000080',
         }}>
-          {/* Top stripe */}
-          <div style={{ height: 3, background: 'linear-gradient(90deg, #FFE81A, #FF7A1A, #FF2D88, #9B30FF, #FFE81A)' }} />
+          <div style={{ height: 3, background: 'var(--yellow)' }} />
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '10px 14px',
-            borderBottom: '1px solid #ffffff18',
+            borderBottom: '1px solid var(--border)',
           }}>
             <span style={{
-              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-              fontSize: 13, letterSpacing: 2, color: '#FFE81A',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontSize: 12, fontWeight: 600, color: 'var(--text)',
             }}>
-              SITE ISSUES BOARD
+              Site Issues
             </span>
-            <Link to="/issues" style={{ fontSize: 10, color: '#ffffff55', textDecoration: 'none', letterSpacing: 1 }}>
-              VIEW ALL →
+            <Link to="/issues" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+              View all →
             </Link>
           </div>
 
           {/* Header row */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 40px 40px 40px',
-            padding: '4px 14px', borderBottom: '1px solid #ffffff10',
+            padding: '4px 14px', borderBottom: '1px solid var(--border)',
           }}>
             {['SITE', 'TTL', 'CRIT', 'HIGH'].map(h => (
-              <span key={h} style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.5, color: '#ffffff33', textAlign: h !== 'SITE' ? 'center' : 'left' }}>
+              <span key={h} style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.06, color: 'var(--text3)', textAlign: h !== 'SITE' ? 'center' : 'left' }}>
                 {h}
               </span>
             ))}
           </div>
 
           {siteIssueStats.length === 0 ? (
-            <div style={{ padding: '20px 14px', fontSize: 12, color: '#ffffff33', textAlign: 'center' }}>
-              ✓ ALL CLEAR — NO OPEN ISSUES
+            <div style={{ padding: '20px 14px', fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
+              All clear — no open issues
             </div>
           ) : siteIssueStats.map(({ site, total, critical, high, status }) => {
-            const statusColor = status === 'emergency' ? '#FF2D88' : status === 'problem' ? '#FF7A1A' : '#00E676'
+            const statusColorHex = status === 'emergency' ? '#EF4444' : status === 'problem' ? '#F97316' : '#10B981'
             return (
               <div
                 key={site.id}
@@ -243,25 +218,25 @@ export function Dashboard() {
                 style={{
                   display: 'grid', gridTemplateColumns: '1fr 40px 40px 40px',
                   alignItems: 'center',
-                  padding: '6px 14px',
-                  borderBottom: '1px solid #ffffff08',
+                  padding: '7px 14px',
+                  borderBottom: '1px solid var(--border)',
                   cursor: 'pointer',
-                  background: status === 'emergency' ? '#FF2D8810' : undefined,
+                  background: status === 'emergency' ? 'rgba(239,68,68,0.06)' : undefined,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: statusColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColorHex, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {site.name}
                   </span>
                 </div>
-                <div style={{ textAlign: 'center', fontFamily: "'Bebas Neue', monospace", fontSize: 16, color: '#FFE81A', fontWeight: 900 }}>
+                <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--text2)' }}>
                   {total}
                 </div>
-                <div style={{ textAlign: 'center', fontFamily: "'Bebas Neue', monospace", fontSize: 16, color: critical > 0 ? '#FF2D88' : '#ffffff22', fontWeight: 900 }}>
+                <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 600, color: critical > 0 ? 'var(--red)' : 'var(--border)' }}>
                   {critical || '—'}
                 </div>
-                <div style={{ textAlign: 'center', fontFamily: "'Bebas Neue', monospace", fontSize: 16, color: high > 0 ? '#FF7A1A' : '#ffffff22', fontWeight: 900 }}>
+                <div style={{ textAlign: 'center', fontSize: 13, fontWeight: 600, color: high > 0 ? 'var(--orange)' : 'var(--border)' }}>
                   {high || '—'}
                 </div>
               </div>
@@ -273,16 +248,16 @@ export function Dashboard() {
             const clean = sites.filter(s => !siteIssueStats.find(x => x.site.id === s.id))
             if (!clean.length) return null
             return (
-              <div style={{ padding: '6px 14px', borderTop: '1px solid #ffffff08', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ padding: '6px 14px', borderTop: '1px solid var(--border)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {clean.map(s => (
                   <span
                     key={s.id}
                     onClick={() => navigate(`/sites/${s.id}`)}
                     style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: 1,
-                      color: '#00E67688', cursor: 'pointer',
-                      background: '#00E67610', borderRadius: 3,
-                      padding: '1px 5px', border: '1px solid #00E67630',
+                      fontSize: 10, fontWeight: 500,
+                      color: 'var(--green)', cursor: 'pointer',
+                      background: 'rgba(16,185,129,0.08)', borderRadius: 4,
+                      padding: '2px 7px', border: '1px solid rgba(16,185,129,0.2)',
                     }}
                   >
                     ✓ {s.name}
@@ -291,33 +266,29 @@ export function Dashboard() {
               </div>
             )
           })()}
-          {/* Bottom stripe */}
-          <div style={{ height: 2, background: 'linear-gradient(90deg, #9B30FF, #FF2D88, #FF7A1A, #FFE81A)' }} />
         </div>
 
         {/* To-Do widget */}
         <div style={{
-          background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
-          border: '2px solid #FF2D88',
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
           borderRadius: 10,
           overflow: 'hidden',
-          boxShadow: '0 0 24px #FF2D8840, inset 0 0 30px #00000080',
         }}>
-          {/* Top stripe */}
-          <div style={{ height: 3, background: 'linear-gradient(90deg, #FF2D88, #FFE81A, #00D4FF, #9B30FF, #FF2D88)' }} />
+          <div style={{ height: 3, background: 'var(--accent)' }} />
           <div style={{ padding: 14 }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: 10, borderBottom: '1px solid #ffffff18', paddingBottom: 8,
+            marginBottom: 10, borderBottom: '1px solid var(--border)', paddingBottom: 8,
           }}>
             <span style={{
-              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-              fontSize: 13, letterSpacing: 2, color: '#FF2D88',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontSize: 12, fontWeight: 600, color: 'var(--text)',
             }}>
-              MY TO-DO
+              My To-Do
             </span>
-            <Link to="/todos" style={{ fontSize: 10, color: '#ffffff55', textDecoration: 'none', letterSpacing: 1 }}>
-              VIEW ALL →
+            <Link to="/todos" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+              View all →
             </Link>
           </div>
 
@@ -354,8 +325,6 @@ export function Dashboard() {
             </>
           )}
           </div>
-          {/* Bottom stripe */}
-          <div style={{ height: 2, background: 'linear-gradient(90deg, #FF2D88, #9B30FF, #00D4FF, #FFE81A)' }} />
         </div>
       </div>
 
@@ -369,55 +338,47 @@ export function Dashboard() {
             const hasCritical = siteIssues.some(i => i.priority === 'critical')
             const hasHigh = siteIssues.some(i => i.priority === 'high')
             const siteStatus = hasCritical
-              ? { label: 'EMERGENCY', color: '#FF2D88' }
+              ? { label: 'Emergency', colorHex: '#EF4444' }
               : hasHigh
-              ? { label: 'PROBLEM', color: '#FF7A1A' }
-              : { label: 'OPERATIONAL', color: '#00E676' }
-            const accentColor = siteStatus.color
+              ? { label: 'Attention', colorHex: '#F97316' }
+              : { label: 'Operational', colorHex: '#10B981' }
 
             return (
               <div
                 key={site.id}
                 onClick={() => navigate(`/sites/${site.id}`)}
                 style={{
-                  background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
-                  border: `2px solid ${accentColor}`,
+                  background: 'var(--bg2)',
+                  border: '1px solid var(--border)',
                   borderRadius: 8,
                   overflow: 'hidden',
                   cursor: 'pointer',
                   minHeight: 78,
-                  boxShadow: `0 0 16px ${accentColor}33`,
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
               >
-                <div style={{ height: 2, background: `linear-gradient(90deg, ${accentColor}, #9B30FF, ${accentColor})` }} />
-                <div style={{ padding: '7px 10px 8px' }}>
+                <div style={{ height: 3, background: siteStatus.colorHex }} />
+                <div style={{ padding: '8px 10px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: accentColor, display: 'inline-block', flexShrink: 0 }} />
-                    <span style={{
-                      fontSize: 7, fontWeight: 800, letterSpacing: .8, color: accentColor,
-                      fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-                    }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: siteStatus.colorHex, display: 'inline-block', flexShrink: 0 }} />
+                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.04, color: siteStatus.colorHex }}>
                       {siteStatus.label}
                     </span>
                   </div>
                   <div style={{
-                    fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-                    fontSize: 14, fontWeight: 900, letterSpacing: .5, color: 'var(--text1)', lineHeight: 1.15,
+                    fontFamily: "'Inter', system-ui, sans-serif",
+                    fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.2,
                     overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   } as React.CSSProperties}>
                     {site.name}
                   </div>
                   {siteIssues.length > 0 && (
-                    <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{
-                        fontFamily: "'Bebas Neue', monospace", fontSize: 18, fontWeight: 900,
-                        color: accentColor, lineHeight: 1,
-                        textShadow: `0 0 8px ${accentColor}66`,
-                      }}>
+                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: siteStatus.colorHex, lineHeight: 1 }}>
                         {siteIssues.length}
                       </span>
-                      <span style={{ fontSize: 9, color: accentColor + '99', letterSpacing: 1 }}>
-                        OPEN
+                      <span style={{ fontSize: 10, color: 'var(--text3)' }}>
+                        open
                       </span>
                     </div>
                   )}
