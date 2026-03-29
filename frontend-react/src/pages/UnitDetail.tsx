@@ -187,7 +187,7 @@ function IssueModal({ issue, unitId, siteId, onClose, onSaved, onDeleted }: Issu
       } else if (siteId) {
         saved = await API.issues.create(siteId, {
           title, description, priority, status,
-          unit_id: unitId,
+          unit_id: unitId, site_id: siteId,
         })
       } else {
         toast('No site ID available', 'error')

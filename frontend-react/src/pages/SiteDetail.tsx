@@ -341,7 +341,7 @@ function IssueModal({ issue, siteId, onClose, onSaved, onDeleted }: IssueModalPr
       if (issue?.id) {
         saved = await API.issues.update(issue.id, { title, description, unit_tag: unitTag, priority, status })
       } else {
-        saved = await API.issues.create(siteId, { title, description, unit_tag: unitTag, priority, status })
+        saved = await API.issues.create(siteId, { title, description, unit_tag: unitTag, priority, status, site_id: siteId })
       }
       toast(issue?.id ? 'Issue updated' : 'Issue created')
       onSaved(saved)
