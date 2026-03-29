@@ -44,22 +44,6 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: 'In Progress',
 }
 
-const SITE_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  normal:        { label: 'Normal',        color: '#16a34a' },
-  open_issues:   { label: 'Open Issues',   color: '#d97706' },
-  techs_onsite:  { label: 'Techs on Site', color: '#2563eb' },
-  emergency:     { label: 'Emergency',     color: '#dc2626' },
-}
-
-const PHASE_BADGE: Record<string, { label: string; color: string }> = {
-  production_shipping: { label: 'Production & Shipping', color: '#6366f1' },
-  commissioning_l2:    { label: 'L2 Pre-Energization',   color: '#f97316' },
-  commissioning_l3:    { label: 'L3 Startup',            color: '#eab308' },
-  commissioning_l4:    { label: 'L4 SOO/TAB/BMS',        color: '#3b82f6' },
-  commissioning_l5:    { label: 'L5 IST',                color: '#06b6d4' },
-  pre_commissioning:   { label: 'Pre-Commissioning',     color: '#6366f1' },
-}
-
 function StatCard({
   label, value, color, onClick,
 }: {
