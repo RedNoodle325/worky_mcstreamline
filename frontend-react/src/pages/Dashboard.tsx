@@ -4,6 +4,28 @@ import { API } from '../api'
 import { useToastFn } from '../App'
 import type { Site, Issue, ServiceTicket, Todo } from '../types'
 
+// ── 90s NBA Team palettes (same as Sites mobile) ──────────────────────────────
+const NBA_TEAMS = [
+  { name: 'BULLS',   abbr: 'CHI', primary: '#CE1141', secondary: '#000000', cardBg: '#1e0008' },
+  { name: 'LAKERS',  abbr: 'LAL', primary: '#FDB927', secondary: '#552583', cardBg: '#160824' },
+  { name: 'MAGIC',   abbr: 'ORL', primary: '#0077C0', secondary: '#C4CED4', cardBg: '#001424' },
+  { name: 'SONICS',  abbr: 'SEA', primary: '#00A550', secondary: '#FFC200', cardBg: '#001810' },
+  { name: 'KNICKS',  abbr: 'NYK', primary: '#F58426', secondary: '#006BB6', cardBg: '#001624' },
+  { name: 'JAZZ',    abbr: 'UTA', primary: '#F9A01B', secondary: '#002B5C', cardBg: '#060e1e' },
+  { name: 'SUNS',    abbr: 'PHX', primary: '#E56020', secondary: '#1D1160', cardBg: '#0e0818' },
+  { name: 'PACERS',  abbr: 'IND', primary: '#FDBB30', secondary: '#002D62', cardBg: '#000e20' },
+  { name: 'ROCKETS', abbr: 'HOU', primary: '#CE1141', secondary: '#C4CED4', cardBg: '#180008' },
+  { name: 'KINGS',   abbr: 'SAC', primary: '#9B4DCA', secondary: '#63727A', cardBg: '#10061e' },
+  { name: 'PISTONS', abbr: 'DET', primary: '#006BB6', secondary: '#ED174C', cardBg: '#00101e' },
+  { name: 'SPURS',   abbr: 'SAS', primary: '#C4CED4', secondary: '#000000', cardBg: '#0a0a0a' },
+]
+
+function getTeam(id: string) {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0
+  return NBA_TEAMS[h % NBA_TEAMS.length]
+}
+
 const PRIORITY_COLOR: Record<string, string> = {
   critical: '#dc2626',
   high:     '#ea580c',
@@ -277,122 +299,96 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Site cards */}
+      {/* Site cards — 90s NBA trading card style */}
       {sites.length === 0 ? (
         <div style={{ color: 'var(--text3)', padding: 40, textAlign: 'center' }}>
-          No sites yet. <Link to="/sites/new" style={{ color: 'var(--accent)' }}>Add a site</Link>
+          No sites yet.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
           {sites.map(site => {
-            const hasOpenTicket = serviceTickets.some(
-              t => t.site_id === site.id && (t.status === 'open' || t.status === 'in_progress')
+            const team = getTeam(site.id)
+            const siteIssues = issues.filter(
+              i => i.site_id === site.id && (i.status === 'open' || i.status === 'in_progress')
             )
+            const hasCritical = siteIssues.some(i => i.priority === 'critical')
+            const hasHigh = siteIssues.some(i => i.priority === 'high')
 
-            const statusCfg = SITE_STATUS_CONFIG[site.site_status || 'normal'] || SITE_STATUS_CONFIG.normal
-
-            const phase = site.lifecycle_phase || 'production_shipping'
-            const today = new Date(); today.setHours(0, 0, 0, 0)
-            let warrantyLabel = ''
-            let warrantyColor = ''
-            if (phase === 'warranty' || phase === 'extended_warranty') {
-              const endDateStr = site.extended_warranty_end || site.warranty_end_date
-              const endDate = endDateStr ? new Date(endDateStr) : null
-              const days = endDate ? Math.round((endDate.getTime() - today.getTime()) / 86400000) : null
-              const prefix = phase === 'extended_warranty' ? 'Ext. ' : ''
-              warrantyLabel = days != null
-                ? `${prefix}Warranty · ${days >= 0 ? days + 'd left' : 'expired'}`
-                : `${prefix}Warranty`
-              warrantyColor = (days != null && days < 0) ? '#dc2626' : '#16a34a'
-            } else if (phase === 'out_of_warranty') {
-              warrantyLabel = 'Out of Warranty'
-              warrantyColor = '#dc2626'
-            } else if (PHASE_BADGE[phase]) {
-              warrantyLabel = PHASE_BADGE[phase].label
-              warrantyColor = PHASE_BADGE[phase].color
-            }
-
-            const lastContact = site.last_contact_date
-              ? new Date(site.last_contact_date + 'T00:00:00').toLocaleDateString()
-              : null
+            const siteStatus = hasCritical
+              ? { label: 'EMERGENCY', color: '#dc2626' }
+              : hasHigh
+              ? { label: 'PROBLEM',   color: '#ea580c' }
+              : { label: 'OPERATIONAL', color: '#16a34a' }
 
             return (
               <div
                 key={site.id}
                 onClick={() => navigate(`/sites/${site.id}`)}
-                className="card"
                 style={{
-                  cursor: 'pointer', padding: 0, overflow: 'hidden',
-                  borderLeft: `4px solid ${statusCfg.color}`,
+                  background: team.cardBg,
+                  borderLeft: `3px solid ${team.primary}`,
+                  borderTop: `1px solid ${team.primary}33`,
+                  borderRight: `1px solid ${team.primary}18`,
+                  borderBottom: `1px solid ${team.primary}18`,
+                  borderRadius: '0 8px 8px 0',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  minHeight: 80,
+                  transition: 'border-color .15s',
                 }}
               >
-                {/* Status header */}
+                {/* Top stripe */}
                 <div style={{
-                  background: `${statusCfg.color}1a`,
-                  borderBottom: `2px solid ${statusCfg.color}55`,
-                  padding: '10px 14px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  height: 2,
+                  background: `linear-gradient(90deg, ${team.primary}, ${team.secondary === '#000000' ? team.primary + '44' : team.secondary}, transparent)`,
+                }} />
+
+                {/* Watermark */}
+                <div style={{
+                  position: 'absolute', bottom: 2, right: 6,
+                  fontSize: 28, fontWeight: 900,
+                  fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+                  color: team.primary, opacity: 0.07,
+                  letterSpacing: 1, pointerEvents: 'none', userSelect: 'none', lineHeight: 1,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{
-                      display: 'inline-block', width: 10, height: 10, borderRadius: '50%',
-                      background: statusCfg.color, flexShrink: 0,
-                    }} />
-                    <span style={{ fontWeight: 700, fontSize: 13, color: statusCfg.color }}>
-                      {statusCfg.label}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {site.techs_on_site && (
-                      <span style={{
-                        background: '#2563eb1a', color: '#2563eb',
-                        border: '1px solid #2563eb55', borderRadius: 99,
-                        padding: '1px 7px', fontSize: 11, fontWeight: 600,
-                      }}>🔧 On Site</span>
-                    )}
-                    {site.logo_url && (
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        background: '#fff', borderRadius: 6, padding: '3px 6px', height: 30,
-                      }}>
-                        <img
-                          src={site.logo_url}
-                          style={{ height: 22, maxWidth: 72, objectFit: 'contain' }}
-                          onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none' }}
-                          alt=""
-                        />
-                      </span>
-                    )}
-                  </div>
+                  {team.name}
                 </div>
 
-                {/* Body */}
-                <div style={{ padding: '12px 14px' }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {site.name || '—'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                    {warrantyLabel && (
+                <div style={{ padding: '7px 10px 8px' }}>
+                  {/* Team badge + status dot */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{
+                      fontSize: 8, fontWeight: 800, letterSpacing: 1.5,
+                      color: team.primary,
+                      fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+                    }}>
+                      {team.abbr}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                       <span style={{
-                        background: `${warrantyColor}1a`, color: warrantyColor,
-                        border: `1px solid ${warrantyColor}55`,
-                        borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 600,
-                      }}>
-                        {warrantyLabel}
-                      </span>
-                    )}
-                    {hasOpenTicket && (
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: siteStatus.color, display: 'inline-block', flexShrink: 0,
+                      }} />
                       <span style={{
-                        background: 'var(--red)22', color: 'var(--red)',
-                        border: '1px solid var(--red)44',
-                        borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 600,
+                        fontSize: 8, fontWeight: 800, letterSpacing: .8,
+                        color: siteStatus.color,
+                        fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
                       }}>
-                        🎫 Open Ticket
+                        {siteStatus.label}
                       </span>
-                    )}
+                    </span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                    {lastContact ? `📞 ${lastContact}` : 'No contact logged'}
+
+                  {/* Site name */}
+                  <div style={{
+                    fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+                    fontSize: 15, fontWeight: 900, letterSpacing: .5,
+                    color: team.primary, lineHeight: 1.15,
+                    overflow: 'hidden', display: '-webkit-box',
+                    WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  } as React.CSSProperties}>
+                    {site.name}
                   </div>
                 </div>
               </div>

@@ -192,6 +192,147 @@ function IssueModal({ issue, sites, onSave, onDelete, onClose }: IssueModalProps
   )
 }
 
+// ── CxAlloy CSV Import Modal ───────────────────────────────────────────────────
+
+// Flexible column name matching for CxAlloy CSV exports
+function pickCol(row: Record<string, string>, ...keys: string[]): string {
+  for (const k of keys) {
+    const found = Object.keys(row).find(h => h.toLowerCase().trim() === k.toLowerCase())
+    if (found && row[found]?.trim()) return row[found].trim()
+  }
+  return ''
+}
+
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+  if (lines.length < 2) return []
+  // Simple CSV parser — handles quoted fields
+  function splitLine(line: string): string[] {
+    const cols: string[] = []
+    let cur = '', inQ = false
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i]
+      if (c === '"') { inQ = !inQ }
+      else if (c === ',' && !inQ) { cols.push(cur); cur = '' }
+      else cur += c
+    }
+    cols.push(cur)
+    return cols
+  }
+  const headers = splitLine(lines[0])
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = splitLine(line)
+    return Object.fromEntries(headers.map((h, i) => [h.trim(), (vals[i] ?? '').trim().replace(/^"|"$/g, '')]))
+  })
+}
+
+interface CxImportModalProps {
+  sites: Site[]
+  onImported: () => void
+  onClose: () => void
+}
+
+function CxImportModal({ sites, onImported, onClose }: CxImportModalProps) {
+  const toast = useToastFn()
+  const [siteId, setSiteId] = useState('')
+  const [rows, setRows] = useState<Record<string, string>[]>([])
+  const [filename, setFilename] = useState('')
+  const [importing, setImporting] = useState(false)
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFilename(file.name)
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const parsed = parseCSV(ev.target?.result as string)
+      setRows(parsed)
+    }
+    reader.readAsText(file)
+  }
+
+  async function handleImport() {
+    if (!siteId) return toast('Select a site first', 'error')
+    if (!rows.length) return toast('No rows parsed from CSV', 'error')
+    setImporting(true)
+    const issues = rows.map(r => ({
+      cxalloy_issue_id: pickCol(r, 'issue id', 'punch id', 'id', 'issue_id', 'punchid', 'item id'),
+      title:            pickCol(r, 'title', 'issue title', 'punch title', 'name', 'summary', 'subject'),
+      description:      pickCol(r, 'description', 'details', 'notes', 'comment', 'comments'),
+      unit_tag:         pickCol(r, 'equipment tag', 'tag', 'unit tag', 'equipment', 'asset tag', 'unit_tag'),
+      priority:         pickCol(r, 'priority'),
+      status:           pickCol(r, 'status'),
+      reported_by:      pickCol(r, 'reported by', 'created by', 'author', 'submitter'),
+      resolution_notes: pickCol(r, 'resolution notes', 'resolution', 'resolution comments'),
+      closed_date:      pickCol(r, 'closed date', 'close date', 'resolved date', 'date closed'),
+      reported_date:    pickCol(r, 'reported date', 'created date', 'date created', 'date reported', 'open date', 'date'),
+      cx_zone:          pickCol(r, 'zone', 'area', 'location'),
+      cx_issue_type:    pickCol(r, 'issue type', 'type', 'category'),
+      cx_source:        pickCol(r, 'source'),
+      cxalloy_url:      pickCol(r, 'url', 'link', 'issue url', 'issue link', 'href'),
+    })).filter(i => i.cxalloy_issue_id || i.title)
+
+    if (!issues.length) return (setImporting(false), toast('No valid issues found — check CSV column names', 'error'))
+    try {
+      const result = await API.issues.importCxAlloy(siteId, issues)
+      toast(`Imported ${result.imported}, skipped ${result.skipped} (already exist)`)
+      onImported()
+      onClose()
+    } catch (err: unknown) {
+      toast('Import failed: ' + (err as Error).message, 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <Modal title="Import from CxAlloy" onClose={onClose} maxWidth={520}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="form-group">
+          <label>Site *</label>
+          <select value={siteId} onChange={e => setSiteId(e.target.value)}>
+            <option value="">— Select Site —</option>
+            {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>CxAlloy Issues CSV</label>
+          <input type="file" accept=".csv,.txt" onChange={handleFile} />
+          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
+            Export from CxAlloy → Issues list → Export CSV. Columns auto-detected.
+          </div>
+        </div>
+
+        {rows.length > 0 && (
+          <div style={{
+            background: 'var(--bg3)', borderRadius: 6, padding: '10px 12px',
+            border: '1px solid var(--border)', fontSize: 12,
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+              {filename} — <span style={{ color: 'var(--green)' }}>{rows.length} rows</span>
+            </div>
+            <div style={{ color: 'var(--text3)', fontSize: 11 }}>
+              Columns: {Object.keys(rows[0]).join(', ')}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn-primary"
+            disabled={importing || !rows.length || !siteId}
+            onClick={handleImport}
+          >
+            {importing ? 'Importing…' : `Import ${rows.length > 0 ? rows.length + ' rows' : ''}`}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 
 export function Issues() {
@@ -208,6 +349,7 @@ export function Issues() {
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingIssue, setEditingIssue] = useState<Issue | null | undefined>(undefined)
+  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     Promise.all([API.issues.listAll(), API.sites.list()])
@@ -261,7 +403,10 @@ export function Issues() {
             {issues.length} total · {counts['open'] ?? 0} open · {counts['closed'] ?? 0} closed
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setEditingIssue(null)}>+ New Issue</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={() => setShowImport(true)}>↑ Import CxAlloy CSV</button>
+          <button className="btn btn-primary" onClick={() => setEditingIssue(null)}>+ New Issue</button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -597,7 +742,7 @@ export function Issues() {
         })}
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       {editingIssue !== undefined && (
         <IssueModal
           issue={editingIssue}
@@ -610,6 +755,15 @@ export function Issues() {
           }}
           onDelete={id => setIssues(prev => prev.filter(i => i.id !== id))}
           onClose={() => setEditingIssue(undefined)}
+        />
+      )}
+      {showImport && (
+        <CxImportModal
+          sites={sites}
+          onImported={() => {
+            API.issues.listAll().then(setIssues).catch(() => {})
+          }}
+          onClose={() => setShowImport(false)}
         />
       )}
     </div>
