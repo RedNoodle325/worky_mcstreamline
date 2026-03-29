@@ -1,11 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { createContext, useContext } from 'react'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { useToast } from './hooks/useToast'
 import { ToastContainer } from './components/Toast'
 import { Layout } from './components/Layout'
-import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Sites } from './pages/Sites'
 import { SiteDetail } from './pages/SiteDetail'
@@ -35,18 +34,6 @@ export const ToastContext = createContext<ToastFn>(() => {})
 export function useToastFn() { return useContext(ToastContext) }
 
 function AuthGate() {
-  const { isAuthenticated, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text3)' }}>
-        Loading…
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) return <Login />
-
   return (
     <Routes>
       <Route element={<Layout />}>

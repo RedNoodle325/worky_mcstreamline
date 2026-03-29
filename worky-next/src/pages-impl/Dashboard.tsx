@@ -1,7 +1,10 @@
+'use client'
+
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { API } from '../api'
-import { useToastFn } from '../App'
+import { useToastFn } from '@/app/providers'
 import type { Site, Issue, ServiceTicket, Todo } from '../types'
 
 
@@ -49,7 +52,7 @@ function ScoreDigit({ value, label, color, onClick }: {
 
 export function Dashboard() {
   const toast = useToastFn()
-  const navigate = useNavigate()
+  const router = useRouter()
 
   const [loading, setLoading] = useState(true)
   const [sites, setSites] = useState<Site[]>([])
@@ -115,7 +118,9 @@ export function Dashboard() {
         overflow: 'hidden',
         position: 'relative',
       }}>
+        {/* Top accent bar */}
         <div style={{ height: 3, background: 'var(--accent)' }} />
+
         <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px' }}>
           {/* Branding */}
           <div style={{ padding: '14px 24px 14px 0', borderRight: '1px solid var(--border)' }}>
@@ -136,13 +141,13 @@ export function Dashboard() {
             <ScoreDigit
               value={openIssues} label="Issues"
               color={openIssues > 0 ? 'var(--yellow)' : 'var(--text3)'}
-              onClick={() => navigate('/issues')}
+              onClick={() => router.push('/issues')}
             />
             {emergencyCount > 0 && (
               <ScoreDigit
                 value={emergencyCount} label="Emergency"
                 color="var(--red)"
-                onClick={() => navigate('/issues')}
+                onClick={() => router.push('/issues')}
               />
             )}
           </div>
@@ -184,11 +189,11 @@ export function Dashboard() {
           }}>
             <span style={{
               fontFamily: "'Inter', system-ui, sans-serif",
-              fontSize: 12, fontWeight: 600, color: 'var(--text)',
+              fontSize: 12, fontWeight: 600, letterSpacing: 0.04, color: 'var(--text)',
             }}>
               Site Issues
             </span>
-            <Link to="/issues" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+            <Link href="/issues" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
               View all →
             </Link>
           </div>
@@ -210,11 +215,12 @@ export function Dashboard() {
               All clear — no open issues
             </div>
           ) : siteIssueStats.map(({ site, total, critical, high, status }) => {
+            const statusColor = status === 'emergency' ? 'var(--red)' : status === 'problem' ? 'var(--orange)' : 'var(--green)'
             const statusColorHex = status === 'emergency' ? '#EF4444' : status === 'problem' ? '#F97316' : '#10B981'
             return (
               <div
                 key={site.id}
-                onClick={() => navigate(`/sites/${site.id}`)}
+                onClick={() => router.push(`/sites/${site.id}`)}
                 style={{
                   display: 'grid', gridTemplateColumns: '1fr 40px 40px 40px',
                   alignItems: 'center',
@@ -252,7 +258,7 @@ export function Dashboard() {
                 {clean.map(s => (
                   <span
                     key={s.id}
-                    onClick={() => navigate(`/sites/${s.id}`)}
+                    onClick={() => router.push(`/sites/${s.id}`)}
                     style={{
                       fontSize: 10, fontWeight: 500,
                       color: 'var(--green)', cursor: 'pointer',
@@ -287,7 +293,7 @@ export function Dashboard() {
             }}>
               My To-Do
             </span>
-            <Link to="/todos" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+            <Link href="/todos" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
               View all →
             </Link>
           </div>
@@ -346,7 +352,7 @@ export function Dashboard() {
             return (
               <div
                 key={site.id}
-                onClick={() => navigate(`/sites/${site.id}`)}
+                onClick={() => router.push(`/sites/${site.id}`)}
                 style={{
                   background: 'var(--bg2)',
                   border: '1px solid var(--border)',
@@ -361,7 +367,9 @@ export function Dashboard() {
                 <div style={{ padding: '8px 10px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: siteStatus.colorHex, display: 'inline-block', flexShrink: 0 }} />
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 0.04, color: siteStatus.colorHex }}>
+                    <span style={{
+                      fontSize: 9, fontWeight: 600, letterSpacing: 0.04, color: siteStatus.colorHex,
+                    }}>
                       {siteStatus.label}
                     </span>
                   </div>

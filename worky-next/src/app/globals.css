@@ -364,8 +364,8 @@ select option { background: var(--bg2); }
 }
 .commission-step:last-child { border-right: 1px solid var(--border); border-radius: 0 6px 6px 0; }
 .commission-step:first-child { border-radius: 6px 0 0 6px; }
-.commission-step.done { background: rgba(16,185,129,0.12); color: #10B981; border-color: rgba(16,185,129,0.3); }
-.commission-step.active { background: rgba(59,130,246,0.12); color: #06B6D4; border-color: rgba(59,130,246,0.3); }
+.commission-step.done { background: #003A20; color: #00E676; border-color: #00C65A; }
+.commission-step.active { background: #2A0050; color: #00D4FF; border-color: #9B30FF; }
 .commission-step .step-label { font-size: 10px; }
 .commission-step .step-check { font-size: 14px; }
 
@@ -453,12 +453,11 @@ select option { background: var(--bg2); }
 }
 .dash-header-title {
   flex: 1;
-  font-family: 'Righteous', sans-serif;
-  font-size: 24px; font-weight: 400;
-  letter-spacing: 0.1em;
-  color: #FFE81A;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 20px; font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
   text-align: center;
-  text-shadow: 0 0 20px rgba(255,232,26,0.4);
 }
 .dash-header-blocks {
   display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
@@ -474,11 +473,11 @@ select option { background: var(--bg2); }
   border-radius: 8px; padding: 12px 14px; overflow-x: auto;
 }
 .dash-site-name {
-  font-family: 'Righteous', sans-serif;
-  font-size: 13px; font-weight: 400; text-transform: uppercase;
-  letter-spacing: 0.08em; color: #FFE81A;
-  background: linear-gradient(90deg, #2A0060 0%, #1A0050 100%);
-  border-bottom: 2px solid #FF2D88;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text);
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
   margin: -12px -14px 10px;
   padding: 7px 14px; border-radius: 7px 7px 0 0;
   text-align: center;
