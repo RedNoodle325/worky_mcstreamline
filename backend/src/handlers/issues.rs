@@ -12,7 +12,7 @@ use crate::{
 
 const SELECT_COLS: &str = r#"id, site_id, unit_id, ticket_type, title, description, status, priority,
                   unit_tag, reported_by, resolution_notes, reported_date, closed_date,
-                  cxalloy_issue_id, cx_zone, cx_issue_type, cx_source, service_ticket_id,
+                  cxalloy_issue_id, cxalloy_url, cx_zone, cx_issue_type, cx_source, service_ticket_id,
                   created_at, updated_at"#;
 
 pub async fn list_site_issues(
@@ -66,9 +66,9 @@ pub async fn create_issue(
         r#"INSERT INTO public.issues
            (site_id, unit_id, title, description, unit_tag, priority, status,
             reported_by, resolution_notes, cx_zone, cx_issue_type, cx_source,
-            reported_date, closed_date, ticket_type, service_ticket_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-                   $13::TIMESTAMPTZ, $14::TIMESTAMPTZ, COALESCE($15, 'field_service'), $16)
+            cxalloy_url, reported_date, closed_date, ticket_type, service_ticket_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+                   $14::TIMESTAMPTZ, $15::TIMESTAMPTZ, COALESCE($16, 'field_service'), $17)
            RETURNING {}"#,
         SELECT_COLS
     );
@@ -85,6 +85,7 @@ pub async fn create_issue(
         .bind(&body.cx_zone)
         .bind(&body.cx_issue_type)
         .bind(&body.cx_source)
+        .bind(&body.cxalloy_url)
         .bind(body.reported_date.as_deref())
         .bind(body.closed_date.as_deref())
         .bind(&body.ticket_type)
@@ -112,6 +113,7 @@ pub async fn update_issue(
            cx_zone           = COALESCE($10, cx_zone),
            cx_issue_type     = COALESCE($11, cx_issue_type),
            service_ticket_id = COALESCE($12, service_ticket_id),
+           cxalloy_url       = COALESCE($13, cxalloy_url),
            updated_at        = now()
            WHERE id = $1
            RETURNING {}"#,
@@ -130,6 +132,7 @@ pub async fn update_issue(
         .bind(&body.cx_zone)
         .bind(&body.cx_issue_type)
         .bind(body.service_ticket_id)
+        .bind(&body.cxalloy_url)
         .fetch_optional(&pool)
         .await?
         .ok_or_else(|| AppError::NotFound(format!("Issue {} not found", id)))?;

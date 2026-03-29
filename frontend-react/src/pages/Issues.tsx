@@ -56,6 +56,7 @@ function IssueModal({ issue, sites, onSave, onDelete, onClose }: IssueModalProps
   const [priority, setPriority] = useState(issue?.priority ?? 'low')
   const [status, setStatus] = useState(issue?.status ?? 'open')
   const [cxIssueType, setCxIssueType] = useState(issue?.cx_issue_type ?? '')
+  const [cxalloyUrl, setCxalloyUrl] = useState(issue?.cxalloy_url ?? '')
   const [resolutionNotes, setResolutionNotes] = useState(issue?.resolution_notes ?? '')
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,6 +72,7 @@ function IssueModal({ issue, sites, onSave, onDelete, onClose }: IssueModalProps
       priority: priority || undefined,
       status,
       cx_issue_type: cxIssueType || undefined,
+      cxalloy_url: cxalloyUrl.trim() || undefined,
       resolution_notes: resolutionNotes.trim() || undefined,
     }
     try {
@@ -160,6 +162,17 @@ function IssueModal({ issue, sites, onSave, onDelete, onClose }: IssueModalProps
               {ISSUE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
+          {(issue?.cxalloy_issue_id || cxalloyUrl) && (
+            <div className="form-group full">
+              <label>CxAlloy Issue URL</label>
+              <input
+                type="url"
+                value={cxalloyUrl}
+                onChange={e => setCxalloyUrl(e.target.value)}
+                placeholder="https://app.cxalloy.com/…"
+              />
+            </div>
+          )}
           <div className="form-group full">
             <label>Comments / Resolution</label>
             <textarea rows={2} value={resolutionNotes} onChange={e => setResolutionNotes(e.target.value)} placeholder="Notes on resolution…" />
@@ -401,94 +414,183 @@ export function Issues() {
         ) : filtered.map(i => {
           const site = i.site_id ? siteMap[i.site_id] : undefined
           const isOpen = expandedId === i.id
+          const isCx = !!i.cxalloy_issue_id
           const priColor = PRIORITY_COLOR[i.priority ?? ''] ?? 'var(--text3)'
+          // CxAlloy = cyan left border; manual/field = accent pink
+          const accentColor = isCx ? 'var(--cyan)' : 'var(--accent)'
+
+          // Primary label: unit_tag is the identifier, fall back to title
+          const primaryLabel = i.unit_tag || i.title || '—'
+          // Secondary text: for CX issues, description is the CxAlloy description; for manual, it's the description
+          const secondaryText = i.description
 
           return (
-            <div key={i.id} className="mobile-issue-card">
-              <div className="mic-main" onClick={() => setExpandedId(isOpen ? null : i.id)}>
-                <div className="mic-header">
-                  <span className="mic-id">
-                    <span className={`mic-chevron${isOpen ? ' open' : ''}`}>▶</span>
-                    {i.cxalloy_issue_id || i.title || '—'}
+            <div
+              key={i.id}
+              style={{
+                borderLeft: `3px solid ${isCx ? 'var(--cyan)' : 'var(--accent)'}`,
+                background: 'var(--bg2)',
+                borderRadius: '0 8px 8px 0',
+                borderTop: '1px solid var(--border)',
+                borderRight: '1px solid var(--border)',
+                borderBottom: '1px solid var(--border)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Collapsed row — always visible, tap to expand */}
+              <div
+                style={{ padding: '9px 12px', cursor: 'pointer' }}
+                onClick={() => setExpandedId(isOpen ? null : i.id)}
+              >
+                {/* Row 1: source badge + identifier + status */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <span style={{
+                    fontSize: 9, fontWeight: 800, letterSpacing: 1,
+                    color: accentColor,
+                    background: `color-mix(in srgb, ${isCx ? 'var(--cyan)' : 'var(--accent)'} 15%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${isCx ? 'var(--cyan)' : 'var(--accent)'} 40%, transparent)`,
+                    borderRadius: 3, padding: '1px 5px', flexShrink: 0,
+                  }}>
+                    {isCx ? 'CX' : 'FIELD'}
                   </span>
-                  <StatusBadge status={i.status ?? 'open'} size="sm" />
+
+                  {/* CxAlloy issue ID — clickable link if URL available */}
+                  {isCx && (
+                    i.cxalloy_url ? (
+                      <a
+                        href={i.cxalloy_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                          fontFamily: 'monospace', fontSize: 11,
+                          color: 'var(--cyan)', textDecoration: 'none',
+                          flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3,
+                        }}
+                      >
+                        {i.cxalloy_issue_id}
+                        <span style={{ fontSize: 9, opacity: 0.8 }}>↗</span>
+                      </a>
+                    ) : (
+                      <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>
+                        {i.cxalloy_issue_id}
+                      </span>
+                    )
+                  )}
+
+                  <span style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                    <StatusBadge status={i.status ?? 'open'} size="sm" />
+                  </span>
                 </div>
-                {i.title && i.cxalloy_issue_id && (
-                  <div className="mic-title">{i.title}</div>
-                )}
-                {i.description && (
-                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>
-                    {i.description}
+
+                {/* Row 2: primary identifier (unit_tag / title) — bold */}
+                <div style={{
+                  fontSize: 14, fontWeight: 700, color: 'var(--text)',
+                  lineHeight: 1.3, marginBottom: secondaryText ? 3 : 5,
+                  overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                }}>
+                  {primaryLabel}
+                </div>
+
+                {/* Row 3: description — 1 line, muted */}
+                {secondaryText && (
+                  <div style={{
+                    fontSize: 12, color: 'var(--text3)', marginBottom: 5,
+                    overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                  }}>
+                    {secondaryText}
                   </div>
                 )}
-                <div className="mic-row">
-                  {i.unit_tag && <span className="mic-equipment">{i.unit_tag}</span>}
+
+                {/* Row 4: meta — site · priority · date */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text3)' }}>
                   {site && (
-                    <Link to={`/sites/${site.id}`} onClick={e => e.stopPropagation()} className="mic-site">{site.name}</Link>
+                    <Link
+                      to={`/sites/${site.id}`}
+                      onClick={e => e.stopPropagation()}
+                      style={{ color: 'var(--text3)', textDecoration: 'none' }}
+                    >
+                      {site.name}
+                    </Link>
                   )}
+                  {site && i.priority && <span style={{ opacity: 0.4 }}>·</span>}
                   {i.priority && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: priColor }}>
+                    <span style={{ color: priColor, fontWeight: 700 }}>
                       {PRIORITY_LABEL[i.priority] || i.priority}
                     </span>
                   )}
-                  <span className="mic-date">{fmtDate(i.reported_date || i.created_at)}</span>
+                  <span style={{ marginLeft: 'auto' }}>
+                    {fmtDate(i.reported_date || i.created_at)}
+                  </span>
                 </div>
               </div>
 
+              {/* Expanded detail panel */}
               {isOpen && (
-                <>
-                  <div className="mic-detail">
+                <div style={{ borderTop: `1px solid var(--border)`, background: 'var(--bg3)' }}>
+                  <div style={{ padding: '10px 12px' }}>
+                    {/* CxAlloy title shown as reference when it differs from unit_tag */}
+                    {isCx && i.title && i.title !== i.unit_tag && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div className="mic-detail-label" style={{ marginBottom: 2 }}>CxAlloy Title</div>
+                        <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.4 }}>{i.title}</div>
+                      </div>
+                    )}
+
+                    {/* Full description */}
+                    {secondaryText && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div className="mic-detail-label" style={{ marginBottom: 2 }}>Description</div>
+                        <div className="mic-detail-text">{secondaryText}</div>
+                      </div>
+                    )}
+
+                    {/* CX metadata grid */}
                     {(i.cx_issue_type || i.cx_zone || i.cx_source || i.reported_by || i.closed_date) && (
-                      <div className="mic-detail-grid">
+                      <div className="mic-detail-grid" style={{ marginBottom: 8 }}>
                         {i.cx_issue_type && (
-                          <div>
-                            <div className="mic-detail-label">Issue Type</div>
-                            <div className="mic-detail-value">{i.cx_issue_type}</div>
-                          </div>
+                          <div><div className="mic-detail-label">Issue Type</div><div className="mic-detail-value">{i.cx_issue_type}</div></div>
                         )}
                         {i.cx_zone && (
-                          <div>
-                            <div className="mic-detail-label">Zone</div>
-                            <div className="mic-detail-value">{i.cx_zone}</div>
-                          </div>
+                          <div><div className="mic-detail-label">Zone</div><div className="mic-detail-value">{i.cx_zone}</div></div>
                         )}
                         {i.cx_source && (
-                          <div>
-                            <div className="mic-detail-label">Source</div>
-                            <div className="mic-detail-value">{i.cx_source}</div>
-                          </div>
+                          <div><div className="mic-detail-label">Source</div><div className="mic-detail-value">{i.cx_source}</div></div>
                         )}
                         {i.reported_by && (
-                          <div>
-                            <div className="mic-detail-label">Reported By</div>
-                            <div className="mic-detail-value">{i.reported_by}</div>
-                          </div>
+                          <div><div className="mic-detail-label">Reported By</div><div className="mic-detail-value">{i.reported_by}</div></div>
                         )}
                         {i.closed_date && (
-                          <div>
-                            <div className="mic-detail-label">Closed</div>
-                            <div className="mic-detail-value">{fmtDate(i.closed_date)}</div>
-                          </div>
+                          <div><div className="mic-detail-label">Closed</div><div className="mic-detail-value">{fmtDate(i.closed_date)}</div></div>
                         )}
                       </div>
                     )}
-                    {i.description && (
-                      <div style={{ marginBottom: 10 }}>
-                        <div className="mic-detail-label" style={{ marginBottom: 4 }}>Description</div>
-                        <div className="mic-detail-text">{i.description}</div>
-                      </div>
-                    )}
+
+                    {/* Resolution notes */}
                     {i.resolution_notes && (
                       <div>
-                        <div className="mic-detail-label" style={{ marginBottom: 4 }}>Comments / Resolution</div>
-                        <div className="mic-detail-text" style={{ background: 'var(--bg2)', borderRadius: 6, padding: '8px 10px' }}>{i.resolution_notes}</div>
+                        <div className="mic-detail-label" style={{ marginBottom: 2 }}>Resolution</div>
+                        <div className="mic-detail-text" style={{ background: 'var(--bg2)', borderRadius: 5, padding: '7px 9px' }}>{i.resolution_notes}</div>
                       </div>
                     )}
                   </div>
-                  <div className="mic-actions">
+
+                  {/* Action row */}
+                  <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button className="btn btn-sm btn-secondary" onClick={() => setEditingIssue(i)}>Edit</button>
+                    {isCx && i.cxalloy_url && (
+                      <a
+                        href={i.cxalloy_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-secondary"
+                        style={{ color: 'var(--cyan)', textDecoration: 'none' }}
+                      >
+                        Open in CxAlloy ↗
+                      </a>
+                    )}
                   </div>
-                </>
+                </div>
               )}
             </div>
           )
