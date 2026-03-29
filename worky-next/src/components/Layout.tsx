@@ -47,7 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* Logo */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="sidebar-logo-mark">ZK</div>
+            <img src="/logo.png" alt="Hackazak" style={{ height: 36, width: 36, objectFit: 'contain' }} />
             <span className="sidebar-logo-m">Zak&apos;s Office</span>
           </div>
         </div>
@@ -104,7 +104,7 @@ export function Layout({ children }: { children: ReactNode }) {
         >
           <Menu size={20} />
         </button>
-        <span style={{ fontFamily: "'Righteous', sans-serif", fontSize: 18, color: '#FFE81A', letterSpacing: '0.08em' }}>Zak&apos;s Office</span>
+        <img src="/logo.png" alt="Hackazak" style={{ height: 32, width: 32, objectFit: 'contain' }} />
         <button
           onClick={() => router.back()}
           style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 13, cursor: 'pointer', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}

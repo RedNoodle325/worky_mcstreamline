@@ -4,6 +4,10 @@ import { Providers } from './providers'
 
 export const metadata: Metadata = {
   title: "Zak's Office",
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

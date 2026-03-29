@@ -426,48 +426,45 @@ export function Operations() {
 
       {/* ── Header ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a00 50%, #0a0a0a 100%)',
+        background: 'var(--bg2)',
         border: '1px solid var(--border)',
         borderRadius: 8,
         marginBottom: 20,
         overflow: 'hidden',
-        position: 'relative',
       }}>
-        {/* Rainbow stripe */}
-        <div style={{ height: 4, background: 'linear-gradient(90deg, #ff2d88, #ff8c00, #ffdd00, #39ff14, #00cfff, #7b2fff, #ff2d88)' }} />
         <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: '#ff8c00', letterSpacing: 4, lineHeight: 1 }}>
-              OPERATIONS CENTER
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>
+              Operations
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: 2, marginTop: 2 }}>
-              DISPATCH · SERVICE REQUESTS · TECH ROSTER
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
+              Dispatch · Service Requests · Tech Roster
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ textAlign: 'center', padding: '6px 14px', background: 'rgba(0,207,255,.1)', borderRadius: 4, border: '1px solid rgba(0,207,255,.3)' }}>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#00cfff', lineHeight: 1 }}>{openJobs.length}</div>
-              <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: 1 }}>OPEN JOBS</div>
+            <div style={{ textAlign: 'center', padding: '6px 14px', background: 'var(--bg3)', borderRadius: 6, border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>{openJobs.length}</div>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>Open Jobs</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '6px 14px', background: 'rgba(57,255,20,.1)', borderRadius: 4, border: '1px solid rgba(57,255,20,.3)' }}>
-              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#39ff14', lineHeight: 1 }}>{activeTechs.length}</div>
-              <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: 1 }}>ACTIVE TECHS</div>
+            <div style={{ textAlign: 'center', padding: '6px 14px', background: 'var(--bg3)', borderRadius: 6, border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--green)', lineHeight: 1 }}>{activeTechs.length}</div>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>Active Techs</div>
             </div>
           </div>
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,.4)' }}>
+        <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
           {([
-            ['dispatch', '📡 DISPATCH BOARD'],
-            ['requests', '📋 SERVICE REQUESTS'],
-            ['roster',   '👥 TECH ROSTER'],
+            ['dispatch', 'Dispatch Board'],
+            ['requests', 'Service Requests'],
+            ['roster',   'Tech Roster'],
           ] as [Tab, string][]).map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)} style={{
               flex: 1, padding: '10px 8px', background: 'none',
-              border: 'none', borderBottom: tab === key ? '3px solid #ff8c00' : '3px solid transparent',
-              color: tab === key ? '#ff8c00' : 'var(--text3)',
-              fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1.5,
+              border: 'none', borderBottom: tab === key ? '2px solid var(--accent)' : '2px solid transparent',
+              color: tab === key ? 'var(--accent)' : 'var(--text3)',
+              fontSize: 13, fontWeight: 500,
               cursor: 'pointer', transition: 'color .15s',
             }}>
               {label}
