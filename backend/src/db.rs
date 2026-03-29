@@ -423,6 +423,7 @@ async fn run_migrations(pool: &PgPool) -> Result<()> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_issue_line_links_ticket ON public.issue_line_links(service_ticket_id)").execute(pool).await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_issue_line_links_order ON public.issue_line_links(order_id)").execute(pool).await?;
     sqlx::query("CREATE UNIQUE INDEX IF NOT EXISTS idx_issue_line_links_unique ON public.issue_line_links(issue_id, order_id)").execute(pool).await?;
+    sqlx::query("ALTER TABLE public.issues ADD COLUMN IF NOT EXISTS cxalloy_url TEXT").execute(pool).await?;
 
     tracing::info!("Migrations applied");
     Ok(())
