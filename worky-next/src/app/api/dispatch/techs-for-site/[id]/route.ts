@@ -4,12 +4,12 @@ import sql from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ siteId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await requireAuth(request)
   if (error) return error
 
-  const { siteId } = await params
+  const { id: siteId } = await params
 
   const siteRows = await sql`
     SELECT latitude, longitude FROM public.sites WHERE id = ${siteId}
