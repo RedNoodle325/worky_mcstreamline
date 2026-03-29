@@ -200,9 +200,34 @@ export interface Schedule {
   created_at?: string
 }
 
+// Job schedule (Operations page)
+export interface JobSchedule {
+  id: string
+  site_id?: string
+  job_name: string
+  job_type: string
+  contract_number?: string
+  priority: number
+  start_date?: string
+  end_date?: string
+  status: string
+  notes?: string
+  scope?: string
+  techs_needed: number
+  created_at?: string
+  updated_at?: string
+}
+
 export interface Technician {
   id: string
   name: string
+  location_city?: string
+  location_state?: string
+  latitude?: number
+  longitude?: number
+  is_active?: boolean
+  notes?: string
+  // legacy fields kept for compatibility
   email?: string
   phone?: string
   region?: string

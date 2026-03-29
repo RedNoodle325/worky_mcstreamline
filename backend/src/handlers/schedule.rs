@@ -62,6 +62,8 @@ pub struct JobSchedule {
     pub end_date: Option<NaiveDate>,
     pub status: String,
     pub notes: Option<String>,
+    pub scope: Option<String>,
+    pub techs_needed: i32,
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
@@ -78,6 +80,8 @@ pub struct CreateJobSchedule {
     pub end_date: Option<NaiveDate>,
     pub status: Option<String>,
     pub notes: Option<String>,
+    pub scope: Option<String>,
+    pub techs_needed: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,6 +96,8 @@ pub struct UpdateJobSchedule {
     pub end_date: Option<NaiveDate>,
     pub status: Option<String>,
     pub notes: Option<String>,
+    pub scope: Option<String>,
+    pub techs_needed: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -236,9 +242,9 @@ pub async fn create_job(
     let job = sqlx::query_as::<_, JobSchedule>(
         r#"INSERT INTO public.job_schedule
            (site_id, pm_id, job_name, job_type, contract_number, priority,
-            start_date, end_date, status, notes)
+            start_date, end_date, status, notes, scope, techs_needed)
            VALUES ($1, $2, $3, COALESCE($4, 'Warranty'), $5, COALESCE($6, 3),
-                   $7, $8, COALESCE($9, 'scheduled'), $10)
+                   $7, $8, COALESCE($9, 'scheduled'), $10, $11, COALESCE($12, 1))
            RETURNING *"#,
     )
     .bind(body.site_id)
@@ -251,6 +257,8 @@ pub async fn create_job(
     .bind(body.end_date)
     .bind(&body.status)
     .bind(&body.notes)
+    .bind(&body.scope)
+    .bind(body.techs_needed)
     .fetch_one(&pool)
     .await?;
     Ok(Json(job))
@@ -273,6 +281,8 @@ pub async fn update_job(
            end_date        = COALESCE($9, end_date),
            status          = COALESCE($10, status),
            notes           = COALESCE($11, notes),
+           scope          = COALESCE($12, scope),
+           techs_needed   = COALESCE($13, techs_needed),
            updated_at      = NOW()
            WHERE id = $1
            RETURNING *"#,
@@ -288,6 +298,8 @@ pub async fn update_job(
     .bind(body.end_date)
     .bind(&body.status)
     .bind(&body.notes)
+    .bind(&body.scope)
+    .bind(body.techs_needed)
     .fetch_optional(&pool)
     .await?
     .ok_or_else(|| AppError::NotFound(format!("Job {} not found", id)))?;

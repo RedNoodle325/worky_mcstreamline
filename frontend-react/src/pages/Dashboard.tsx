@@ -4,34 +4,26 @@ import { API } from '../api'
 import { useToastFn } from '../App'
 import type { Site, Issue, ServiceTicket, Todo } from '../types'
 
-// ── 90s NBA Team palettes (same as Sites mobile) ──────────────────────────────
+// ── 90s NBA Team palettes ──────────────────────────────────────────────────────
 const NBA_TEAMS = [
-  { name: 'BULLS',   abbr: 'CHI', primary: '#CE1141', secondary: '#000000', cardBg: '#1e0008' },
-  { name: 'LAKERS',  abbr: 'LAL', primary: '#FDB927', secondary: '#552583', cardBg: '#160824' },
-  { name: 'MAGIC',   abbr: 'ORL', primary: '#0077C0', secondary: '#C4CED4', cardBg: '#001424' },
-  { name: 'SONICS',  abbr: 'SEA', primary: '#00A550', secondary: '#FFC200', cardBg: '#001810' },
-  { name: 'KNICKS',  abbr: 'NYK', primary: '#F58426', secondary: '#006BB6', cardBg: '#001624' },
-  { name: 'JAZZ',    abbr: 'UTA', primary: '#F9A01B', secondary: '#002B5C', cardBg: '#060e1e' },
-  { name: 'SUNS',    abbr: 'PHX', primary: '#E56020', secondary: '#1D1160', cardBg: '#0e0818' },
-  { name: 'PACERS',  abbr: 'IND', primary: '#FDBB30', secondary: '#002D62', cardBg: '#000e20' },
-  { name: 'ROCKETS', abbr: 'HOU', primary: '#CE1141', secondary: '#C4CED4', cardBg: '#180008' },
-  { name: 'KINGS',   abbr: 'SAC', primary: '#9B4DCA', secondary: '#63727A', cardBg: '#10061e' },
-  { name: 'PISTONS', abbr: 'DET', primary: '#006BB6', secondary: '#ED174C', cardBg: '#00101e' },
-  { name: 'SPURS',   abbr: 'SAS', primary: '#C4CED4', secondary: '#000000', cardBg: '#0a0a0a' },
+  { abbr: 'CHI', primary: '#CE1141', secondary: '#000000', cardBg: '#1e0008' },
+  { abbr: 'LAL', primary: '#FDB927', secondary: '#552583', cardBg: '#160824' },
+  { abbr: 'ORL', primary: '#0077C0', secondary: '#C4CED4', cardBg: '#001424' },
+  { abbr: 'SEA', primary: '#00A550', secondary: '#FFC200', cardBg: '#001810' },
+  { abbr: 'NYK', primary: '#F58426', secondary: '#006BB6', cardBg: '#001624' },
+  { abbr: 'UTA', primary: '#F9A01B', secondary: '#002B5C', cardBg: '#060e1e' },
+  { abbr: 'PHX', primary: '#E56020', secondary: '#1D1160', cardBg: '#0e0818' },
+  { abbr: 'IND', primary: '#FDBB30', secondary: '#002D62', cardBg: '#000e20' },
+  { abbr: 'HOU', primary: '#CE1141', secondary: '#C4CED4', cardBg: '#180008' },
+  { abbr: 'SAC', primary: '#9B4DCA', secondary: '#63727A', cardBg: '#10061e' },
+  { abbr: 'DET', primary: '#006BB6', secondary: '#ED174C', cardBg: '#00101e' },
+  { abbr: 'SAS', primary: '#C4CED4', secondary: '#000000', cardBg: '#0a0a0a' },
 ]
 
 function getTeam(id: string) {
   let h = 0
   for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0
   return NBA_TEAMS[h % NBA_TEAMS.length]
-}
-
-const PRIORITY_COLOR: Record<string, string> = {
-  critical: '#dc2626',
-  high:     '#ea580c',
-  urgent:   '#dc2626',
-  normal:   '#2563eb',
-  low:      '#6b7280',
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -44,29 +36,35 @@ const STATUS_LABEL: Record<string, string> = {
   in_progress: 'In Progress',
 }
 
-function StatCard({
-  label, value, color, onClick,
-}: {
-  label: string; value: number | string; color?: string; onClick?: () => void
+// ── Scoreboard digit ──────────────────────────────────────────────────────────
+function ScoreDigit({ value, label, color, onClick }: {
+  value: number; label: string; color: string; onClick?: () => void
 }) {
   return (
     <div
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '7px 14px', background: 'var(--bg2)',
-        border: `1px solid var(--border)`,
-        borderLeft: color ? `3px solid ${color}` : '1px solid var(--border)',
-        borderRadius: 8,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
         cursor: onClick ? 'pointer' : 'default',
+        padding: '8px 20px',
+        borderLeft: '1px solid #ffffff18',
       }}
     >
-      <span style={{ fontSize: 20, fontWeight: 700, color: color || 'var(--text)', lineHeight: 1 }}>
-        {value}
-      </span>
-      <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+      <div style={{
+        fontFamily: "'Bebas Neue', 'Righteous', monospace",
+        fontSize: 42, lineHeight: 1, fontWeight: 900,
+        color,
+        textShadow: `0 0 20px ${color}88, 0 0 40px ${color}44`,
+        letterSpacing: 2,
+      }}>
+        {String(value).padStart(2, '0')}
+      </div>
+      <div style={{
+        fontSize: 9, fontWeight: 800, letterSpacing: 2,
+        color: '#ffffff55', textTransform: 'uppercase', marginTop: 2,
+      }}>
         {label}
-      </span>
+      </div>
     </div>
   )
 }
@@ -107,9 +105,12 @@ export function Dashboard() {
   }
 
   const siteMap = Object.fromEntries(sites.map(s => [s.id, s.name]))
-
   const openIssues = issues.filter(i => i.status === 'open' || i.status === 'in_progress').length
   const openTickets = serviceTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length
+  const emergencyCount = sites.filter(s => {
+    const si = issues.filter(i => i.site_id === s.id && (i.status === 'open' || i.status === 'in_progress'))
+    return si.some(i => i.priority === 'critical')
+  }).length
 
   const criticalIssues = issues
     .filter(i =>
@@ -118,100 +119,204 @@ export function Dashboard() {
     )
     .sort((a, b) => (a.priority === 'critical' ? 0 : 1) - (b.priority === 'critical' ? 0 : 1))
 
+  // Per-site issue counts, sorted: emergency → problem → operational
+  const siteIssueStats = sites.map(s => {
+    const si = issues.filter(i => i.site_id === s.id && (i.status === 'open' || i.status === 'in_progress'))
+    const critical = si.filter(i => i.priority === 'critical').length
+    const high = si.filter(i => i.priority === 'high').length
+    const total = si.length
+    const status = critical > 0 ? 'emergency' : high > 0 ? 'problem' : 'operational'
+    return { site: s, total, critical, high, status }
+  }).filter(s => s.total > 0)
+    .sort((a, b) => {
+      const order = { emergency: 0, problem: 1, operational: 2 }
+      return order[a.status] - order[b.status] || b.critical - a.critical || b.total - a.total
+    })
+
   return (
     <div>
-      {/* Header */}
+      {/* ── 90s Scoreboard Header ── */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)',
-        gap: 16, flexWrap: 'wrap',
+        background: 'linear-gradient(180deg, #0a0010 0%, #120020 100%)',
+        border: '2px solid #FF2D88',
+        borderRadius: 10,
+        marginBottom: 16,
+        overflow: 'hidden',
+        boxShadow: '0 0 30px #FF2D8840, inset 0 0 40px #00000080',
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>
-            Dashboard
-          </h1>
+        {/* Top stripe */}
+        <div style={{
+          height: 3,
+          background: 'linear-gradient(90deg, #FF2D88, #FFE81A, #00D4FF, #9B30FF, #FF2D88)',
+        }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+          {/* Branding */}
+          <div style={{ padding: '12px 20px 12px 0', borderRight: '1px solid #ffffff18' }}>
+            <div style={{
+              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+              fontSize: 11, letterSpacing: 3, color: '#FF2D88', fontWeight: 900,
+            }}>
+              WORKY
+            </div>
+            <div style={{
+              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+              fontSize: 22, letterSpacing: 2, color: '#FFE81A', lineHeight: 1, fontWeight: 900,
+            }}>
+              MCSTREAMLINE
+            </div>
+            <div style={{ fontSize: 9, color: '#ffffff44', letterSpacing: 2, marginTop: 2 }}>
+              FIELD OPS · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
+            </div>
+          </div>
+
+          {/* Score digits */}
+          <div style={{ display: 'flex', flex: 1, justifyContent: 'center' }}>
+            <ScoreDigit value={sites.length} label="Sites" color="#00D4FF" />
+            <ScoreDigit
+              value={openIssues} label="Issues"
+              color={openIssues > 0 ? '#FFE81A' : '#4a4a4a'}
+              onClick={() => navigate('/issues')}
+            />
+            <ScoreDigit
+              value={openTickets} label="CS Tickets"
+              color={openTickets > 0 ? '#FF7A1A' : '#4a4a4a'}
+              onClick={() => navigate('/service-tickets')}
+            />
+            {emergencyCount > 0 && (
+              <ScoreDigit
+                value={emergencyCount} label="Emergency"
+                color="#FF2D88"
+                onClick={() => navigate('/issues')}
+              />
+            )}
+          </div>
+
+          {/* Period / clock decoration */}
+          <div style={{
+            padding: '12px 0 12px 20px',
+            borderLeft: '1px solid #ffffff18',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontFamily: "'Bebas Neue', monospace",
+              fontSize: 28, color: '#FF2D8888', lineHeight: 1,
+            }}>
+              {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div style={{ fontSize: 9, color: '#ffffff33', letterSpacing: 2, marginTop: 2 }}>
+              LOCAL TIME
+            </div>
+          </div>
         </div>
 
-        {/* Stat chips */}
-        <div style={{ display: 'flex', gap: 8, flex: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <StatCard label="Sites" value={sites.length} />
-          <StatCard
-            label="Open Issues" value={openIssues}
-            color={openIssues > 0 ? '#d97706' : undefined}
-            onClick={() => navigate('/issues')}
-          />
-          <StatCard
-            label="CS Tickets" value={openTickets}
-            color={openTickets > 0 ? '#2563eb' : undefined}
-            onClick={() => navigate('/service-tickets')}
-          />
-        </div>
+        {/* Bottom stripe */}
+        <div style={{
+          height: 2,
+          background: 'linear-gradient(90deg, #9B30FF, #00D4FF, #FFE81A, #FF2D88)',
+        }} />
       </div>
 
-      {/* Two-column widget row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+      {/* ── Two-column: Site Issues Board + To-Do ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
 
-        {/* Critical Issues */}
-        <div className="card" style={{ padding: 14 }}>
+        {/* Site Issues Scoreboard */}
+        <div style={{
+          background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
+          border: '1px solid var(--border)',
+          borderTop: '3px solid #FFE81A',
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}>
           <div style={{
-            fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '.07em', color: 'var(--red)', marginBottom: 10,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 14px',
+            borderBottom: '1px solid #ffffff18',
           }}>
-            <span>Critical &amp; High Issues</span>
-            <Link
-              to="/issues"
-              style={{ fontSize: 11, fontWeight: 400, color: 'var(--text3)', textDecoration: 'none' }}
-            >
-              View all →
+            <span style={{
+              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+              fontSize: 13, letterSpacing: 2, color: '#FFE81A',
+            }}>
+              SITE ISSUES BOARD
+            </span>
+            <Link to="/issues" style={{ fontSize: 10, color: 'var(--text3)', textDecoration: 'none', letterSpacing: 1 }}>
+              VIEW ALL →
             </Link>
           </div>
 
-          {criticalIssues.length === 0 ? (
-            <div style={{ color: 'var(--text3)', fontSize: 12, padding: '8px 0' }}>
-              No critical or high issues
+          {/* Header row */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 40px 40px 40px',
+            padding: '4px 14px', borderBottom: '1px solid #ffffff10',
+          }}>
+            {['SITE', 'TTL', 'CRIT', 'HIGH'].map(h => (
+              <span key={h} style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.5, color: '#ffffff33', textAlign: h !== 'SITE' ? 'center' : 'left' }}>
+                {h}
+              </span>
+            ))}
+          </div>
+
+          {siteIssueStats.length === 0 ? (
+            <div style={{ padding: '20px 14px', fontSize: 12, color: '#ffffff33', textAlign: 'center' }}>
+              ✓ ALL CLEAR — NO OPEN ISSUES
             </div>
-          ) : (
-            <>
-              {criticalIssues.slice(0, 8).map(i => (
-                <div
-                  key={i.id}
-                  onClick={() => navigate(`/sites/${i.site_id}`)}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 8,
-                    padding: '7px 0', borderBottom: '1px solid var(--border)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{
-                    flexShrink: 0, width: 6, height: 6, borderRadius: '50%',
-                    background: PRIORITY_COLOR[i.priority ?? 'high'], marginTop: 5,
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {i.title || 'Untitled'}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                      {siteMap[i.site_id ?? ''] || 'Unknown'}
-                      {i.unit_tag ? ` · ${i.unit_tag}` : ''}
-                    </div>
-                  </div>
-                  <span style={{
-                    flexShrink: 0, fontSize: 10, fontWeight: 700,
-                    color: STATUS_COLOR[i.status ?? ''] || 'var(--text3)',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {STATUS_LABEL[i.status ?? ''] || i.status}
+          ) : siteIssueStats.map(({ site, total, critical, high, status }) => {
+            const statusColor = status === 'emergency' ? '#FF2D88' : status === 'problem' ? '#FF7A1A' : '#00E676'
+            return (
+              <div
+                key={site.id}
+                onClick={() => navigate(`/sites/${site.id}`)}
+                style={{
+                  display: 'grid', gridTemplateColumns: '1fr 40px 40px 40px',
+                  alignItems: 'center',
+                  padding: '6px 14px',
+                  borderBottom: '1px solid #ffffff08',
+                  cursor: 'pointer',
+                  background: status === 'emergency' ? '#FF2D8810' : undefined,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: statusColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {site.name}
                   </span>
                 </div>
-              ))}
-              {criticalIssues.length > 8 && (
-                <div style={{ fontSize: 11, color: 'var(--text3)', paddingTop: 6, textAlign: 'center' }}>
-                  + {criticalIssues.length - 8} more
+                <div style={{ textAlign: 'center', fontFamily: "'Bebas Neue', monospace", fontSize: 16, color: '#FFE81A', fontWeight: 900 }}>
+                  {total}
                 </div>
-              )}
-            </>
-          )}
+                <div style={{ textAlign: 'center', fontFamily: "'Bebas Neue', monospace", fontSize: 16, color: critical > 0 ? '#FF2D88' : '#ffffff22', fontWeight: 900 }}>
+                  {critical || '—'}
+                </div>
+                <div style={{ textAlign: 'center', fontFamily: "'Bebas Neue', monospace", fontSize: 16, color: high > 0 ? '#FF7A1A' : '#ffffff22', fontWeight: 900 }}>
+                  {high || '—'}
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Sites with no issues — compact footer */}
+          {(() => {
+            const clean = sites.filter(s => !siteIssueStats.find(x => x.site.id === s.id))
+            if (!clean.length) return null
+            return (
+              <div style={{ padding: '6px 14px', borderTop: '1px solid #ffffff08', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {clean.map(s => (
+                  <span
+                    key={s.id}
+                    onClick={() => navigate(`/sites/${s.id}`)}
+                    style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: 1,
+                      color: '#00E67688', cursor: 'pointer',
+                      background: '#00E67610', borderRadius: 3,
+                      padding: '1px 5px', border: '1px solid #00E67630',
+                    }}
+                  >
+                    ✓ {s.name}
+                  </span>
+                ))}
+              </div>
+            )
+          })()}
         </div>
 
         {/* To-Do widget */}
@@ -221,11 +326,10 @@ export function Dashboard() {
             letterSpacing: '.07em', color: 'var(--accent)', marginBottom: 10,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span>My To-Do</span>
-            <Link
-              to="/todos"
-              style={{ fontSize: 11, fontWeight: 400, color: 'var(--text3)', textDecoration: 'none' }}
-            >
+            <span style={{ fontFamily: "'Bebas Neue', 'Righteous', sans-serif", letterSpacing: 2 }}>
+              My To-Do
+            </span>
+            <Link to="/todos" style={{ fontSize: 11, fontWeight: 400, color: 'var(--text3)', textDecoration: 'none' }}>
               View all →
             </Link>
           </div>
@@ -239,32 +343,16 @@ export function Dashboard() {
               {todos.slice(0, 8).map(t => {
                 const due = t.due_date ? new Date(t.due_date + 'T00:00:00') : null
                 const overdue = due && due < new Date() && t.status !== 'done'
+                const priColor: Record<string, string> = { urgent: '#dc2626', high: '#ea580c', normal: '#2563eb', low: '#6b7280' }
                 return (
-                  <div
-                    key={t.id}
-                    style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 8,
-                      padding: '7px 0', borderBottom: '1px solid var(--border)',
-                    }}
-                  >
-                    <span style={{
-                      flexShrink: 0, width: 6, height: 6, borderRadius: '50%',
-                      background: PRIORITY_COLOR[t.priority ?? 'normal'], marginTop: 5,
-                    }} />
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ flexShrink: 0, width: 6, height: 6, borderRadius: '50%', background: priColor[t.priority ?? 'normal'], marginTop: 5 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {t.title}
-                      </div>
-                      {t.site_id && (
-                        <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                          {siteMap[t.site_id] || ''}
-                        </div>
-                      )}
+                      <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+                      {t.site_id && <div style={{ fontSize: 11, color: 'var(--text3)' }}>{siteMap[t.site_id] || ''}</div>}
                     </div>
                     {overdue ? (
-                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'var(--red)', whiteSpace: 'nowrap' }}>
-                        Overdue
-                      </span>
+                      <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'var(--red)', whiteSpace: 'nowrap' }}>Overdue</span>
                     ) : due ? (
                       <span style={{ flexShrink: 0, fontSize: 10, color: 'var(--text3)', whiteSpace: 'nowrap' }}>
                         {due.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -274,21 +362,15 @@ export function Dashboard() {
                 )
               })}
               {todos.length > 8 && (
-                <div style={{ fontSize: 11, color: 'var(--text3)', paddingTop: 6, textAlign: 'center' }}>
-                  + {todos.length - 8} more
-                </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', paddingTop: 6, textAlign: 'center' }}>+ {todos.length - 8} more</div>
               )}
             </>
           )}
         </div>
       </div>
 
-      {/* Site cards — 90s NBA trading card style */}
-      {sites.length === 0 ? (
-        <div style={{ color: 'var(--text3)', padding: 40, textAlign: 'center' }}>
-          No sites yet.
-        </div>
-      ) : (
+      {/* ── Site Cards ── */}
+      {sites.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
           {sites.map(site => {
             const team = getTeam(site.id)
@@ -297,12 +379,11 @@ export function Dashboard() {
             )
             const hasCritical = siteIssues.some(i => i.priority === 'critical')
             const hasHigh = siteIssues.some(i => i.priority === 'high')
-
             const siteStatus = hasCritical
-              ? { label: 'EMERGENCY', color: '#dc2626' }
+              ? { label: 'EMERGENCY', color: '#FF2D88' }
               : hasHigh
-              ? { label: 'PROBLEM',   color: '#ea580c' }
-              : { label: 'OPERATIONAL', color: '#16a34a' }
+              ? { label: 'PROBLEM', color: '#FF7A1A' }
+              : { label: 'OPERATIONAL', color: '#00E676' }
 
             return (
               <div
@@ -317,69 +398,63 @@ export function Dashboard() {
                   borderRadius: '0 8px 8px 0',
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  position: 'relative',
-                  minHeight: 80,
-                  transition: 'border-color .15s',
+                  minHeight: 78,
                 }}
               >
-                {/* Top stripe */}
                 <div style={{
                   height: 2,
                   background: `linear-gradient(90deg, ${team.primary}, ${team.secondary === '#000000' ? team.primary + '44' : team.secondary}, transparent)`,
                 }} />
-
-                {/* Watermark */}
-                <div style={{
-                  position: 'absolute', bottom: 2, right: 6,
-                  fontSize: 28, fontWeight: 900,
-                  fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-                  color: team.primary, opacity: 0.07,
-                  letterSpacing: 1, pointerEvents: 'none', userSelect: 'none', lineHeight: 1,
-                }}>
-                  {team.name}
-                </div>
-
                 <div style={{ padding: '7px 10px 8px' }}>
-                  {/* Team badge + status dot */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
                     <span style={{
-                      fontSize: 8, fontWeight: 800, letterSpacing: 1.5,
-                      color: team.primary,
+                      fontSize: 8, fontWeight: 800, letterSpacing: 1.5, color: team.primary,
                       fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
                     }}>
                       {team.abbr}
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: siteStatus.color, display: 'inline-block' }} />
                       <span style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: siteStatus.color, display: 'inline-block', flexShrink: 0,
-                      }} />
-                      <span style={{
-                        fontSize: 8, fontWeight: 800, letterSpacing: .8,
-                        color: siteStatus.color,
+                        fontSize: 7, fontWeight: 800, letterSpacing: .8, color: siteStatus.color,
                         fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
                       }}>
                         {siteStatus.label}
                       </span>
                     </span>
                   </div>
-
-                  {/* Site name */}
                   <div style={{
                     fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-                    fontSize: 15, fontWeight: 900, letterSpacing: .5,
-                    color: team.primary, lineHeight: 1.15,
-                    overflow: 'hidden', display: '-webkit-box',
-                    WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                    fontSize: 15, fontWeight: 900, letterSpacing: .5, color: team.primary, lineHeight: 1.15,
+                    overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   } as React.CSSProperties}>
                     {site.name}
                   </div>
+                  {siteIssues.length > 0 && (
+                    <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{
+                        fontFamily: "'Bebas Neue', monospace", fontSize: 18, fontWeight: 900,
+                        color: siteStatus.color, lineHeight: 1,
+                        textShadow: `0 0 8px ${siteStatus.color}66`,
+                      }}>
+                        {siteIssues.length}
+                      </span>
+                      <span style={{ fontSize: 9, color: siteStatus.color + '99', letterSpacing: 1 }}>
+                        OPEN
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )
           })}
         </div>
       )}
+
+      {/* Hidden — kept for StatusBadge/Link import usage */}
+      <span style={{ display: 'none' }}>
+        {Object.keys(STATUS_COLOR).map(k => STATUS_LABEL[k])}
+      </span>
     </div>
   )
 }
