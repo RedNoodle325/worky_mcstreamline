@@ -1,6 +1,6 @@
 import type {
   Site, Unit, Contact, Contractor, Note, Issue, ServiceTicket, IssueLineLink,
-  Ticket, Todo, Schedule, Technician, MsowDraft, WarrantyClaim, BomImport,
+  Ticket, Todo, Schedule, JobSchedule, Technician, MsowDraft, WarrantyClaim, BomImport,
   BomItem, Campaign, SycoolSystem, User, JobNumber, LoginResponse, ImportResult,
 } from '../types'
 
@@ -213,16 +213,22 @@ export const API = {
       apiFetch(`/todos/${id}`, { method: 'DELETE' }),
   },
 
-  // Schedule
+  // Schedule / Operations
   schedule: {
     listJobs: (params: Record<string, string> = {}) =>
-      apiFetch<Schedule[]>('/job-schedule?' + new URLSearchParams(params)),
-    createJob: (data: Partial<Schedule>) =>
-      apiFetch<Schedule>('/job-schedule', { method: 'POST', body: JSON.stringify(data) }),
-    updateJob: (id: string, data: Partial<Schedule>) =>
-      apiFetch<Schedule>(`/job-schedule/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      apiFetch<JobSchedule[]>('/job-schedule?' + new URLSearchParams(params)),
+    createJob: (data: Partial<JobSchedule>) =>
+      apiFetch<JobSchedule>('/job-schedule', { method: 'POST', body: JSON.stringify(data) }),
+    updateJob: (id: string, data: Partial<JobSchedule>) =>
+      apiFetch<JobSchedule>(`/job-schedule/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteJob: (id: string) =>
       apiFetch(`/job-schedule/${id}`, { method: 'DELETE' }),
+    listJobTechs: (jobId: string) =>
+      apiFetch<Technician[]>(`/job-schedule/${jobId}/techs`),
+    assignTech: (jobId: string, technicianId: string) =>
+      apiFetch(`/job-schedule/${jobId}/techs`, { method: 'POST', body: JSON.stringify({ technician_id: technicianId }) }),
+    removeTech: (jobId: string, techId: string) =>
+      apiFetch(`/job-schedule/${jobId}/techs/${techId}`, { method: 'DELETE' }),
     listTechs: () => apiFetch<Technician[]>('/technicians'),
     createTech: (data: Partial<Technician>) =>
       apiFetch<Technician>('/technicians', { method: 'POST', body: JSON.stringify(data) }),

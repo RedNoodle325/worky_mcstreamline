@@ -5,18 +5,18 @@ import { useEditMode } from '../contexts/EditModeContext'
 import { useState } from 'react'
 import {
   LayoutDashboard, Ticket, AlertTriangle,
-  Users, FileText, CheckSquare, Calendar, Sun, Moon,
+  Users, FileText, CheckSquare, Wrench, Sun, Moon,
   Eye, Pencil, LogOut, Menu, ChevronLeft,
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/',           label: 'Dashboard',  Icon: LayoutDashboard, end: true },
-  { to: '/cs-tickets', label: 'CS Tickets',  Icon: Ticket },
-  { to: '/issues',     label: 'Issues',      Icon: AlertTriangle },
-  { to: '/contacts',   label: 'Contacts',    Icon: Users },
-  { to: '/notes',      label: 'Notes',       Icon: FileText },
-  { to: '/todos',      label: 'To-Do',       Icon: CheckSquare },
-  { to: '/schedule',   label: 'Schedule',    Icon: Calendar },
+  { to: '/',            label: 'Dashboard',   Icon: LayoutDashboard, end: true },
+  { to: '/cs-tickets',  label: 'CS Tickets',  Icon: Ticket },
+  { to: '/issues',      label: 'Issues',      Icon: AlertTriangle },
+  { to: '/contacts',    label: 'Contacts',    Icon: Users },
+  { to: '/notes',       label: 'Notes',       Icon: FileText },
+  { to: '/todos',       label: 'To-Do',       Icon: CheckSquare },
+  { to: '/operations',  label: 'Operations',  Icon: Wrench },
 ]
 
 export function Layout() {
