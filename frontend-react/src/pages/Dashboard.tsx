@@ -195,11 +195,13 @@ export function Dashboard() {
         {/* Site Issues Scoreboard */}
         <div style={{
           background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
-          border: '1px solid var(--border)',
-          borderTop: '3px solid #FFE81A',
-          borderRadius: 8,
+          border: '2px solid #FFE81A',
+          borderRadius: 10,
           overflow: 'hidden',
+          boxShadow: '0 0 24px #FFE81A40, inset 0 0 30px #00000080',
         }}>
+          {/* Top stripe */}
+          <div style={{ height: 3, background: 'linear-gradient(90deg, #FFE81A, #FF7A1A, #FF2D88, #9B30FF, #FFE81A)' }} />
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '10px 14px',
@@ -211,7 +213,7 @@ export function Dashboard() {
             }}>
               SITE ISSUES BOARD
             </span>
-            <Link to="/issues" style={{ fontSize: 10, color: 'var(--text3)', textDecoration: 'none', letterSpacing: 1 }}>
+            <Link to="/issues" style={{ fontSize: 10, color: '#ffffff55', textDecoration: 'none', letterSpacing: 1 }}>
               VIEW ALL →
             </Link>
           </div>
@@ -289,20 +291,33 @@ export function Dashboard() {
               </div>
             )
           })()}
+          {/* Bottom stripe */}
+          <div style={{ height: 2, background: 'linear-gradient(90deg, #9B30FF, #FF2D88, #FF7A1A, #FFE81A)' }} />
         </div>
 
         {/* To-Do widget */}
-        <div className="card" style={{ padding: 14 }}>
+        <div style={{
+          background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
+          border: '2px solid #FF2D88',
+          borderRadius: 10,
+          overflow: 'hidden',
+          boxShadow: '0 0 24px #FF2D8840, inset 0 0 30px #00000080',
+        }}>
+          {/* Top stripe */}
+          <div style={{ height: 3, background: 'linear-gradient(90deg, #FF2D88, #FFE81A, #00D4FF, #9B30FF, #FF2D88)' }} />
+          <div style={{ padding: 14 }}>
           <div style={{
-            fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '.07em', color: 'var(--accent)', marginBottom: 10,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 10, borderBottom: '1px solid #ffffff18', paddingBottom: 8,
           }}>
-            <span style={{ fontFamily: "'Bebas Neue', 'Righteous', sans-serif", letterSpacing: 2 }}>
-              My To-Do
+            <span style={{
+              fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
+              fontSize: 13, letterSpacing: 2, color: '#FF2D88',
+            }}>
+              MY TO-DO
             </span>
-            <Link to="/todos" style={{ fontSize: 11, fontWeight: 400, color: 'var(--text3)', textDecoration: 'none' }}>
-              View all →
+            <Link to="/todos" style={{ fontSize: 10, color: '#ffffff55', textDecoration: 'none', letterSpacing: 1 }}>
+              VIEW ALL →
             </Link>
           </div>
 
@@ -338,6 +353,9 @@ export function Dashboard() {
               )}
             </>
           )}
+          </div>
+          {/* Bottom stripe */}
+          <div style={{ height: 2, background: 'linear-gradient(90deg, #FF2D88, #9B30FF, #00D4FF, #FFE81A)' }} />
         </div>
       </div>
 
@@ -362,15 +380,16 @@ export function Dashboard() {
                 key={site.id}
                 onClick={() => navigate(`/sites/${site.id}`)}
                 style={{
-                  background: 'var(--bg2)',
-                  border: '1px solid var(--border)',
-                  borderLeft: `3px solid ${accentColor}`,
-                  borderRadius: 6,
+                  background: 'linear-gradient(180deg, #0a0010 0%, #0e0020 100%)',
+                  border: `2px solid ${accentColor}`,
+                  borderRadius: 8,
                   overflow: 'hidden',
                   cursor: 'pointer',
                   minHeight: 78,
+                  boxShadow: `0 0 16px ${accentColor}33`,
                 }}
               >
+                <div style={{ height: 2, background: `linear-gradient(90deg, ${accentColor}, #9B30FF, ${accentColor})` }} />
                 <div style={{ padding: '7px 10px 8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: accentColor, display: 'inline-block', flexShrink: 0 }} />

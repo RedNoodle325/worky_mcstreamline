@@ -263,12 +263,199 @@ function buildReportHtml(data: ReportData, weeklyNotes: string): string {
 </html>`
 }
 
+// ── Activity Log HTML builder ──────────────────────────────────────────────────
+
+type ActivityEvent =
+  | { type: 'issue_opened';  date: Date; issue: Issue; siteName: string }
+  | { type: 'issue_closed';  date: Date; issue: Issue; siteName: string }
+  | { type: 'issue_updated'; date: Date; issue: Issue; siteName: string }
+  | { type: 'note';          date: Date; note: Note;   siteName: string }
+
+function buildActivityLogHtml(events: ActivityEvent[], label: string): string {
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+  const EVENT_CFG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+    issue_opened:  { label: 'Issue Opened',  color: '#dc2626', bg: '#fee2e2', icon: '🔴' },
+    issue_closed:  { label: 'Issue Closed',  color: '#16a34a', bg: '#dcfce7', icon: '✅' },
+    issue_updated: { label: 'Issue Updated', color: '#d97706', bg: '#fef9c3', icon: '✏️' },
+    note:          { label: 'Contact Logged',color: '#2563eb', bg: '#dbeafe', icon: '📋' },
+  }
+
+  // Group by date
+  const byDay: Record<string, ActivityEvent[]> = {}
+  for (const ev of events) {
+    const key = ev.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+    if (!byDay[key]) byDay[key] = []
+    byDay[key].push(ev)
+  }
+
+  const rowsHtml = Object.entries(byDay).map(([day, dayEvents]) => {
+    const eventRows = dayEvents.map(ev => {
+      const cfg = EVENT_CFG[ev.type]
+      const time = ev.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      let detail = ''
+      if (ev.type === 'note') {
+        detail = renderNoteText(ev.note.content)
+        const author = ev.note.author_name || ev.note.created_by_name
+        if (author) detail = `<strong>${esc(author)}</strong>: ` + detail
+      } else {
+        const { issue } = ev
+        detail = `<strong>${esc(issue.title || '—')}</strong>`
+        if (issue.unit_tag) detail += ` <span style="color:#6b7280;font-size:9px">[${esc(issue.unit_tag)}]</span>`
+        if (ev.type === 'issue_updated') {
+          const statusLabel: Record<string, string> = { open: 'Open', in_progress: 'In Progress', work_complete: 'Work Complete', ready_to_inspect: 'Ready to Inspect', closed: 'Closed' }
+          const s = statusLabel[issue.status ?? ''] ?? issue.status ?? ''
+          if (s) detail += ` <span style="color:#6b7280;font-size:9px">→ ${esc(s)}</span>`
+        }
+      }
+      return `<tr style="border-bottom:1px solid #f3f4f6">
+        <td style="padding:5px 8px;white-space:nowrap;font-size:9px;color:#6b7280;vertical-align:top">${time}</td>
+        <td style="padding:5px 8px;white-space:nowrap;vertical-align:top">
+          <span style="background:${cfg.bg};color:${cfg.color};border:1px solid ${cfg.color}44;border-radius:99px;padding:1px 7px;font-size:9px;font-weight:700">${cfg.icon} ${cfg.label}</span>
+        </td>
+        <td style="padding:5px 8px;white-space:nowrap;font-size:10px;font-weight:600;vertical-align:top;color:#374151">${esc(ev.siteName)}</td>
+        <td style="padding:5px 8px;font-size:10px;line-height:1.5;vertical-align:top">${detail}</td>
+      </tr>`
+    }).join('')
+
+    return `<div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:#374151;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px 6px 0 0;padding:5px 10px;border-bottom:none">${day}</div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:0 0 6px 6px;overflow:hidden">
+        <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb">
+          ${['Time','Event','Site','Details'].map(h => `<th style="padding:4px 8px;font-size:8px;text-transform:uppercase;color:#9ca3af;font-weight:700;text-align:left">${h}</th>`).join('')}
+        </tr></thead>
+        <tbody>${eventRows}</tbody>
+      </table>
+    </div>`
+  }).join('')
+
+  const counts = {
+    opened: events.filter(e => e.type === 'issue_opened').length,
+    closed: events.filter(e => e.type === 'issue_closed').length,
+    updated: events.filter(e => e.type === 'issue_updated').length,
+    notes: events.filter(e => e.type === 'note').length,
+  }
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Activity Log — ${today}</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: #fff; color: #111827; }
+  @media print { .no-print { display: none !important; } body { font-size: 10px; } }
+</style>
+</head>
+<body>
+  <div style="background:#1e3a5f;color:#fff;padding:12px 24px;display:flex;align-items:center;gap:14px;border-bottom:3px solid #2563eb">
+    <div style="width:32px;height:32px;background:#6366f1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0">📋</div>
+    <div>
+      <div style="font-size:15px;font-weight:800;letter-spacing:.04em">ACTIVITY LOG</div>
+      <div style="font-size:10px;color:#a5b4fc;margin-top:2px">${label} · Printed ${today}</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:20px;margin:12px 24px;padding:8px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;align-items:center">
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#dc2626">${counts.opened}</div><div style="font-size:8px;text-transform:uppercase;color:#6b7280">Opened</div></div>
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#16a34a">${counts.closed}</div><div style="font-size:8px;text-transform:uppercase;color:#6b7280">Closed</div></div>
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#d97706">${counts.updated}</div><div style="font-size:8px;text-transform:uppercase;color:#6b7280">Updated</div></div>
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#2563eb">${counts.notes}</div><div style="font-size:8px;text-transform:uppercase;color:#6b7280">Contacts</div></div>
+    <div style="text-align:center"><div style="font-size:20px;font-weight:800;color:#111827">${events.length}</div><div style="font-size:8px;text-transform:uppercase;color:#6b7280">Total Events</div></div>
+  </div>
+  <div style="margin:0 24px 24px">
+    ${events.length === 0
+      ? `<div style="text-align:center;color:#9ca3af;padding:40px;border:1px dashed #e5e7eb;border-radius:8px;font-size:13px">No activity in this period</div>`
+      : rowsHtml}
+  </div>
+</body>
+</html>`
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 
 export function Report() {
   const toast = useToastFn()
   const [loading, setLoading] = useState(false)
   const [weeklyNotes, setWeeklyNotes] = useState('')
+  const [activityRange, setActivityRange] = useState('30')
+  const [activityFrom, setActivityFrom] = useState('')
+  const [activityTo, setActivityTo] = useState('')
+  const [activityLoading, setActivityLoading] = useState(false)
+
+  async function buildActivityLog() {
+    setActivityLoading(true)
+    try {
+      let cutoff: Date
+      let endDate = new Date()
+      let label: string
+
+      if (activityRange === 'custom') {
+        if (!activityFrom) { toast('Select a start date', 'error'); return }
+        cutoff = new Date(activityFrom + 'T00:00:00')
+        endDate = activityTo ? new Date(activityTo + 'T23:59:59') : new Date()
+        label = `${fmtShort(cutoff)} – ${fmtShort(endDate)}`
+      } else {
+        const days = parseInt(activityRange, 10)
+        cutoff = new Date()
+        cutoff.setDate(cutoff.getDate() - days)
+        cutoff.setHours(0, 0, 0, 0)
+        label = `Last ${days} days`
+      }
+
+      const [sites, issues, notes] = await Promise.all([
+        API.sites.list(),
+        API.issues.listAll().catch(() => [] as Issue[]),
+        API.notes.search('').catch(() => [] as Note[]),
+      ])
+      const siteMap = Object.fromEntries(sites.map(s => [s.id, s.name ?? s.id]))
+
+      const events: ActivityEvent[] = []
+
+      for (const issue of issues) {
+        const siteName = (issue.site_id ? siteMap[issue.site_id] : undefined) ?? 'Unknown Site'
+
+        if (issue.created_at) {
+          const d = new Date(issue.created_at)
+          if (d >= cutoff && d <= endDate)
+            events.push({ type: 'issue_opened', date: d, issue, siteName })
+        }
+
+        if (issue.closed_date && issue.status === 'closed') {
+          const d = new Date(issue.closed_date)
+          if (d >= cutoff && d <= endDate)
+            events.push({ type: 'issue_closed', date: d, issue, siteName })
+        }
+
+        if (issue.updated_at && issue.created_at) {
+          const upd = new Date(issue.updated_at)
+          const created = new Date(issue.created_at)
+          if (upd >= cutoff && upd <= endDate && upd.getTime() - created.getTime() > 60_000)
+            events.push({ type: 'issue_updated', date: upd, issue, siteName })
+        }
+      }
+
+      for (const note of notes) {
+        if (note.created_at) {
+          const d = new Date(note.created_at)
+          if (d >= cutoff && d <= endDate) {
+            const siteName = (note.site_id ? siteMap[note.site_id] : undefined) ?? 'Unknown Site'
+            events.push({ type: 'note', date: d, note, siteName })
+          }
+        }
+      }
+
+      events.sort((a, b) => b.date.getTime() - a.date.getTime())
+
+      const html = buildActivityLogHtml(events, label)
+      const win = window.open('', '_blank')
+      if (!win) { toast('Popup blocked — allow pop-ups and try again', 'error'); return }
+      win.document.write(html)
+      win.document.close()
+    } catch (err: unknown) {
+      toast('Error: ' + (err as Error).message, 'error')
+    } finally {
+      setActivityLoading(false)
+    }
+  }
 
   async function buildReport() {
     setLoading(true)
@@ -348,6 +535,64 @@ export function Report() {
           <li>Per-site breakdowns: open issues, recent activity</li>
           <li>Printable via browser print dialog (Ctrl/Cmd+P)</li>
         </ul>
+      </div>
+
+      {/* ── Activity Log ── */}
+      <div className="card" style={{ marginTop: 24, maxWidth: 700 }}>
+        <div className="card-title" style={{ marginBottom: 4 }}>Activity Log Report</div>
+        <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 0, marginBottom: 14 }}>
+          Print a timeline of all activity — issues opened, closed, or updated, and contacts logged — for any date range.
+        </p>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>Date Range</label>
+            <select
+              value={activityRange}
+              onChange={e => setActivityRange(e.target.value)}
+              style={{ minWidth: 160 }}
+            >
+              <option value="7">Last 7 days</option>
+              <option value="14">Last 14 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last 12 months</option>
+              <option value="custom">Custom range…</option>
+            </select>
+          </div>
+
+          {activityRange === 'custom' && (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>From</label>
+                <input type="date" value={activityFrom} onChange={e => setActivityFrom(e.target.value)} style={{ minWidth: 140 }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>To</label>
+                <input type="date" value={activityTo} onChange={e => setActivityTo(e.target.value)} style={{ minWidth: 140 }} />
+              </div>
+            </>
+          )}
+
+          <button
+            className="btn btn-primary"
+            onClick={buildActivityLog}
+            disabled={activityLoading}
+            style={{ alignSelf: 'flex-end' }}
+          >
+            {activityLoading ? 'Building…' : '📋 Generate Activity Log'}
+          </button>
+        </div>
+
+        <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--bg)', borderRadius: 6, border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Includes</div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12, color: 'var(--text2)' }}>
+            <span>🔴 Issues opened</span>
+            <span>✅ Issues closed</span>
+            <span>✏️ Issues updated</span>
+            <span>📋 Contacts &amp; notes logged</span>
+          </div>
+        </div>
       </div>
     </div>
   )
