@@ -4,27 +4,6 @@ import { API } from '../api'
 import { useToastFn } from '../App'
 import type { Site, Issue, ServiceTicket, Todo } from '../types'
 
-// ── 90s NBA Team palettes ──────────────────────────────────────────────────────
-const NBA_TEAMS = [
-  { abbr: 'CHI', primary: '#CE1141', secondary: '#000000', cardBg: '#1e0008' },
-  { abbr: 'LAL', primary: '#FDB927', secondary: '#552583', cardBg: '#160824' },
-  { abbr: 'ORL', primary: '#0077C0', secondary: '#C4CED4', cardBg: '#001424' },
-  { abbr: 'SEA', primary: '#00A550', secondary: '#FFC200', cardBg: '#001810' },
-  { abbr: 'NYK', primary: '#F58426', secondary: '#006BB6', cardBg: '#001624' },
-  { abbr: 'UTA', primary: '#F9A01B', secondary: '#002B5C', cardBg: '#060e1e' },
-  { abbr: 'PHX', primary: '#E56020', secondary: '#1D1160', cardBg: '#0e0818' },
-  { abbr: 'IND', primary: '#FDBB30', secondary: '#002D62', cardBg: '#000e20' },
-  { abbr: 'HOU', primary: '#CE1141', secondary: '#C4CED4', cardBg: '#180008' },
-  { abbr: 'SAC', primary: '#9B4DCA', secondary: '#63727A', cardBg: '#10061e' },
-  { abbr: 'DET', primary: '#006BB6', secondary: '#ED174C', cardBg: '#00101e' },
-  { abbr: 'SAS', primary: '#C4CED4', secondary: '#000000', cardBg: '#0a0a0a' },
-]
-
-function getTeam(id: string) {
-  let h = 0
-  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0
-  return NBA_TEAMS[h % NBA_TEAMS.length]
-}
 
 const STATUS_COLOR: Record<string, string> = {
   open:        '#dc2626',
@@ -373,7 +352,6 @@ export function Dashboard() {
       {sites.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
           {sites.map(site => {
-            const team = getTeam(site.id)
             const siteIssues = issues.filter(
               i => i.site_id === site.id && (i.status === 'open' || i.status === 'in_progress')
             )
@@ -384,48 +362,35 @@ export function Dashboard() {
               : hasHigh
               ? { label: 'PROBLEM', color: '#FF7A1A' }
               : { label: 'OPERATIONAL', color: '#00E676' }
+            const accentColor = siteStatus.color
 
             return (
               <div
                 key={site.id}
                 onClick={() => navigate(`/sites/${site.id}`)}
                 style={{
-                  background: team.cardBg,
-                  borderLeft: `3px solid ${team.primary}`,
-                  borderTop: `1px solid ${team.primary}33`,
-                  borderRight: `1px solid ${team.primary}18`,
-                  borderBottom: `1px solid ${team.primary}18`,
-                  borderRadius: '0 8px 8px 0',
+                  background: 'var(--bg2)',
+                  border: '1px solid var(--border)',
+                  borderLeft: `3px solid ${accentColor}`,
+                  borderRadius: 6,
                   overflow: 'hidden',
                   cursor: 'pointer',
                   minHeight: 78,
                 }}
               >
-                <div style={{
-                  height: 2,
-                  background: `linear-gradient(90deg, ${team.primary}, ${team.secondary === '#000000' ? team.primary + '44' : team.secondary}, transparent)`,
-                }} />
                 <div style={{ padding: '7px 10px 8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: accentColor, display: 'inline-block', flexShrink: 0 }} />
                     <span style={{
-                      fontSize: 8, fontWeight: 800, letterSpacing: 1.5, color: team.primary,
+                      fontSize: 7, fontWeight: 800, letterSpacing: .8, color: accentColor,
                       fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
                     }}>
-                      {team.abbr}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: siteStatus.color, display: 'inline-block' }} />
-                      <span style={{
-                        fontSize: 7, fontWeight: 800, letterSpacing: .8, color: siteStatus.color,
-                        fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-                      }}>
-                        {siteStatus.label}
-                      </span>
+                      {siteStatus.label}
                     </span>
                   </div>
                   <div style={{
                     fontFamily: "'Bebas Neue', 'Righteous', sans-serif",
-                    fontSize: 15, fontWeight: 900, letterSpacing: .5, color: team.primary, lineHeight: 1.15,
+                    fontSize: 14, fontWeight: 900, letterSpacing: .5, color: 'var(--text1)', lineHeight: 1.15,
                     overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   } as React.CSSProperties}>
                     {site.name}
@@ -434,12 +399,12 @@ export function Dashboard() {
                     <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span style={{
                         fontFamily: "'Bebas Neue', monospace", fontSize: 18, fontWeight: 900,
-                        color: siteStatus.color, lineHeight: 1,
-                        textShadow: `0 0 8px ${siteStatus.color}66`,
+                        color: accentColor, lineHeight: 1,
+                        textShadow: `0 0 8px ${accentColor}66`,
                       }}>
                         {siteIssues.length}
                       </span>
-                      <span style={{ fontSize: 9, color: siteStatus.color + '99', letterSpacing: 1 }}>
+                      <span style={{ fontSize: 9, color: accentColor + '99', letterSpacing: 1 }}>
                         OPEN
                       </span>
                     </div>
