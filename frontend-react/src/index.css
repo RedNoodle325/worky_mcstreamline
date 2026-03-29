@@ -801,3 +801,238 @@ select option { background: var(--bg2); }
     display: flex !important;
   }
 }
+
+/* ── Mobile/Desktop visibility utilities ──────── */
+.mobile-only { display: none; }
+@media (max-width: 768px) {
+  .mobile-only { display: block; }
+  .desktop-only { display: none !important; }
+}
+
+/* ── Mobile Ticket Cards ──────────────────────── */
+.mobile-ticket-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.mobile-ticket-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-ticket-card:active {
+  background: var(--bg3);
+  border-color: var(--accent);
+}
+
+.mtc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.mtc-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 6px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.mtc-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text3);
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.mtc-tag {
+  font-family: monospace;
+  font-size: 11px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--text2);
+}
+
+.mtc-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mtc-date {
+  font-size: 11px;
+  color: var(--text3);
+  margin-left: auto;
+}
+
+/* ── Mobile Issue Cards ───────────────────────── */
+.mobile-issue-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.mobile-issue-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mic-main {
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.mic-main:active {
+  background: var(--bg3);
+}
+
+.mic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.mic-id {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.mic-chevron {
+  font-size: 9px;
+  color: var(--text3);
+  transition: transform .15s;
+  flex-shrink: 0;
+}
+.mic-chevron.open {
+  transform: rotate(90deg);
+}
+
+.mic-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 5px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.mic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mic-equipment {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+}
+
+.mic-site {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.mic-date {
+  font-size: 11px;
+  color: var(--text3);
+  margin-left: auto;
+}
+
+.mic-detail {
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+  padding: 12px 14px;
+}
+
+.mic-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.mic-detail-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text3);
+  margin-bottom: 2px;
+}
+
+.mic-detail-value {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.mic-detail-text {
+  font-size: 12px;
+  color: var(--text2);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.mic-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 14px 10px;
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Mobile filter bar ────────────────────────── */
+@media (max-width: 768px) {
+  .issue-filters {
+    gap: 8px;
+  }
+  .issue-filters input,
+  .issue-filters select {
+    width: 100%;
+  }
+  .issue-status-pills {
+    width: 100%;
+  }
+}

@@ -299,8 +299,8 @@ export function Issues() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card">
+      {/* Desktop table */}
+      <div className="card desktop-only">
         <div className="table-wrap">
           <table>
             <thead>
@@ -392,6 +392,107 @@ export function Issues() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile card list */}
+      <div className="mobile-issue-cards mobile-only">
+        {filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--text3)', padding: 32 }}>No issues match your filters</div>
+        ) : filtered.map(i => {
+          const site = i.site_id ? siteMap[i.site_id] : undefined
+          const isOpen = expandedId === i.id
+          const priColor = PRIORITY_COLOR[i.priority ?? ''] ?? 'var(--text3)'
+
+          return (
+            <div key={i.id} className="mobile-issue-card">
+              <div className="mic-main" onClick={() => setExpandedId(isOpen ? null : i.id)}>
+                <div className="mic-header">
+                  <span className="mic-id">
+                    <span className={`mic-chevron${isOpen ? ' open' : ''}`}>▶</span>
+                    {i.cxalloy_issue_id || i.title || '—'}
+                  </span>
+                  <StatusBadge status={i.status ?? 'open'} size="sm" />
+                </div>
+                {i.title && i.cxalloy_issue_id && (
+                  <div className="mic-title">{i.title}</div>
+                )}
+                {i.description && (
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>
+                    {i.description}
+                  </div>
+                )}
+                <div className="mic-row">
+                  {i.unit_tag && <span className="mic-equipment">{i.unit_tag}</span>}
+                  {site && (
+                    <Link to={`/sites/${site.id}`} onClick={e => e.stopPropagation()} className="mic-site">{site.name}</Link>
+                  )}
+                  {i.priority && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: priColor }}>
+                      {PRIORITY_LABEL[i.priority] || i.priority}
+                    </span>
+                  )}
+                  <span className="mic-date">{fmtDate(i.reported_date || i.created_at)}</span>
+                </div>
+              </div>
+
+              {isOpen && (
+                <>
+                  <div className="mic-detail">
+                    {(i.cx_issue_type || i.cx_zone || i.cx_source || i.reported_by || i.closed_date) && (
+                      <div className="mic-detail-grid">
+                        {i.cx_issue_type && (
+                          <div>
+                            <div className="mic-detail-label">Issue Type</div>
+                            <div className="mic-detail-value">{i.cx_issue_type}</div>
+                          </div>
+                        )}
+                        {i.cx_zone && (
+                          <div>
+                            <div className="mic-detail-label">Zone</div>
+                            <div className="mic-detail-value">{i.cx_zone}</div>
+                          </div>
+                        )}
+                        {i.cx_source && (
+                          <div>
+                            <div className="mic-detail-label">Source</div>
+                            <div className="mic-detail-value">{i.cx_source}</div>
+                          </div>
+                        )}
+                        {i.reported_by && (
+                          <div>
+                            <div className="mic-detail-label">Reported By</div>
+                            <div className="mic-detail-value">{i.reported_by}</div>
+                          </div>
+                        )}
+                        {i.closed_date && (
+                          <div>
+                            <div className="mic-detail-label">Closed</div>
+                            <div className="mic-detail-value">{fmtDate(i.closed_date)}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {i.description && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div className="mic-detail-label" style={{ marginBottom: 4 }}>Description</div>
+                        <div className="mic-detail-text">{i.description}</div>
+                      </div>
+                    )}
+                    {i.resolution_notes && (
+                      <div>
+                        <div className="mic-detail-label" style={{ marginBottom: 4 }}>Comments / Resolution</div>
+                        <div className="mic-detail-text" style={{ background: 'var(--bg2)', borderRadius: 6, padding: '8px 10px' }}>{i.resolution_notes}</div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mic-actions">
+                    <button className="btn btn-sm btn-secondary" onClick={() => setEditingIssue(i)}>Edit</button>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {/* Modal */}

@@ -140,7 +140,8 @@ export function Tickets() {
           <div className="toolbar-spacer" />
         </div>
 
-        <div className="table-wrap">
+        {/* Desktop table */}
+        <div className="table-wrap desktop-only">
           {loading ? (
             <div style={{ color: 'var(--text3)', padding: 40, textAlign: 'center' }}>Loading…</div>
           ) : (
@@ -232,6 +233,59 @@ export function Tickets() {
             </table>
           )}
         </div>
+
+        {/* Mobile card list */}
+        {loading ? (
+          <div className="mobile-only" style={{ color: 'var(--text3)', padding: 32, textAlign: 'center' }}>Loading…</div>
+        ) : (
+          <div className="mobile-ticket-cards mobile-only">
+            {filtered.length === 0 ? (
+              <div style={{ color: 'var(--text3)', textAlign: 'center', padding: 24 }}>No tickets found</div>
+            ) : filtered.map(t => {
+              const typeStyle = TICKET_TYPE_STYLE[t.ticket_type || ''] || {
+                background: 'var(--bg3)', color: 'var(--text2)',
+              }
+              return (
+                <div key={t.id} className="mobile-ticket-card" onClick={() => navigate(`/tickets/${t.id}`)}>
+                  <div className="mtc-header">
+                    <span className="badge" style={typeStyle}>
+                      {TICKET_TYPE_LABELS[t.ticket_type || ''] || t.ticket_type || '—'}
+                    </span>
+                    <StatusBadge status={t.status} size="sm" />
+                  </div>
+                  <div className="mtc-title">{getTicketSummary(t)}</div>
+                  <div className="mtc-meta">
+                    <span>{siteName(t.site_id)}</span>
+                    {t.unit_tag && <span className="mtc-tag">{t.unit_tag}</span>}
+                  </div>
+                  <div className="mtc-footer">
+                    {t.priority && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700,
+                        color: PRIORITY_COLOR[t.priority] || 'var(--text3)',
+                        background: `${PRIORITY_COLOR[t.priority] || '#6b7280'}18`,
+                        border: `1px solid ${PRIORITY_COLOR[t.priority] || '#6b7280'}44`,
+                        borderRadius: 99, padding: '2px 8px',
+                      }}>
+                        {t.priority.charAt(0).toUpperCase() + t.priority.slice(1)}
+                      </span>
+                    )}
+                    <span className="mtc-date">
+                      {t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'}
+                    </span>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      style={{ color: 'var(--red)', padding: '4px 10px' }}
+                      onClick={e => { e.stopPropagation(); handleDelete(t.id) }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
