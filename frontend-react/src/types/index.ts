@@ -214,6 +214,8 @@ export interface JobSchedule {
   notes?: string
   scope?: string
   techs_needed: number
+  technician_ids?: string[]
+  pm_user_id?: string
   created_at?: string
   updated_at?: string
 }

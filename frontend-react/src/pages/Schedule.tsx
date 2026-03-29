@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { API } from '../api'
-import type { Schedule as ScheduleJob, Site, Technician, User } from '../types'
+import type { JobSchedule as ScheduleJob, Site, Technician, User } from '../types'
 import { Modal } from '../components/Modal'
 import { useToastFn } from '../App'
 
@@ -69,13 +69,9 @@ function pmInitials(userId: string, users: User[]): string {
 // ── Extended job type (API may return extra fields) ────────────────────────────
 
 interface Job extends ScheduleJob {
-  priority?: number
-  job_type?: string
-  pm_user_id?: string
-  contract_number?: string
+  title?: string
   name?: string
-  notes?: string
-  technician_ids?: string[]
+  description?: string
   _techCount?: number
 }
 

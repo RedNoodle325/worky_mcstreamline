@@ -91,13 +91,6 @@ export function Dashboard() {
     return si.some(i => i.priority === 'critical')
   }).length
 
-  const criticalIssues = issues
-    .filter(i =>
-      (i.priority === 'critical' || i.priority === 'high') &&
-      (i.status === 'open' || i.status === 'in_progress')
-    )
-    .sort((a, b) => (a.priority === 'critical' ? 0 : 1) - (b.priority === 'critical' ? 0 : 1))
-
   // Per-site issue counts, sorted: emergency → problem → operational
   const siteIssueStats = sites.map(s => {
     const si = issues.filter(i => i.site_id === s.id && (i.status === 'open' || i.status === 'in_progress'))
@@ -108,7 +101,7 @@ export function Dashboard() {
     return { site: s, total, critical, high, status }
   }).filter(s => s.total > 0)
     .sort((a, b) => {
-      const order = { emergency: 0, problem: 1, operational: 2 }
+      const order: Record<string, number> = { emergency: 0, problem: 1, operational: 2 }
       return order[a.status] - order[b.status] || b.critical - a.critical || b.total - a.total
     })
 
