@@ -19,6 +19,7 @@ pub struct Issue {
     pub reported_date: Option<NaiveDateTime>,
     pub closed_date: Option<NaiveDateTime>,
     pub cxalloy_issue_id: Option<String>,
+    pub cxalloy_url: Option<String>,
     pub cx_zone: Option<String>,
     pub cx_issue_type: Option<String>,
     pub cx_source: Option<String>,
@@ -41,6 +42,7 @@ pub struct CreateIssue {
     pub cx_zone: Option<String>,
     pub cx_issue_type: Option<String>,
     pub cx_source: Option<String>,
+    pub cxalloy_url: Option<String>,
     pub service_ticket_id: Option<Uuid>,
     pub reported_date: Option<String>,
     pub closed_date: Option<String>,
@@ -59,5 +61,6 @@ pub struct UpdateIssue {
     pub closed_date: Option<String>,
     pub cx_zone: Option<String>,
     pub cx_issue_type: Option<String>,
+    pub cxalloy_url: Option<String>,
     pub service_ticket_id: Option<Uuid>,
 }

@@ -100,6 +100,7 @@ export interface Issue {
   reported_date?: string
   closed_date?: string
   cxalloy_issue_id?: string
+  cxalloy_url?: string
   cx_zone?: string
   cx_issue_type?: string
   cx_source?: string
