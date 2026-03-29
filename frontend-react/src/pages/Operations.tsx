@@ -265,7 +265,7 @@ export function Operations() {
     setLoading(true)
     try {
       const [j, t, s] = await Promise.all([
-        API.schedule.listJobs({ status: 'scheduled,in_progress' }),
+        API.schedule.listJobs(),
         API.schedule.listTechs(),
         API.sites.list(),
       ])
