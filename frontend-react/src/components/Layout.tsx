@@ -42,7 +42,7 @@ export function Layout() {
         {/* Logo */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="sidebar-logo-mark">🏀</div>
+            <div className="sidebar-logo-mark">ZK</div>
             <span className="sidebar-logo-m">Zak's Office</span>
           </div>
         </div>
