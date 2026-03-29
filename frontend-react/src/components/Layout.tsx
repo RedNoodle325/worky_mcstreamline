@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   LayoutDashboard, Ticket, AlertTriangle,
   Users, FileText, CheckSquare, Wrench, Sun, Moon,
-  Eye, Pencil, LogOut, Menu, ChevronLeft,
+  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2,
 } from 'lucide-react'
 
 const NAV = [
@@ -17,6 +17,7 @@ const NAV = [
   { to: '/notes',       label: 'Notes',       Icon: FileText },
   { to: '/todos',       label: 'To-Do',       Icon: CheckSquare },
   { to: '/operations',  label: 'Operations',  Icon: Wrench },
+  { to: '/report',      label: 'Report',      Icon: BarChart2 },
 ]
 
 export function Layout() {
