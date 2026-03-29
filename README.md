@@ -1,6 +1,6 @@
 # Worky McStreamline
 
-A field service and commissioning management app for tracking HVAC/cooling system installations, service tickets, scheduling, and supply chain — built with a Rust/Axum backend and a React frontend.
+A field service and commissioning management app for tracking HVAC/cooling system installations, service tickets, scheduling, and supply chain.
 
 ## Features
 
@@ -31,58 +31,44 @@ A field service and commissioning management app for tracking HVAC/cooling syste
 
 | Layer | Technology |
 |---|---|
-| Backend | Rust, Axum 0.7, Tokio |
-| Database | PostgreSQL via Supabase, SQLx |
-| Frontend | React 19, TypeScript, Vite |
+| Frontend + API | Next.js 15, TypeScript |
+| Database | PostgreSQL via Supabase |
 | Auth | JWT + bcrypt |
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Rust + Cargo](https://rustup.rs/)
-- [Bun](https://bun.sh/)
-- [sqlx-cli](https://github.com/launchbadge/sqlx): `cargo install sqlx-cli --no-default-features --features postgres`
+- [Node.js](https://nodejs.org/) 22+
 - A [Supabase](https://supabase.com/) project
 
 ### Setup
 
 ```bash
 # 1. Configure environment
-cp backend/.env.example backend/.env
-# Fill in DATABASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY
+cp worky-next/.env.example worky-next/.env
+# Fill in DATABASE_URL, SUPABASE_URL, SUPABASE_ANON_KEY, JWT_SECRET
 
-# 2. Run database migrations
-cd backend && sqlx migrate run
+# 2. Install dependencies
+cd worky-next && npm install
 
-# 3. Build the frontend
-cd frontend-react && bun install && bun build
-
-# 4. Start the backend (serves the frontend too)
-cd backend && FRONTEND_DIR=../frontend-react-dist cargo run
+# 3. Start the development server
+npm run dev
 ```
 
 The app runs at `http://localhost:3000`.
 
-For full deployment instructions (systemd service, production builds, etc.) see [DEPLOYMENT.md](./DEPLOYMENT.md).
-
 ## Project Structure
 
 ```
-backend/          Rust/Axum API server
+worky-next/           Next.js 15 app (frontend + API routes)
   src/
-    handlers/     Route handlers (auth, sites, units, tickets, schedule, ...)
-    models/       Database models
-    routes.rs     API route definitions
-  migrations/     SQL migration files
-
-frontend-react/   React + TypeScript frontend (Vite)
-  src/
-    pages/        Page components
-    components/   Shared UI components
-    api/          API client functions
-
-frontend-react-dist/  Production frontend build (generated)
+    app/              Pages and API routes
+    components/       Shared UI components
+    contexts/         React context providers
+    lib/              Auth, DB, and storage utilities
+    pages-impl/       Page implementation components
+    types/            TypeScript types
 ```
 
 ## License

@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50">
-  <text x="10" y="22" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#4C4B3D">server</text>
-  <text x="72" y="22" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#8B7355">farm</text>
-  <text x="10" y="38" font-family="Arial,sans-serif" font-size="8" fill="#888888" letter-spacing="2">DATA CENTERS</text>
-</svg>
