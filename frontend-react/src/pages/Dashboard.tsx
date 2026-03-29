@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API } from '../api'
 import { useToastFn } from '../App'
-import type { Site, Issue, ServiceTicket, Todo } from '../types'
+import type { Site, Issue, Todo } from '../types'
 
 
 const STATUS_COLOR: Record<string, string> = {
@@ -54,20 +54,17 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [sites, setSites] = useState<Site[]>([])
   const [issues, setIssues] = useState<Issue[]>([])
-  const [serviceTickets, setServiceTickets] = useState<ServiceTicket[]>([])
   const [todos, setTodos] = useState<Todo[]>([])
 
   useEffect(() => {
     Promise.all([
       API.sites.list(),
       API.issues.listAll().catch(() => [] as Issue[]),
-      API.serviceTickets.listAll().catch(() => [] as ServiceTicket[]),
       API.todos.list({ status: 'todo' }).catch(() => [] as Todo[]),
       API.todos.list({ status: 'in_progress' }).catch(() => [] as Todo[]),
-    ]).then(([s, i, st, todosOpen, todosInProgress]) => {
+    ]).then(([s, i, todosOpen, todosInProgress]) => {
       setSites(s)
       setIssues(i)
-      setServiceTickets(st)
       const merged = [...todosInProgress, ...todosOpen].sort((a, b) => {
         const order: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
         return (order[a.priority ?? 'normal'] ?? 2) - (order[b.priority ?? 'normal'] ?? 2)
@@ -84,7 +81,6 @@ export function Dashboard() {
 
   const siteMap = Object.fromEntries(sites.map(s => [s.id, s.name]))
   const openIssues = issues.filter(i => i.status === 'open' || i.status === 'in_progress').length
-  const openTickets = serviceTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length
   const emergencyCount = sites.filter(s => {
     const si = issues.filter(i => i.site_id === s.id && (i.status === 'open' || i.status === 'in_progress'))
     return si.some(i => i.priority === 'critical')
