@@ -1,6 +1,6 @@
 import type {
   Site, Unit, Contact, Contractor, Note, Issue, ServiceTicket, IssueLineLink,
-  Ticket, Todo, Schedule, JobSchedule, Technician, MsowDraft, WarrantyClaim, BomImport,
+  Ticket, Todo, JobSchedule, Technician, MsowDraft, WarrantyClaim, BomImport,
   BomItem, Campaign, SycoolSystem, User, JobNumber, LoginResponse, ImportResult,
 } from '../types'
 
