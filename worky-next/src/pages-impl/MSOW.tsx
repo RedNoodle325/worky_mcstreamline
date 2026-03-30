@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { API } from '../api'
 import type { Site, MsowDraft } from '../types'
 import { useToastFn } from '@/app/providers'
+import { ContactPicker } from '../components/ContactPicker'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -208,7 +209,20 @@ export function MSOW() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
-                {(['name', 'role', 'email', 'tel'] as const).map(k => (
+                <td style={{ padding: '3px 3px' }}>
+                  <ContactPicker
+                    value={r.name}
+                    onChange={v => set('personnel', rows.map((row, idx) => idx === i ? { ...row, name: v } : row))}
+                    onSelect={c => set('personnel', rows.map((row, idx) => idx === i ? {
+                      ...row,
+                      name: c.name,
+                      email: c.email || row.email,
+                      tel: c.phone || row.tel,
+                    } : row))}
+                    style={IS}
+                  />
+                </td>
+                {(['role', 'email', 'tel'] as const).map(k => (
                   <td key={k} style={{ padding: '3px 3px' }}>
                     <input value={r[k]} onChange={e => set('personnel', rows.map((row, idx) => idx === i ? { ...row, [k]: e.target.value } : row))} style={IS} />
                   </td>
@@ -302,7 +316,13 @@ export function MSOW() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
-                <td style={{ padding: '3px 3px' }}><input value={r.name} onChange={e => set('acceptance', rows.map((row, idx) => idx === i ? { ...row, name: e.target.value } : row))} style={IS} /></td>
+                <td style={{ padding: '3px 3px' }}>
+                  <ContactPicker
+                    value={r.name}
+                    onChange={v => set('acceptance', rows.map((row, idx) => idx === i ? { ...row, name: v } : row))}
+                    style={IS}
+                  />
+                </td>
                 <td style={{ padding: '3px 3px' }}><input value={r.signature} onChange={e => set('acceptance', rows.map((row, idx) => idx === i ? { ...row, signature: e.target.value } : row))} style={IS} /></td>
                 <td style={{ padding: '3px 3px' }}><input type="date" value={r.date} onChange={e => set('acceptance', rows.map((row, idx) => idx === i ? { ...row, date: e.target.value } : row))} style={IS} /></td>
                 <td style={{ padding: '3px 3px' }}><button type="button" className="btn btn-sm btn-secondary" onClick={() => set('acceptance', rows.filter((_, idx) => idx !== i))} style={{ padding: '3px 7px' }}>✕</button></td>
@@ -392,8 +412,8 @@ export function MSOW() {
           <FG label="CMMS WO #"><input value={form.cmms_wo} onChange={e => set('cmms_wo', e.target.value)} style={IS} /></FG>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FG label="Contractor's Name"><input value={form.contractor_name} onChange={e => set('contractor_name', e.target.value)} style={IS} /></FG>
-          <FG label="Author's Name"><input value={form.author_name} onChange={e => set('author_name', e.target.value)} style={IS} /></FG>
+          <FG label="Contractor's Name"><ContactPicker value={form.contractor_name} onChange={v => set('contractor_name', v)} style={IS} /></FG>
+          <FG label="Author's Name"><ContactPicker value={form.author_name} onChange={v => set('author_name', v)} style={IS} /></FG>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
           <FG label="POC Phone"><input type="tel" value={form.poc_phone} onChange={e => set('poc_phone', e.target.value)} style={IS} /></FG>
@@ -403,7 +423,7 @@ export function MSOW() {
         <FG label="Site Address"><input value={form.site_address} onChange={e => set('site_address', e.target.value)} style={IS} /></FG>
         <FG label="Description of Task / Activity"><textarea rows={3} value={form.task_description} onChange={e => set('task_description', e.target.value)} style={TA(3)} /></FG>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FG label="Site Supervisor"><input value={form.site_supervisor} onChange={e => set('site_supervisor', e.target.value)} style={IS} /></FG>
+          <FG label="Site Supervisor"><ContactPicker value={form.site_supervisor} onChange={v => set('site_supervisor', v)} style={IS} /></FG>
           <span />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -411,7 +431,7 @@ export function MSOW() {
           <FG label="Supervisor Email"><input type="email" value={form.supervisor_email} onChange={e => set('supervisor_email', e.target.value)} style={IS} /></FG>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FG label="Safety Officer"><input value={form.safety_officer} onChange={e => set('safety_officer', e.target.value)} style={IS} /></FG>
+          <FG label="Safety Officer"><ContactPicker value={form.safety_officer} onChange={v => set('safety_officer', v)} style={IS} /></FG>
           <span />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -473,7 +493,7 @@ export function MSOW() {
           <FG label="Facility Operations Center #"><input type="tel" value={form.foc_number} onChange={e => set('foc_number', e.target.value)} style={IS} /></FG>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <FG label="On-Site First Aider Name"><input value={form.first_aider} onChange={e => set('first_aider', e.target.value)} style={IS} /></FG>
+          <FG label="On-Site First Aider Name"><ContactPicker value={form.first_aider} onChange={v => set('first_aider', v)} style={IS} /></FG>
           <FG label="First Aid Box Location"><input value={form.first_aid_location} onChange={e => set('first_aid_location', e.target.value)} style={IS} /></FG>
         </div>
         <FG label="Nearest Hospital Location"><input value={form.hospital_location} onChange={e => set('hospital_location', e.target.value)} style={IS} /></FG>
@@ -485,7 +505,7 @@ export function MSOW() {
       {/* Section 6 — Daily Briefing Record */}
       <ColCard title="6. Daily Briefing Record">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          <FG label="Briefing Delivered By"><input value={form.briefing_by} onChange={e => set('briefing_by', e.target.value)} style={IS} /></FG>
+          <FG label="Briefing Delivered By"><ContactPicker value={form.briefing_by} onChange={v => set('briefing_by', v)} style={IS} /></FG>
           <FG label="Position"><input value={form.briefing_position} onChange={e => set('briefing_position', e.target.value)} style={IS} /></FG>
           <FG label="Briefing Date"><input type="date" value={form.briefing_date} onChange={e => set('briefing_date', e.target.value)} style={IS} /></FG>
         </div>

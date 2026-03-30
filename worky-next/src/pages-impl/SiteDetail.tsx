@@ -7,6 +7,7 @@ import { API } from '../api'
 import type { Site, Unit, Contact, Note, Issue, ServiceTicket, JobNumber } from '../types'
 import { Modal } from '../components/Modal'
 import { StatusBadge } from '../components/StatusBadge'
+import { ContactPicker } from '../components/ContactPicker'
 import { useToastFn } from '@/app/providers'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -201,7 +202,7 @@ function ContactModal({ contact, siteId, onClose, onSaved, onDeleted }: ContactM
     <Modal title={contact?.id ? 'Edit Contact' : 'Add Contact'} onClose={onClose}>
       <div className="form-group" style={{ marginBottom: 12 }}>
         <label>Name *</label>
-        <input value={name} onChange={e => setName(e.target.value)} autoFocus />
+        <ContactPicker value={name} onChange={setName} autoFocus />
       </div>
       <div className="form-group" style={{ marginBottom: 12 }}>
         <label>Type</label>
@@ -306,7 +307,7 @@ function SiteNoteModal({ note, siteId, onClose, onSaved, onDeleted }: SiteNoteMo
         </div>
         <div className="form-group" style={{ flex: 1 }}>
           <label>Author</label>
-          <input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="Your name (optional)" />
+          <ContactPicker value={authorName} onChange={setAuthorName} placeholder="Your name (optional)" />
         </div>
       </div>
       <div className="form-group" style={{ marginBottom: 16 }}>
