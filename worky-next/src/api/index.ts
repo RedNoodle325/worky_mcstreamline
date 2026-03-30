@@ -126,6 +126,8 @@ export const API = {
     listSite: (siteId: string) => apiFetch<Note[]>(`/sites/${siteId}/notes`),
     listUnit: (unitId: string) => apiFetch<Note[]>(`/units/${unitId}/notes`),
     search: (q: string) => apiFetch<Note[]>(`/notes/search?q=${encodeURIComponent(q)}`),
+    create: (data: Partial<Note>) =>
+      apiFetch<Note>('/notes', { method: 'POST', body: JSON.stringify(data) }),
     createSite: (siteId: string, data: Partial<Note>) =>
       apiFetch<Note>(`/sites/${siteId}/notes`, { method: 'POST', body: JSON.stringify(data) }),
     createUnit: (unitId: string, data: Partial<Note>) =>
@@ -134,8 +136,6 @@ export const API = {
       apiFetch<Note>(`/notes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       apiFetch(`/notes/${id}`, { method: 'DELETE' }),
-    summarizeEmail: (data: { email_text: string; site_id?: string }) =>
-      apiFetch<Note>('/notes/summarize-email', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // Issues (commissioning)
