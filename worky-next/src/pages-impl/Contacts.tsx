@@ -1,11 +1,59 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
 import type { Site, Contact, Contractor } from '../types'
+
+const TEMPLATE_HEADERS = ['name', 'company', 'phone', 'email', 'notes']
+const TEMPLATE_EXAMPLE = ['Jane Smith', 'Acme Corp', '(555) 123-4567', 'jane@acme.com', 'West region']
+
+function downloadTemplate() {
+  const rows = [TEMPLATE_HEADERS, TEMPLATE_EXAMPLE]
+  const csv = rows.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'contacts_template.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim())
+  if (lines.length < 2) return []
+
+  const parseRow = (line: string): string[] => {
+    const fields: string[] = []
+    let cur = ''
+    let inQuote = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (inQuote) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++ }
+        else if (ch === '"') { inQuote = false }
+        else { cur += ch }
+      } else {
+        if (ch === '"') { inQuote = true }
+        else if (ch === ',') { fields.push(cur); cur = '' }
+        else { cur += ch }
+      }
+    }
+    fields.push(cur)
+    return fields
+  }
+
+  const headers = parseRow(lines[0]).map(h => h.trim().toLowerCase())
+  return lines.slice(1).map(line => {
+    const vals = parseRow(line)
+    const obj: Record<string, string> = {}
+    headers.forEach((h, i) => { obj[h] = (vals[i] ?? '').trim() })
+    return obj
+  }).filter(row => row['name'])
+}
 
 interface NormalizedContact {
   _type: 'site_contact' | 'contractor'
@@ -43,6 +91,8 @@ export function Contacts() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<NewContractorForm>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const importRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     setLoading(true)
@@ -121,6 +171,43 @@ export function Contacts() {
     }
   }
 
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const rows = parseCSV(text)
+      if (rows.length === 0) {
+        toast('No valid rows found in file', 'error')
+        return
+      }
+      let ok = 0
+      let fail = 0
+      await Promise.all(rows.map(async row => {
+        try {
+          await API.contractors.create({
+            name: row['name'],
+            company: row['company'] || undefined,
+            phone: row['phone'] || undefined,
+            email: row['email'] || undefined,
+            notes: row['notes'] || undefined,
+          })
+          ok++
+        } catch {
+          fail++
+        }
+      }))
+      toast(`Imported ${ok} contact${ok !== 1 ? 's' : ''}${fail > 0 ? `, ${fail} failed` : ''}`, fail > 0 ? 'error' : 'success')
+      load()
+    } catch (e) {
+      toast('Failed to read file: ' + (e as Error).message, 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const filtered = siteFilter
     ? contacts.filter(c => c._type === 'site_contact' && c.siteId === siteFilter)
     : contacts
@@ -132,9 +219,28 @@ export function Contacts() {
           <h1>Contacts</h1>
           <div className="page-subtitle">All contacts across sites and contractors</div>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          + Add Contact
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary" onClick={downloadTemplate}>
+            ↓ Template
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => importRef.current?.click()}
+            disabled={importing}
+          >
+            {importing ? 'Importing…' : '↑ Import CSV'}
+          </button>
+          <input
+            ref={importRef}
+            type="file"
+            accept=".csv,text/csv"
+            style={{ display: 'none' }}
+            onChange={handleImport}
+          />
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            + Add Contact
+          </button>
+        </div>
       </div>
 
       {/* Filter bar */}
