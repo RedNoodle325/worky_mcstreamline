@@ -141,6 +141,12 @@ interface ContactModalProps {
   onDeleted?: (id: string) => void
 }
 
+function toMuntersEmail(name: string): string {
+  const parts = name.trim().toLowerCase().split(/\s+/)
+  if (parts.length < 2) return ''
+  return `${parts[0]}.${parts[parts.length - 1]}@munters.com`
+}
+
 function ContactModal({ contact, siteId, onClose, onSaved, onDeleted }: ContactModalProps) {
   const toast = useToastFn()
   const [name, setName] = useState(contact?.name || '')
@@ -149,6 +155,15 @@ function ContactModal({ contact, siteId, onClose, onSaved, onDeleted }: ContactM
   const [title, setTitle] = useState(contact?.title || '')
   const [contactType, setContactType] = useState(contact?.contact_type || 'site_contact')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (contactType === 'munters_employee') {
+      const generated = toMuntersEmail(name)
+      if (generated && (!email || email.endsWith('@munters.com'))) {
+        setEmail(generated)
+      }
+    }
+  }, [name, contactType])
 
   const handleSubmit = async () => {
     if (!name.trim()) return

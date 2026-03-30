@@ -7,7 +7,8 @@ export async function GET(req: NextRequest) {
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: 401 })
 
   const rows = await sql`
-    SELECT * FROM public.contractors
+    SELECT id, contact_name AS name, company_name AS company, title, email, phone, region, notes, created_at
+    FROM public.contractors
     ORDER BY company_name ASC
   `
   return NextResponse.json(rows)

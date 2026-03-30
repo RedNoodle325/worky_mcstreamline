@@ -12,7 +12,8 @@ export async function GET(
   const { id } = await params
 
   const rows = await sql`
-    SELECT * FROM public.contractors
+    SELECT id, contact_name AS name, company_name AS company, title, email, phone, region, notes, created_at
+    FROM public.contractors
     WHERE id = ${id}
   `
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -28,7 +29,9 @@ export async function PUT(
 
   const { id } = await params
   const body = await req.json()
-  const { company_name, contact_name, title, email, phone, region, notes, is_active } = body
+  const { title, email, phone, region, notes, is_active } = body
+  const company_name = body.company_name ?? body.company ?? undefined
+  const contact_name = body.contact_name ?? body.name ?? undefined
 
   const rows = await sql`
     UPDATE public.contractors
@@ -43,7 +46,7 @@ export async function PUT(
       is_active    = COALESCE(${is_active ?? null}, is_active),
       updated_at   = now()
     WHERE id = ${id}
-    RETURNING *
+    RETURNING id, contact_name AS name, company_name AS company, title, email, phone, region, notes, created_at
   `
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(rows[0])
