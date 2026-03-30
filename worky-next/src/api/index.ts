@@ -134,6 +134,8 @@ export const API = {
       apiFetch<Note>(`/notes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       apiFetch(`/notes/${id}`, { method: 'DELETE' }),
+    summarizeEmail: (data: { email_text: string; site_id?: string }) =>
+      apiFetch<Note>('/notes/summarize-email', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   // Issues (commissioning)

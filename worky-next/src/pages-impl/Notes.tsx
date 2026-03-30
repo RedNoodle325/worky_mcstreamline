@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
-import type { Note } from '../types'
+import type { Note, Site } from '../types'
 
 const NOTE_TYPE_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
   meeting:    { icon: '👥', label: 'Meeting',    color: '#7c3aed' },
@@ -102,6 +102,13 @@ export function Notes() {
   const [saving, setSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Email summarization state
+  const [summarizeOpen, setSummarizeOpen] = useState(false)
+  const [summarizeEmail, setSummarizeEmail] = useState('')
+  const [summarizeSiteId, setSummarizeSiteId] = useState('')
+  const [summarizeSites, setSummarizeSites] = useState<Site[]>([])
+  const [summarizing, setSummarizing] = useState(false)
+
   async function doSearch(q: string) {
     setSearching(true)
     setSearched(true)
@@ -170,6 +177,39 @@ export function Notes() {
     }
   }
 
+  async function openSummarize() {
+    setSummarizeEmail('')
+    setSummarizeSiteId('')
+    setSummarizeOpen(true)
+    try {
+      const sites = await API.sites.list()
+      setSummarizeSites(sites)
+    } catch {
+      // non-fatal, site selector just won't populate
+    }
+  }
+
+  async function handleSummarize() {
+    if (!summarizeEmail.trim()) {
+      toast('Paste an email first', 'error')
+      return
+    }
+    setSummarizing(true)
+    try {
+      await API.notes.summarizeEmail({
+        email_text: summarizeEmail,
+        site_id: summarizeSiteId || undefined,
+      })
+      toast('Email summarized and saved as a note')
+      setSummarizeOpen(false)
+      doSearch(query)
+    } catch (e) {
+      toast('Error: ' + (e as Error).message, 'error')
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
   async function handleDeleteNote() {
     if (!editState) return
     if (!confirm('Delete this note?')) return
@@ -222,6 +262,9 @@ export function Notes() {
           <h1 style={{ margin: 0 }}>Notes</h1>
           <div className="page-subtitle">Search notes across all sites and units</div>
         </div>
+        <button className="btn btn-primary" onClick={openSummarize}>
+          ✨ Summarize Email
+        </button>
       </div>
 
       {/* Search bar */}
@@ -346,6 +389,53 @@ export function Notes() {
             </div>
           ))}
         </>
+      )}
+
+      {/* Summarize email modal */}
+      {summarizeOpen && (
+        <Modal title="Summarize Email with AI" onClose={() => setSummarizeOpen(false)} maxWidth={560}>
+          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16, marginTop: 0 }}>
+            Paste an email below. AI will extract the key details and save it as an Email note.
+          </p>
+
+          <div className="form-group" style={{ marginBottom: 12 }}>
+            <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)', display: 'block', marginBottom: 4 }}>
+              Site (optional)
+            </label>
+            <select
+              value={summarizeSiteId}
+              onChange={e => setSummarizeSiteId(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            >
+              <option value="">— No site —</option>
+              {summarizeSites.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)', display: 'block', marginBottom: 4 }}>
+              Email Content
+            </label>
+            <textarea
+              rows={12}
+              value={summarizeEmail}
+              onChange={e => setSummarizeEmail(e.target.value)}
+              placeholder="Paste the full email text here…"
+              style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 12, resize: 'vertical' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button className="btn btn-secondary" onClick={() => setSummarizeOpen(false)}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleSummarize} disabled={summarizing}>
+              {summarizing ? 'Summarizing…' : '✨ Summarize & Save'}
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* Edit modal */}
