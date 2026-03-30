@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { API } from '../api'
 import type { Site, Unit, Contact, Note, Issue, ServiceTicket, JobNumber } from '../types'
 import { Modal } from '../components/Modal'
@@ -1248,8 +1250,8 @@ export function SiteDetail() {
                       >✕</button>
                     </div>
                   </div>
-                  <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--text)' }}>
-                    {n.content}
+                  <div className="md-content" style={{ fontSize: 13 }}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{n.content || ''}</ReactMarkdown>
                   </div>
                 </div>
               )
