@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
@@ -44,6 +46,14 @@ interface NoteGroup {
   notes: Note[]
 }
 
+function MarkdownField({ content, size = 13 }: { content: string; size?: number }) {
+  return (
+    <div className="md-content" style={{ fontSize: size }}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    </div>
+  )
+}
+
 function StructuredContent({ parsed }: { parsed: ParsedContent }) {
   return (
     <div style={{ marginTop: 4 }}>
@@ -54,7 +64,10 @@ function StructuredContent({ parsed }: { parsed: ParsedContent }) {
             <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
               {CONTENT_LABELS[k] || k}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{v}</div>
+            {TEXTAREA_FIELDS.has(k)
+              ? <MarkdownField content={v} size={12} />
+              : <div style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{v}</div>
+            }
           </div>
         ))
       }
@@ -63,9 +76,7 @@ function StructuredContent({ parsed }: { parsed: ParsedContent }) {
           <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
             Notes
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text)', whiteSpace: 'pre-wrap', marginTop: 2 }}>
-            {parsed.notes}
-          </div>
+          <MarkdownField content={parsed.notes} />
         </div>
       )}
     </div>
@@ -76,6 +87,7 @@ interface EditState {
   note: Note
   type: string
   fields: Record<string, string>
+  preview: boolean
 }
 
 export function Notes() {
@@ -123,7 +135,7 @@ export function Notes() {
     } else {
       fields['notes'] = note.content || ''
     }
-    setEditState({ note, type: activeType, fields })
+    setEditState({ note, type: activeType, fields, preview: false })
   }
 
   function switchType(type: string) {
@@ -132,7 +144,7 @@ export function Notes() {
     for (const k of (NOTE_TEMPLATES[type] || NOTE_TEMPLATES.note)) {
       fields[k] = ''
     }
-    setEditState({ ...editState, type, fields })
+    setEditState({ ...editState, type, fields, preview: false })
   }
 
   async function handleSaveNote() {
@@ -326,11 +338,7 @@ export function Notes() {
 
                     {parsed
                       ? <StructuredContent parsed={parsed} />
-                      : (
-                        <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--text)' }}>
-                          {highlight(n.content || '')}
-                        </div>
-                      )
+                      : <MarkdownField content={n.content || ''} />
                     }
                   </div>
                 )
@@ -375,16 +383,49 @@ export function Notes() {
             const isDate = field === 'date'
             return (
               <div key={field} className="form-group" style={{ marginBottom: 10 }}>
-                <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
-                  {label}
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
+                    {label}
+                  </label>
+                  {isTextarea && (
+                    <button
+                      type="button"
+                      onClick={() => setEditState(s => s ? { ...s, preview: !s.preview } : s)}
+                      style={{
+                        fontSize: 10, fontWeight: 600, padding: '1px 8px',
+                        border: '1px solid var(--border)', borderRadius: 4,
+                        background: editState.preview ? 'var(--accent)' : 'transparent',
+                        color: editState.preview ? '#fff' : 'var(--text3)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {editState.preview ? 'Edit' : 'Preview'}
+                    </button>
+                  )}
+                </div>
                 {isTextarea ? (
-                  <textarea
-                    rows={3}
-                    value={editState.fields[field] || ''}
-                    onChange={e => setEditState(s => s ? { ...s, fields: { ...s.fields, [field]: e.target.value } } : s)}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
-                  />
+                  editState.preview ? (
+                    <div
+                      className="md-content"
+                      style={{
+                        minHeight: 72, padding: '8px 10px',
+                        border: '1px solid var(--border)', borderRadius: 8,
+                        background: 'var(--bg3)', fontSize: 13,
+                      }}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {editState.fields[field] || '*nothing yet*'}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <textarea
+                      rows={4}
+                      value={editState.fields[field] || ''}
+                      onChange={e => setEditState(s => s ? { ...s, fields: { ...s.fields, [field]: e.target.value } } : s)}
+                      style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 13 }}
+                      placeholder="Markdown supported"
+                    />
+                  )
                 ) : (
                   <input
                     type={isDate ? 'datetime-local' : 'text'}
