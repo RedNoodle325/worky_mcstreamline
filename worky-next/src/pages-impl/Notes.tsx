@@ -10,34 +10,123 @@ import { Modal } from '../components/Modal'
 import type { Note, Site } from '../types'
 
 const NOTE_TYPE_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
-  meeting:    { icon: '👥', label: 'Meeting',    color: '#7c3aed' },
-  phone_call: { icon: '📞', label: 'Phone Call', color: '#2563eb' },
-  email:      { icon: '✉️',  label: 'Email',      color: '#0891b2' },
-  note:       { icon: '📝', label: 'Note',       color: '#6b7280' },
+  meeting:    { icon: '👥', label: 'Meeting',     color: '#7c3aed' },
+  phone_call: { icon: '📞', label: 'Phone Call',  color: '#2563eb' },
+  email:      { icon: '✉️',  label: 'Email',       color: '#0891b2' },
+  note:       { icon: '📝', label: 'Note',        color: '#6b7280' },
+  improvement:{ icon: '💡', label: 'Improvement', color: '#d97706' },
+  follow_up:  { icon: '👤', label: 'Follow Up',   color: '#16a34a' },
 }
 
-const NOTE_TEMPLATES: Record<string, string[]> = {
-  meeting:    ['date', 'attendees', 'agenda', 'notes', 'actions'],
-  phone_call: ['date', 'with', 'purpose', 'notes', 'actions'],
-  email:      ['date', 'to_from', 'subject', 'notes', 'actions'],
-  note:       ['notes'],
+// Site-related note types
+const SITE_NOTE_TYPES = ['meeting', 'phone_call', 'email', 'note']
+// Job-level note types (not site-specific)
+const JOB_NOTE_TYPES = ['improvement', 'follow_up', 'note', 'meeting', 'phone_call', 'email']
+
+const MARKDOWN_TEMPLATES: Record<string, string> = {
+  meeting: `# Meeting Notes
+
+**Date:**
+**Attendees:**
+**Location / Call Link:**
+
+## Agenda
+
+
+## Notes
+
+
+## Action Items
+- `,
+  phone_call: `# Phone Call
+
+**Date:**
+**With:**
+**Purpose:**
+
+## Notes
+
+
+## Action Items
+- `,
+  email: `# Email
+
+**Date:**
+**To / From:**
+**Subject:**
+
+## Notes
+
+
+## Action Items
+- `,
+  note: '',
+  improvement: `# Company Improvement
+
+## Observation
+
+
+## Suggestion
+
+
+## Priority
+Low / Medium / High
+`,
+  follow_up: `# Follow Up
+
+**Person:**
+**Topic:**
+
+## Notes
+
+
+## Next Steps
+- `,
 }
 
-const CONTENT_LABELS: Record<string, string> = {
-  date: 'Date', attendees: 'Attendees', agenda: 'Agenda',
-  notes: 'Notes', actions: 'Action Items', with: 'With',
-  purpose: 'Purpose', to_from: 'To / From', subject: 'Subject',
+// Convert legacy JSON-structured notes to markdown
+function jsonToMarkdown(parsed: Record<string, string>, noteType: string): string {
+  if (noteType === 'meeting') {
+    const parts: string[] = ['# Meeting Notes']
+    if (parsed.date)      parts.push(`\n**Date:** ${parsed.date}`)
+    if (parsed.attendees) parts.push(`**Attendees:** ${parsed.attendees}`)
+    if (parsed.agenda)    parts.push(`\n## Agenda\n${parsed.agenda}`)
+    if (parsed.notes)     parts.push(`\n## Notes\n${parsed.notes}`)
+    if (parsed.actions)   parts.push(`\n## Action Items\n${parsed.actions}`)
+    return parts.join('\n')
+  }
+  if (noteType === 'phone_call') {
+    const parts: string[] = ['# Phone Call']
+    if (parsed.date)    parts.push(`\n**Date:** ${parsed.date}`)
+    if (parsed.with)    parts.push(`**With:** ${parsed.with}`)
+    if (parsed.purpose) parts.push(`**Purpose:** ${parsed.purpose}`)
+    if (parsed.notes)   parts.push(`\n## Notes\n${parsed.notes}`)
+    if (parsed.actions) parts.push(`\n## Action Items\n${parsed.actions}`)
+    return parts.join('\n')
+  }
+  if (noteType === 'email') {
+    const parts: string[] = ['# Email']
+    if (parsed.date)    parts.push(`\n**Date:** ${parsed.date}`)
+    if (parsed.to_from) parts.push(`**To / From:** ${parsed.to_from}`)
+    if (parsed.subject) parts.push(`**Subject:** ${parsed.subject}`)
+    if (parsed.notes)   parts.push(`\n## Notes\n${parsed.notes}`)
+    if (parsed.actions) parts.push(`\n## Action Items\n${parsed.actions}`)
+    return parts.join('\n')
+  }
+  // generic
+  return parsed.notes || Object.values(parsed).join('\n')
 }
 
-const TEXTAREA_FIELDS = new Set(['notes', 'agenda', 'actions', 'purpose'])
-
-type ParsedContent = Record<string, string>
-
-function parseContent(content?: string): ParsedContent | null {
-  if (!content) return null
-  const c = content.trim()
-  if (!c.startsWith('{')) return null
-  try { return JSON.parse(c) } catch { return null }
+function getEditableContent(note: Note): string {
+  const raw = note.content || ''
+  const trimmed = raw.trim()
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      return jsonToMarkdown(parsed, note.note_type || 'note')
+    } catch { /* fall through */ }
+  }
+  return raw
 }
 
 interface NoteGroup {
@@ -46,48 +135,39 @@ interface NoteGroup {
   notes: Note[]
 }
 
-function MarkdownField({ content, size = 13 }: { content: string; size?: number }) {
-  return (
-    <div className="md-content" style={{ fontSize: size }}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-    </div>
-  )
-}
-
-function StructuredContent({ parsed }: { parsed: ParsedContent }) {
-  return (
-    <div style={{ marginTop: 4 }}>
-      {Object.entries(parsed)
-        .filter(([k, v]) => v && k !== 'notes')
-        .map(([k, v]) => (
-          <div key={k} style={{ marginBottom: 6 }}>
-            <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
-              {CONTENT_LABELS[k] || k}
-            </div>
-            {TEXTAREA_FIELDS.has(k)
-              ? <MarkdownField content={v} size={12} />
-              : <div style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{v}</div>
-            }
-          </div>
-        ))
-      }
-      {parsed.notes && (
-        <div>
-          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
-            Notes
-          </div>
-          <MarkdownField content={parsed.notes} />
-        </div>
-      )}
-    </div>
-  )
-}
-
 interface EditState {
   note: Note
   type: string
-  fields: Record<string, string>
+  content: string
   preview: boolean
+}
+
+interface CreateState {
+  type: string
+  siteId: string
+  content: string
+  preview: boolean
+}
+
+function MarkdownView({ content }: { content: string }) {
+  const trimmed = content.trim()
+  // Render legacy JSON as markdown
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      const md = jsonToMarkdown(parsed, 'note')
+      return (
+        <div className="md-content" style={{ fontSize: 13 }}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+        </div>
+      )
+    } catch { /* fall through */ }
+  }
+  return (
+    <div className="md-content" style={{ fontSize: 13 }}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+    </div>
+  )
 }
 
 export function Notes() {
@@ -100,14 +180,9 @@ export function Notes() {
   const [searched, setSearched] = useState(false)
   const [editState, setEditState] = useState<EditState | null>(null)
   const [saving, setSaving] = useState(false)
+  const [createState, setCreateState] = useState<CreateState | null>(null)
+  const [sites, setSites] = useState<Site[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // Email summarization state
-  const [summarizeOpen, setSummarizeOpen] = useState(false)
-  const [summarizeEmail, setSummarizeEmail] = useState('')
-  const [summarizeSiteId, setSummarizeSiteId] = useState('')
-  const [summarizeSites, setSummarizeSites] = useState<Site[]>([])
-  const [summarizing, setSummarizing] = useState(false)
 
   async function doSearch(q: string) {
     setSearching(true)
@@ -122,7 +197,10 @@ export function Notes() {
     }
   }
 
-  useEffect(() => { doSearch('') }, [])
+  useEffect(() => {
+    doSearch('')
+    API.sites.list().then(setSites).catch(() => {})
+  }, [])
 
   function handleSearch() { doSearch(query) }
   function handleClear() {
@@ -132,43 +210,45 @@ export function Notes() {
   }
 
   function openEdit(note: Note) {
-    const parsed = parseContent(note.content)
-    const activeType = note.note_type || 'note'
-    const fields: Record<string, string> = {}
-    if (parsed) {
-      for (const k of (NOTE_TEMPLATES[activeType] || NOTE_TEMPLATES.note)) {
-        fields[k] = parsed[k] || ''
-      }
-    } else {
-      fields['notes'] = note.content || ''
-    }
-    setEditState({ note, type: activeType, fields, preview: false })
+    setEditState({
+      note,
+      type: note.note_type || 'note',
+      content: getEditableContent(note),
+      preview: false,
+    })
   }
 
-  function switchType(type: string) {
-    if (!editState) return
-    const fields: Record<string, string> = {}
-    for (const k of (NOTE_TEMPLATES[type] || NOTE_TEMPLATES.note)) {
-      fields[k] = ''
-    }
-    setEditState({ ...editState, type, fields, preview: false })
+  function openCreate() {
+    setCreateState({ type: 'note', siteId: '', content: MARKDOWN_TEMPLATES.note, preview: false })
   }
 
-  async function handleSaveNote() {
+  function switchCreateType(type: string) {
+    if (!createState) return
+    setCreateState({ ...createState, type, content: MARKDOWN_TEMPLATES[type] || '' })
+  }
+
+  function switchEditType(type: string) {
     if (!editState) return
+    setEditState({ ...editState, type })
+  }
+
+  async function handleCreateNote() {
+    if (!createState) return
     setSaving(true)
-    const contentObj: Record<string, string> = {}
-    for (const f of (NOTE_TEMPLATES[editState.type] || NOTE_TEMPLATES.note)) {
-      const v = editState.fields[f]
-      if (v) contentObj[f] = v
-    }
     try {
-      await API.notes.update(editState.note.id, {
-        note_type: editState.type,
-        content: JSON.stringify(contentObj),
-      })
-      toast('Note saved')
-      setEditState(null)
+      if (createState.siteId) {
+        await API.notes.createSite(createState.siteId, {
+          note_type: createState.type,
+          content: createState.content,
+        })
+      } else {
+        await API.notes.create({
+          note_type: createState.type,
+          content: createState.content,
+        })
+      }
+      toast('Note created')
+      setCreateState(null)
       doSearch(query)
     } catch (e) {
       toast('Error: ' + (e as Error).message, 'error')
@@ -177,36 +257,21 @@ export function Notes() {
     }
   }
 
-  async function openSummarize() {
-    setSummarizeEmail('')
-    setSummarizeSiteId('')
-    setSummarizeOpen(true)
+  async function handleSaveNote() {
+    if (!editState) return
+    setSaving(true)
     try {
-      const sites = await API.sites.list()
-      setSummarizeSites(sites)
-    } catch {
-      // non-fatal, site selector just won't populate
-    }
-  }
-
-  async function handleSummarize() {
-    if (!summarizeEmail.trim()) {
-      toast('Paste an email first', 'error')
-      return
-    }
-    setSummarizing(true)
-    try {
-      await API.notes.summarizeEmail({
-        email_text: summarizeEmail,
-        site_id: summarizeSiteId || undefined,
+      await API.notes.update(editState.note.id, {
+        note_type: editState.type,
+        content: editState.content,
       })
-      toast('Email summarized and saved as a note')
-      setSummarizeOpen(false)
+      toast('Note saved')
+      setEditState(null)
       doSearch(query)
     } catch (e) {
       toast('Error: ' + (e as Error).message, 'error')
     } finally {
-      setSummarizing(false)
+      setSaving(false)
     }
   }
 
@@ -223,35 +288,76 @@ export function Notes() {
     }
   }
 
-  // Group by site
-  const grouped: NoteGroup[] = []
+  // Separate site notes from job notes
+  const siteNotes = results.filter(n => n.site_id)
+  const jobNotes  = results.filter(n => !n.site_id)
+
+  // Group site notes by site
+  const siteGroups: NoteGroup[] = []
   const siteOrder: string[] = []
   const siteMap: Record<string, NoteGroup> = {}
-
-  for (const n of results) {
-    const key = n.site_id || '__none__'
+  for (const n of siteNotes) {
+    const key = n.site_id!
     if (!siteMap[key]) {
       siteMap[key] = { site_id: n.site_id, site_name: (n as Note & { site_name?: string }).site_name, notes: [] }
       siteOrder.push(key)
     }
     siteMap[key].notes.push(n)
   }
-  for (const k of siteOrder) grouped.push(siteMap[k])
+  for (const k of siteOrder) siteGroups.push(siteMap[k])
 
-  function highlight(text: string) {
-    if (!query.trim()) return text
-    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    const parts = text.split(re)
+  function renderNoteCard(n: Note) {
+    const typeCfg = NOTE_TYPE_CONFIG[n.note_type || 'note'] || NOTE_TYPE_CONFIG.note
     return (
-      <>
-        {parts.map((p, i) =>
-          re.test(p) ? (
-            <mark key={i} style={{ background: 'var(--yellow)33', color: 'var(--yellow)', borderRadius: 2 }}>
-              {p}
-            </mark>
-          ) : p
-        )}
-      </>
+      <div
+        key={n.id}
+        onClick={() => openEdit(n)}
+        style={{
+          border: '1px solid var(--border)',
+          borderLeft: `3px solid ${typeCfg.color}`,
+          borderRadius: 8, padding: 12, marginBottom: 8,
+          background: 'var(--bg3)', cursor: 'pointer',
+        }}
+      >
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          marginBottom: 6, flexWrap: 'wrap', gap: 6,
+        }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700,
+              color: typeCfg.color, background: `${typeCfg.color}18`,
+              border: `1px solid ${typeCfg.color}44`,
+              borderRadius: 99, padding: '1px 8px',
+            }}>
+              {typeCfg.icon} {typeCfg.label}
+            </span>
+            {(n as Note & { unit_asset_tag?: string; unit_id?: string }).unit_asset_tag && (
+              <span
+                onClick={e => {
+                  e.stopPropagation()
+                  const unitId = (n as Note & { unit_id?: string }).unit_id
+                  if (unitId) router.push(`/units/${unitId}`)
+                }}
+                style={{
+                  fontSize: 11, fontFamily: 'monospace',
+                  background: 'var(--bg2)', border: '1px solid var(--border)',
+                  borderRadius: 4, padding: '1px 6px', cursor: 'pointer',
+                }}
+              >
+                {(n as Note & { unit_asset_tag?: string }).unit_asset_tag}
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+              {n.created_at ? new Date(n.created_at).toLocaleDateString() : ''}
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>Edit</span>
+          </div>
+        </div>
+        <MarkdownView content={n.content || ''} />
+      </div>
     )
   }
 
@@ -260,10 +366,10 @@ export function Notes() {
       <div className="page-header" style={{ marginBottom: 20 }}>
         <div>
           <h1 style={{ margin: 0 }}>Notes</h1>
-          <div className="page-subtitle">Search notes across all sites and units</div>
+          <div className="page-subtitle">Search and manage notes across sites and jobs</div>
         </div>
-        <button className="btn btn-primary" onClick={openSummarize}>
-          ✨ Summarize Email
+        <button className="btn btn-primary" onClick={openCreate}>
+          + New Note
         </button>
       </div>
 
@@ -299,236 +405,226 @@ export function Notes() {
         <div style={{ color: 'var(--text3)', fontSize: 13, padding: '12px 0' }}>No notes found.</div>
       ) : (
         <>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
             {results.length} note{results.length !== 1 ? 's' : ''} found
           </div>
-          {grouped.map(group => (
-            <div key={group.site_id || 'none'} style={{ marginBottom: 20 }}>
+
+          {/* Job-level notes */}
+          {jobNotes.length > 0 && (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{
+                fontSize: 13, fontWeight: 700, color: 'var(--text2)',
+                textTransform: 'uppercase', letterSpacing: '.06em',
+                marginBottom: 10, borderBottom: '1px solid var(--border)', paddingBottom: 6,
+              }}>
+                Job Notes
+              </div>
+              {jobNotes.map(renderNoteCard)}
+            </div>
+          )}
+
+          {/* Site-grouped notes */}
+          {siteGroups.map(group => (
+            <div key={group.site_id} style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                {group.site_id ? (
-                  <span
-                    onClick={() => router.push(`/sites/${group.site_id}`)}
-                    style={{ cursor: 'pointer', fontSize: 15, fontWeight: 600, color: 'var(--text)' }}
-                  >
-                    {group.site_name || 'Unknown Site'}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
-                    No Site
-                  </span>
-                )}
+                <span
+                  onClick={() => router.push(`/sites/${group.site_id}`)}
+                  style={{ cursor: 'pointer', fontSize: 15, fontWeight: 600, color: 'var(--text)' }}
+                >
+                  {group.site_name || 'Unknown Site'}
+                </span>
                 <span style={{ fontSize: 11, color: 'var(--text3)' }}>
                   {group.notes.length} note{group.notes.length !== 1 ? 's' : ''}
                 </span>
               </div>
-
-              {group.notes.map(n => {
-                const typeCfg = NOTE_TYPE_CONFIG[n.note_type || 'note'] || NOTE_TYPE_CONFIG.note
-                const parsed = parseContent(n.content)
-                const whoField = parsed?.attendees || parsed?.with || parsed?.to_from || null
-
-                return (
-                  <div
-                    key={n.id}
-                    onClick={() => openEdit(n)}
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderLeft: `3px solid ${typeCfg.color}`,
-                      borderRadius: 8, padding: 12, marginBottom: 8,
-                      background: 'var(--bg3)', cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                      marginBottom: parsed ? 8 : 4, flexWrap: 'wrap', gap: 6,
-                    }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700,
-                          color: typeCfg.color, background: `${typeCfg.color}18`,
-                          border: `1px solid ${typeCfg.color}44`,
-                          borderRadius: 99, padding: '1px 8px',
-                        }}>
-                          {typeCfg.icon} {typeCfg.label}
-                        </span>
-                        {whoField && (
-                          <span style={{ fontSize: 12, color: 'var(--text2)' }}>{whoField}</span>
-                        )}
-                        {(n as Note & { unit_id?: string; unit_asset_tag?: string }).unit_asset_tag && (
-                          <span
-                            onClick={e => {
-                              e.stopPropagation()
-                              const unitId = (n as Note & { unit_id?: string }).unit_id
-                              if (unitId) router.push(`/units/${unitId}`)
-                            }}
-                            style={{
-                              fontSize: 11, fontFamily: 'monospace',
-                              background: 'var(--bg2)', border: '1px solid var(--border)',
-                              borderRadius: 4, padding: '1px 6px', cursor: 'pointer',
-                            }}
-                          >
-                            {(n as Note & { unit_asset_tag?: string }).unit_asset_tag}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 11, color: 'var(--text3)' }}>
-                          {n.created_at ? new Date(n.created_at).toLocaleDateString() : ''}
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>Edit</span>
-                      </div>
-                    </div>
-
-                    {parsed
-                      ? <StructuredContent parsed={parsed} />
-                      : <MarkdownField content={n.content || ''} />
-                    }
-                  </div>
-                )
-              })}
+              {group.notes.map(renderNoteCard)}
             </div>
           ))}
         </>
       )}
 
-      {/* Summarize email modal */}
-      {summarizeOpen && (
-        <Modal title="Summarize Email with AI" onClose={() => setSummarizeOpen(false)} maxWidth={560}>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16, marginTop: 0 }}>
-            Paste an email below. AI will extract the key details and save it as an Email note.
-          </p>
+      {/* Create note modal */}
+      {createState && (
+        <Modal title="New Note" onClose={() => setCreateState(null)} maxWidth={580}>
+          {/* Note type */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)', marginBottom: 6 }}>
+              Type
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {Object.entries(NOTE_TYPE_CONFIG).map(([val, cfg]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => switchCreateType(val)}
+                  style={{
+                    padding: '5px 10px',
+                    border: '1px solid var(--border)', borderRadius: 8,
+                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    background: createState.type === val ? 'var(--accent)' : 'transparent',
+                    color: createState.type === val ? '#fff' : 'var(--text)',
+                    borderColor: createState.type === val ? 'var(--accent)' : 'var(--border)',
+                  }}
+                >
+                  {cfg.icon} {cfg.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <div className="form-group" style={{ marginBottom: 12 }}>
+          {/* Site (optional) */}
+          <div className="form-group" style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)', display: 'block', marginBottom: 4 }}>
-              Site (optional)
+              Site (optional — leave blank for job notes)
             </label>
             <select
-              value={summarizeSiteId}
-              onChange={e => setSummarizeSiteId(e.target.value)}
+              value={createState.siteId}
+              onChange={e => setCreateState(s => s ? { ...s, siteId: e.target.value } : s)}
               style={{ width: '100%', boxSizing: 'border-box' }}
             >
-              <option value="">— No site —</option>
-              {summarizeSites.map(s => (
+              <option value="">— No site (job note) —</option>
+              {sites.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)', display: 'block', marginBottom: 4 }}>
-              Email Content
-            </label>
-            <textarea
-              rows={12}
-              value={summarizeEmail}
-              onChange={e => setSummarizeEmail(e.target.value)}
-              placeholder="Paste the full email text here…"
-              style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 12, resize: 'vertical' }}
-            />
+          {/* Markdown editor */}
+          <div className="form-group" style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
+                Content (Markdown)
+              </label>
+              <button
+                type="button"
+                onClick={() => setCreateState(s => s ? { ...s, preview: !s.preview } : s)}
+                style={{
+                  fontSize: 10, fontWeight: 600, padding: '1px 8px',
+                  border: '1px solid var(--border)', borderRadius: 4,
+                  background: createState.preview ? 'var(--accent)' : 'transparent',
+                  color: createState.preview ? '#fff' : 'var(--text3)',
+                  cursor: 'pointer',
+                }}
+              >
+                {createState.preview ? 'Edit' : 'Preview'}
+              </button>
+            </div>
+            {createState.preview ? (
+              <div
+                className="md-content"
+                style={{
+                  minHeight: 160, padding: '8px 12px',
+                  border: '1px solid var(--border)', borderRadius: 8,
+                  background: 'var(--bg3)', fontSize: 13,
+                }}
+              >
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {createState.content || '*nothing yet*'}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <textarea
+                rows={10}
+                value={createState.content}
+                onChange={e => setCreateState(s => s ? { ...s, content: e.target.value } : s)}
+                style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
+                placeholder="Markdown supported…"
+                autoFocus
+              />
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button className="btn btn-secondary" onClick={() => setSummarizeOpen(false)}>
-              Cancel
-            </button>
-            <button className="btn btn-primary" onClick={handleSummarize} disabled={summarizing}>
-              {summarizing ? 'Summarizing…' : '✨ Summarize & Save'}
+            <button className="btn btn-secondary" onClick={() => setCreateState(null)}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleCreateNote} disabled={saving}>
+              {saving ? 'Saving…' : 'Save Note'}
             </button>
           </div>
         </Modal>
       )}
 
-      {/* Edit modal */}
+      {/* Edit note modal */}
       {editState && (
-        <Modal title="Edit Log Entry" onClose={() => setEditState(null)} maxWidth={520}>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
-            {editState.note.site_id ? (grouped.find(g => g.site_id === editState.note.site_id)?.site_name || 'Unknown Site') : 'No Site'}
+        <Modal title="Edit Note" onClose={() => setEditState(null)} maxWidth={580}>
+          <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 12 }}>
+            {editState.note.site_id
+              ? (siteGroups.find(g => g.site_id === editState.note.site_id)?.site_name || 'Site note')
+              : 'Job note'
+            }
           </div>
 
-          {/* Note type selector */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-            {Object.entries(NOTE_TYPE_CONFIG).map(([val, cfg]) => (
+          {/* Note type */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)', marginBottom: 6 }}>
+              Type
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {Object.entries(NOTE_TYPE_CONFIG).map(([val, cfg]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => switchEditType(val)}
+                  style={{
+                    padding: '5px 10px',
+                    border: '1px solid var(--border)', borderRadius: 8,
+                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    background: editState.type === val ? 'var(--accent)' : 'transparent',
+                    color: editState.type === val ? '#fff' : 'var(--text)',
+                    borderColor: editState.type === val ? 'var(--accent)' : 'var(--border)',
+                  }}
+                >
+                  {cfg.icon} {cfg.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Markdown editor */}
+          <div className="form-group" style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
+                Content (Markdown)
+              </label>
               <button
-                key={val}
                 type="button"
-                onClick={() => switchType(val)}
+                onClick={() => setEditState(s => s ? { ...s, preview: !s.preview } : s)}
                 style={{
-                  flex: 1, minWidth: 80, textAlign: 'center', padding: '7px 4px',
-                  border: '1px solid var(--border)', borderRadius: 8,
-                  fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                  background: editState.type === val ? 'var(--accent)' : 'transparent',
-                  color: editState.type === val ? '#fff' : 'var(--text)',
-                  borderColor: editState.type === val ? 'var(--accent)' : 'var(--border)',
+                  fontSize: 10, fontWeight: 600, padding: '1px 8px',
+                  border: '1px solid var(--border)', borderRadius: 4,
+                  background: editState.preview ? 'var(--accent)' : 'transparent',
+                  color: editState.preview ? '#fff' : 'var(--text3)',
+                  cursor: 'pointer',
                 }}
               >
-                {cfg.icon} {cfg.label}
+                {editState.preview ? 'Edit' : 'Preview'}
               </button>
-            ))}
+            </div>
+            {editState.preview ? (
+              <div
+                className="md-content"
+                style={{
+                  minHeight: 160, padding: '8px 12px',
+                  border: '1px solid var(--border)', borderRadius: 8,
+                  background: 'var(--bg3)', fontSize: 13,
+                }}
+              >
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {editState.content || '*nothing yet*'}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <textarea
+                rows={12}
+                value={editState.content}
+                onChange={e => setEditState(s => s ? { ...s, content: e.target.value } : s)}
+                style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
+                placeholder="Markdown supported…"
+                autoFocus
+              />
+            )}
           </div>
 
-          {/* Dynamic fields */}
-          {(NOTE_TEMPLATES[editState.type] || NOTE_TEMPLATES.note).map(field => {
-            const label = CONTENT_LABELS[field] || field
-            const isTextarea = TEXTAREA_FIELDS.has(field)
-            const isDate = field === 'date'
-            return (
-              <div key={field} className="form-group" style={{ marginBottom: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <label style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text3)' }}>
-                    {label}
-                  </label>
-                  {isTextarea && (
-                    <button
-                      type="button"
-                      onClick={() => setEditState(s => s ? { ...s, preview: !s.preview } : s)}
-                      style={{
-                        fontSize: 10, fontWeight: 600, padding: '1px 8px',
-                        border: '1px solid var(--border)', borderRadius: 4,
-                        background: editState.preview ? 'var(--accent)' : 'transparent',
-                        color: editState.preview ? '#fff' : 'var(--text3)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {editState.preview ? 'Edit' : 'Preview'}
-                    </button>
-                  )}
-                </div>
-                {isTextarea ? (
-                  editState.preview ? (
-                    <div
-                      className="md-content"
-                      style={{
-                        minHeight: 72, padding: '8px 10px',
-                        border: '1px solid var(--border)', borderRadius: 8,
-                        background: 'var(--bg3)', fontSize: 13,
-                      }}
-                    >
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {editState.fields[field] || '*nothing yet*'}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <textarea
-                      rows={4}
-                      value={editState.fields[field] || ''}
-                      onChange={e => setEditState(s => s ? { ...s, fields: { ...s.fields, [field]: e.target.value } } : s)}
-                      style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 13 }}
-                      placeholder="Markdown supported"
-                    />
-                  )
-                ) : (
-                  <input
-                    type={isDate ? 'datetime-local' : 'text'}
-                    value={editState.fields[field] || ''}
-                    onChange={e => setEditState(s => s ? { ...s, fields: { ...s.fields, [field]: e.target.value } } : s)}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
-                  />
-                )}
-              </div>
-            )
-          })}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <button
               className="btn btn-secondary"
               style={{ color: 'var(--red)' }}

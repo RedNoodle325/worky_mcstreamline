@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
   if (auth.error) return NextResponse.json({ error: auth.error }, { status: 401 })
 
   const body = await req.json()
-  const { company_name, contact_name, title, email, phone, region, notes, specialties } = body
+  const { title, email, phone, region, notes, specialties } = body
+  // Accept both DB column names and frontend-friendly aliases
+  const company_name = body.company_name ?? body.company ?? null
+  const contact_name = body.contact_name ?? body.name ?? null
 
   const rows = await sql`
     INSERT INTO public.contractors (company_name, contact_name, title, email, phone, region, notes)
