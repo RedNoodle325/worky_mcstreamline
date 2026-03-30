@@ -153,7 +153,7 @@ export function Dashboard() {
           </div>
 
           {/* Clock */}
-          <div style={{
+          <div className="dash-clock" style={{
             padding: '14px 0 14px 24px',
             borderLeft: '1px solid var(--border)',
             textAlign: 'right',
@@ -172,7 +172,7 @@ export function Dashboard() {
       </div>
 
       {/* ── Two-column: Site Issues Board + To-Do ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="dash-two-col">
 
         {/* Site Issues Board */}
         <div style={{
@@ -305,7 +305,7 @@ export function Dashboard() {
           ) : (
             <>
               {todos.slice(0, 8).map(t => {
-                const due = t.due_date ? new Date(t.due_date + 'T00:00:00') : null
+                const due = t.due_date ? new Date(t.due_date.includes('T') ? t.due_date : t.due_date + 'T00:00:00') : null
                 const overdue = due && due < new Date() && t.status !== 'done'
                 const priColor: Record<string, string> = { urgent: '#dc2626', high: '#ea580c', normal: '#2563eb', low: '#6b7280' }
                 return (

@@ -1068,3 +1068,19 @@ select option { background: var(--bg2); }
     width: 100%;
   }
 }
+
+/* ── Dashboard layout ─────────────────────────── */
+.dash-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+  .dash-two-col {
+    grid-template-columns: 1fr;
+  }
+  .dash-clock {
+    display: none;
+  }
+}
