@@ -839,14 +839,14 @@ export function SiteDetail() {
           {addr && (
             <div style={{ gridColumn: '1 / -1' }}>
               <div className="section-title" style={{ marginBottom: 4 }}>Map</div>
-              <iframe
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(addr)}&output=embed&z=14`}
-                width="100%"
-                height="220"
-                style={{ border: 0, borderRadius: 6, display: 'block' }}
-                loading="lazy"
-                title="Site map"
-              />
+              <div style={{ position: 'relative', width: '100%', paddingBottom: '100%' }}>
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(addr)}&output=embed&z=14`}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, borderRadius: 6 }}
+                  loading="lazy"
+                  title="Site map"
+                />
+              </div>
             </div>
           )}
         </div>
