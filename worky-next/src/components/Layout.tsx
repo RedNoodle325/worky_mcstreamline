@@ -9,13 +9,14 @@ import { useState, type ReactNode } from 'react'
 import {
   LayoutDashboard, Ticket, AlertTriangle,
   Users, FileText, CheckSquare, Wrench, Sun, Moon,
-  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2, BookOpen, Wand2,
+  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2, BookOpen, Wand2, PackageCheck,
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/',            label: 'Dashboard',     Icon: LayoutDashboard, end: true },
-  { to: '/astea',       label: 'Ticket Wizard', Icon: Wand2 },
-  { to: '/cs-tickets',  label: 'CS Tickets',    Icon: Ticket },
+  { to: '/',                label: 'Dashboard',     Icon: LayoutDashboard, end: true },
+  { to: '/astea',           label: 'Ticket Wizard', Icon: Wand2 },
+  { to: '/parts-transfer',  label: 'Parts Transfer', Icon: PackageCheck },
+  { to: '/cs-tickets',      label: 'CS Tickets',    Icon: Ticket },
   { to: '/issues',      label: 'Issues',      Icon: AlertTriangle },
   { to: '/contacts',    label: 'Contacts',    Icon: Users },
   { to: '/notes',       label: 'Notes',       Icon: FileText },
