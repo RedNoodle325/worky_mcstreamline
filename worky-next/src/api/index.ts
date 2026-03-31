@@ -2,6 +2,7 @@ import type {
   Site, Unit, Contact, Contractor, Note, Issue, ServiceTicket, IssueLineLink,
   Ticket, Todo, JobSchedule, Technician, MsowDraft, WarrantyClaim, BomImport,
   BomItem, Campaign, SycoolSystem, User, JobNumber, LoginResponse, ImportResult,
+  ResourceLink,
 } from '../types'
 
 const API_BASE = '/api'
@@ -306,6 +307,17 @@ export const API = {
       apiFetch<JobNumber>(`/sites/${siteId}/job-numbers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (siteId: string, id: string) =>
       apiFetch(`/sites/${siteId}/job-numbers/${id}`, { method: 'DELETE' }),
+  },
+
+  // Resource links (trackers, forms, references)
+  resourceLinks: {
+    list: () => apiFetch<ResourceLink[]>('/resource-links'),
+    create: (data: Partial<ResourceLink>) =>
+      apiFetch<ResourceLink>('/resource-links', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<ResourceLink>) =>
+      apiFetch<ResourceLink>(`/resource-links/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: string) =>
+      apiFetch(`/resource-links/${id}`, { method: 'DELETE' }),
   },
 
   // SyCool systems

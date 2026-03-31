@@ -7,12 +7,47 @@ import type { WarrantyClaim, Site, Unit } from '../types'
 import { StatusBadge } from '../components/StatusBadge'
 import { useToastFn } from '@/app/providers'
 
+const STATUS_OPTIONS = [
+  ['submitted',   'Submitted'],
+  ['in_review',   'In Review'],
+  ['approved',    'Approved'],
+  ['denied',      'Denied'],
+  ['closed',      'Closed'],
+]
+
+const PARTS_STATUS_OPTIONS = [
+  ['not_needed', 'Not Needed'],
+  ['needed',     'Parts Needed'],
+  ['ordered',    'Parts Ordered'],
+  ['received',   'Parts Received'],
+]
+
 const STATUS_COLORS: Record<string, string> = {
   submitted: '#3b82f6',
   in_review: '#f97316',
   approved:  '#22c55e',
   denied:    '#ef4444',
   closed:    '#64748b',
+}
+
+const PARTS_COLORS: Record<string, string> = {
+  not_needed: '#64748b',
+  needed:     '#ef4444',
+  ordered:    '#f97316',
+  received:   '#22c55e',
+}
+
+// ── Small inline section header ───────────────────────────────────────────────
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontSize: 11, fontWeight: 700, letterSpacing: 0.06,
+      textTransform: 'uppercase', color: 'var(--text3)',
+      marginBottom: 12, borderBottom: '1px solid var(--border)', paddingBottom: 6,
+    }}>
+      {children}
+    </div>
+  )
 }
 
 export function WarrantyDetail() {
@@ -22,21 +57,29 @@ export function WarrantyDetail() {
 
   const isEditing = !!id && id !== 'new'
 
-  const [claim, setClaim] = useState<Partial<WarrantyClaim>>({})
   const [sites, setSites] = useState<Site[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  // Form fields
-  const [siteId, setSiteId] = useState('')
-  const [unitId, setUnitId] = useState('')
-  const [claimNumber, setClaimNumber] = useState('')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [status, setStatus] = useState('submitted')
+  // Core claim fields
+  const [siteId, setSiteId]               = useState('')
+  const [unitId, setUnitId]               = useState('')
+  const [title, setTitle]                 = useState('')
+  const [claimNumber, setClaimNumber]     = useState('')
+  const [description, setDescription]     = useState('')
+  const [status, setStatus]               = useState('submitted')
   const [submittedDate, setSubmittedDate] = useState('')
-  const [resolvedDate, setResolvedDate] = useState('')
+  const [resolvedDate, setResolvedDate]   = useState('')
+  const [resolution, setResolution]       = useState('')
+
+  // Workflow fields
+  const [rgaNumber, setRgaNumber]             = useState('')
+  const [c2TicketNumber, setC2TicketNumber]   = useState('')
+  const [partsStatus, setPartsStatus]         = useState('not_needed')
+  const [partsNotes, setPartsNotes]           = useState('')
+  const [techDispatched, setTechDispatched]   = useState(false)
+  const [techDispatchDate, setTechDispatchDate] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -46,15 +89,21 @@ export function WarrantyDetail() {
         setUnits(u)
         if (isEditing && id) {
           const c = await API.warranty.get(id)
-          setClaim(c)
           setSiteId(c.site_id ?? '')
           setUnitId(c.unit_id ?? '')
-          setClaimNumber(c.claim_number ?? '')
           setTitle(c.title ?? '')
+          setClaimNumber(c.claim_number ?? '')
           setDescription(c.description ?? '')
           setStatus(c.status ?? 'submitted')
           setSubmittedDate(c.submitted_date ?? '')
           setResolvedDate(c.resolved_date ?? '')
+          setResolution(c.resolution ?? '')
+          setRgaNumber(c.rga_number ?? '')
+          setC2TicketNumber(c.c2_ticket_number ?? '')
+          setPartsStatus(c.parts_status ?? 'not_needed')
+          setPartsNotes(c.parts_notes ?? '')
+          setTechDispatched(c.tech_dispatched ?? false)
+          setTechDispatchDate(c.tech_dispatch_date ?? '')
         }
       } catch (err: unknown) {
         toast('Error loading: ' + (err as Error).message, 'error')
@@ -70,24 +119,32 @@ export function WarrantyDetail() {
     if (!title.trim()) return toast('Title is required', 'error')
     setSaving(true)
     const data: Partial<WarrantyClaim> = {
-      site_id: siteId || undefined,
-      unit_id: unitId || undefined,
-      claim_number: claimNumber.trim() || undefined,
-      title: title.trim(),
-      description: description.trim() || undefined,
+      site_id:           siteId || undefined,
+      unit_id:           unitId || undefined,
+      title:             title.trim(),
+      claim_number:      claimNumber.trim() || undefined,
+      description:       description.trim() || undefined,
       status,
-      submitted_date: submittedDate || undefined,
-      resolved_date: resolvedDate || undefined,
+      submitted_date:    submittedDate || undefined,
+      resolved_date:     resolvedDate || undefined,
+      resolution:        resolution.trim() || undefined,
+      rga_number:        rgaNumber.trim() || undefined,
+      c2_ticket_number:  c2TicketNumber.trim() || undefined,
+      parts_status:      partsStatus,
+      parts_notes:       partsNotes.trim() || undefined,
+      tech_dispatched:   techDispatched,
+      tech_dispatch_date: techDispatchDate || undefined,
     }
     try {
       if (isEditing && id) {
         await API.warranty.update(id, data)
         toast('Claim updated')
       } else {
-        await API.warranty.create(data)
-        toast('Warranty claim submitted')
+        const created = await API.warranty.create(data)
+        toast('Warranty claim created')
+        router.push(`/warranty/${created.id}`)
+        return
       }
-      router.push('/warranty')
     } catch (err: unknown) {
       toast('Error: ' + (err as Error).message, 'error')
     } finally {
@@ -108,19 +165,27 @@ export function WarrantyDetail() {
 
   if (loading) return <div style={{ color: 'var(--text2)', padding: 40, textAlign: 'center' }}>Loading…</div>
 
+  const filteredUnits = unitId
+    ? units
+    : siteId
+    ? units.filter(u => u.site_id === siteId)
+    : units
+
   return (
     <div>
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="page-header" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => router.push('/warranty')}>← Warranty</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => router.push('/warranty')}>
+            ← Warranty
+          </button>
           <div>
             <h1 style={{ margin: 0 }}>
-              {isEditing ? (claim.claim_number || claim.title || 'Warranty Claim') : 'New Warranty Claim'}
+              {isEditing ? (claimNumber || title || 'Warranty Claim') : 'New Warranty Claim'}
             </h1>
-            {isEditing && claim.status && (
+            {isEditing && status && (
               <div className="page-subtitle">
-                <StatusBadge status={claim.status} />
+                <StatusBadge status={status} />
               </div>
             )}
           </div>
@@ -131,20 +196,21 @@ export function WarrantyDetail() {
             onClick={handleDelete}
             style={{ background: 'var(--red)22', color: 'var(--red)', border: '1px solid var(--red)44' }}
           >
-            Delete Claim
+            Delete
           </button>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 900 }}>
-        {/* Claim Details */}
+      <form onSubmit={handleSubmit} style={{ maxWidth: 960 }}>
+
+        {/* ── Claim Details ── */}
         <div className="card" style={{ marginBottom: 16 }}>
-          <div className="card-title" style={{ marginBottom: 16 }}>Claim Details</div>
+          <SectionTitle>Claim Details</SectionTitle>
           <div className="form-grid">
             <div className="form-group">
-              <label>Site *</label>
-              <select required value={siteId} onChange={e => setSiteId(e.target.value)}>
-                <option value="">— Select Site —</option>
+              <label>Site</label>
+              <select value={siteId} onChange={e => { setSiteId(e.target.value); setUnitId('') }}>
+                <option value="">— No site —</option>
                 {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
@@ -152,17 +218,15 @@ export function WarrantyDetail() {
               <label>Unit</label>
               <select value={unitId} onChange={e => setUnitId(e.target.value)}>
                 <option value="">— No specific unit —</option>
-                {units
-                  .filter(u => !siteId || u.site_id === siteId)
-                  .map(u => (
-                    <option key={u.id} value={u.id}>
-                      {u.tag || u.serial_number || u.id} {u.model ? `– ${u.model}` : ''}
-                    </option>
-                  ))}
+                {filteredUnits.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.tag || u.serial_number || u.id}{u.model ? ` – ${u.model}` : ''}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="form-group">
-              <label>Claim Number</label>
+              <label>Claim # / Reference</label>
               <input
                 value={claimNumber}
                 onChange={e => setClaimNumber(e.target.value)}
@@ -176,13 +240,17 @@ export function WarrantyDetail() {
             </div>
             <div className="form-group full">
               <label>Title *</label>
-              <input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Brief title for the warranty claim" />
+              <input
+                required
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Brief title for the warranty claim"
+              />
             </div>
             <div className="form-group full">
-              <label>Description *</label>
+              <label>Description</label>
               <textarea
-                required
-                rows={4}
+                rows={3}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Describe the warranty issue in detail…"
@@ -191,32 +259,125 @@ export function WarrantyDetail() {
           </div>
         </div>
 
-        {/* Status & Resolution (edit mode only) */}
+        {/* ── Workflow Tracking ── */}
+        <div className="card" style={{ marginBottom: 16 }}>
+          <SectionTitle>Workflow Tracking</SectionTitle>
+          <div className="form-grid">
+
+            {/* RGA */}
+            <div className="form-group">
+              <label>RGA Number</label>
+              <input
+                value={rgaNumber}
+                onChange={e => setRgaNumber(e.target.value)}
+                placeholder="Return goods authorization #"
+                style={{ fontFamily: 'monospace' }}
+              />
+            </div>
+
+            {/* C2 ticket */}
+            <div className="form-group">
+              <label>C2 Ticket #</label>
+              <input
+                value={c2TicketNumber}
+                onChange={e => setC2TicketNumber(e.target.value)}
+                placeholder="Factory C2 system ticket #"
+                style={{ fontFamily: 'monospace' }}
+              />
+            </div>
+
+            {/* Parts status */}
+            <div className="form-group">
+              <label>Parts Status</label>
+              <select value={partsStatus} onChange={e => setPartsStatus(e.target.value)}>
+                {PARTS_STATUS_OPTIONS.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Parts notes */}
+            <div className="form-group">
+              <label>Parts Notes</label>
+              <input
+                value={partsNotes}
+                onChange={e => setPartsNotes(e.target.value)}
+                placeholder="Part numbers, SO#, ETA…"
+              />
+            </div>
+
+            {/* Tech dispatched */}
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={techDispatched}
+                  onChange={e => setTechDispatched(e.target.checked)}
+                  style={{ width: 'auto', margin: 0 }}
+                />
+                Tech Dispatched to Site
+              </label>
+            </div>
+
+            {/* Tech dispatch date */}
+            <div className="form-group">
+              <label>Tech Dispatch Date</label>
+              <input
+                type="date"
+                value={techDispatchDate}
+                onChange={e => setTechDispatchDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Workflow status pills */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+            <Pill
+              label={`Parts: ${PARTS_STATUS_OPTIONS.find(([v]) => v === partsStatus)?.[1] ?? partsStatus}`}
+              color={PARTS_COLORS[partsStatus] ?? '#64748b'}
+            />
+            <Pill
+              label={techDispatched ? 'Tech: Dispatched' : 'Tech: Not Dispatched'}
+              color={techDispatched ? '#22c55e' : '#64748b'}
+            />
+            {rgaNumber && <Pill label={`RGA: ${rgaNumber}`} color="#3b82f6" />}
+            {c2TicketNumber && <Pill label={`C2: ${c2TicketNumber}`} color="#8b5cf6" />}
+          </div>
+        </div>
+
+        {/* ── Status & Resolution (edit only) ── */}
         {isEditing && (
           <div className="card" style={{ marginBottom: 16 }}>
-            <div className="card-title" style={{ marginBottom: 16 }}>Status &amp; Resolution</div>
+            <SectionTitle>Status &amp; Resolution</SectionTitle>
             <div className="form-grid">
               <div className="form-group">
                 <label>Status</label>
                 <select value={status} onChange={e => setStatus(e.target.value)}>
-                  {[
-                    ['submitted', 'Submitted'],
-                    ['in_review', 'In Review'],
-                    ['approved', 'Approved'],
-                    ['denied', 'Denied'],
-                    ['closed', 'Closed'],
-                  ].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  {STATUS_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Resolved Date</label>
                 <input type="date" value={resolvedDate} onChange={e => setResolvedDate(e.target.value)} />
               </div>
+              <div className="form-group full">
+                <label>Resolution Notes</label>
+                <textarea
+                  rows={2}
+                  value={resolution}
+                  onChange={e => setResolution(e.target.value)}
+                  placeholder="How was this resolved?"
+                />
+              </div>
             </div>
-            {/* Status indicator */}
             {status && (
-              <div style={{ marginTop: 8, padding: '10px 14px', background: `${STATUS_COLORS[status] ?? '#64748b'}11`, border: `1px solid ${STATUS_COLORS[status] ?? '#64748b'}33`, borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[status] ?? '#64748b', flexShrink: 0 }} />
+              <div style={{
+                marginTop: 8, padding: '8px 14px',
+                background: `${STATUS_COLORS[status] ?? '#64748b'}11`,
+                border: `1px solid ${STATUS_COLORS[status] ?? '#64748b'}33`,
+                borderRadius: 8, display: 'inline-flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATUS_COLORS[status] ?? '#64748b', flexShrink: 0 }} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: STATUS_COLORS[status] ?? '#64748b' }}>
                   {status.replace('_', ' ').replace(/^\w/, c => c.toUpperCase())}
                 </span>
@@ -225,14 +386,31 @@ export function WarrantyDetail() {
           </div>
         )}
 
-        {/* Form actions */}
-        <div className="form-actions" style={{ padding: '0 0 32px', display: 'flex', gap: 8 }}>
-          <button type="button" className="btn btn-secondary" onClick={() => router.push('/warranty')}>Cancel</button>
+        {/* ── Form Actions ── */}
+        <div style={{ display: 'flex', gap: 8, paddingBottom: 32 }}>
+          <button type="button" className="btn btn-secondary" onClick={() => router.push('/warranty')}>
+            Cancel
+          </button>
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Submit Claim'}
+            {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Claim'}
           </button>
         </div>
       </form>
     </div>
+  )
+}
+
+function Pill({ label, color }: { label: string; color: string }) {
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 600,
+      color,
+      background: `${color}18`,
+      border: `1px solid ${color}44`,
+      borderRadius: 20,
+      padding: '3px 10px',
+    }}>
+      {label}
+    </span>
   )
 }

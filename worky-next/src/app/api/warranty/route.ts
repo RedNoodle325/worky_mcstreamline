@@ -20,10 +20,25 @@ export async function POST(request: NextRequest) {
 
   const rows = await sql`
     INSERT INTO public.warranty_claims
-      (unit_id, site_id, issue_id, astea_request_id, description, status)
+      (unit_id, site_id, title, claim_number, description,
+       submitted_date, status,
+       rga_number, c2_ticket_number,
+       parts_status, parts_notes,
+       tech_dispatched, tech_dispatch_date)
     VALUES
-      (${body.unit_id}, ${body.site_id}, ${body.issue_id ?? null},
-       ${body.astea_request_id ?? null}, ${body.description}, 'submitted')
+      (${body.unit_id ?? null},
+       ${body.site_id ?? null},
+       ${body.title ?? null},
+       ${body.claim_number ?? null},
+       ${body.description ?? null},
+       ${body.submitted_date ?? null},
+       ${body.status ?? 'submitted'},
+       ${body.rga_number ?? null},
+       ${body.c2_ticket_number ?? null},
+       ${body.parts_status ?? 'not_needed'},
+       ${body.parts_notes ?? null},
+       ${body.tech_dispatched ?? false},
+       ${body.tech_dispatch_date ?? null})
     RETURNING *
   `
   return NextResponse.json(rows[0], { status: 201 })

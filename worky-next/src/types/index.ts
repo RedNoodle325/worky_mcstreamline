@@ -256,7 +256,26 @@ export interface WarrantyClaim {
   status: string
   submitted_date?: string
   resolved_date?: string
+  resolution?: string
+  rga_number?: string
+  c2_ticket_number?: string
+  parts_status?: string   // not_needed | needed | ordered | received
+  parts_notes?: string
+  tech_dispatched?: boolean
+  tech_dispatch_date?: string
   created_at?: string
+  updated_at?: string
+}
+
+export interface ResourceLink {
+  id: string
+  name: string
+  url?: string
+  category: string   // tracker | form | reference | general
+  description?: string
+  sort_order?: number
+  created_at?: string
+  updated_at?: string
 }
 
 export interface BomImport {

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
-import type { Site, Issue, ServiceTicket, Todo } from '../types'
+import type { Site, Issue, ServiceTicket, Todo, ResourceLink } from '../types'
+import { ExternalLink, BookOpen } from 'lucide-react'
 
 
 const STATUS_COLOR: Record<string, string> = {
@@ -59,6 +60,7 @@ export function Dashboard() {
   const [issues, setIssues] = useState<Issue[]>([])
   const [serviceTickets, setServiceTickets] = useState<ServiceTicket[]>([])
   const [todos, setTodos] = useState<Todo[]>([])
+  const [quickLinks, setQuickLinks] = useState<ResourceLink[]>([])
 
   useEffect(() => {
     Promise.all([
@@ -67,7 +69,8 @@ export function Dashboard() {
       API.serviceTickets.listAll().catch(() => [] as ServiceTicket[]),
       API.todos.list({ status: 'todo' }).catch(() => [] as Todo[]),
       API.todos.list({ status: 'in_progress' }).catch(() => [] as Todo[]),
-    ]).then(([s, i, st, todosOpen, todosInProgress]) => {
+      API.resourceLinks.list().catch(() => [] as ResourceLink[]),
+    ]).then(([s, i, st, todosOpen, todosInProgress, rl]) => {
       setSites(s)
       setIssues(i)
       setServiceTickets(st)
@@ -76,6 +79,7 @@ export function Dashboard() {
         return (order[a.priority ?? 'normal'] ?? 2) - (order[b.priority ?? 'normal'] ?? 2)
       })
       setTodos(merged)
+      setQuickLinks(rl)
     }).catch(e => {
       toast('Failed to load dashboard: ' + (e as Error).message, 'error')
     }).finally(() => setLoading(false))
@@ -333,6 +337,70 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Quick Links ── */}
+      {quickLinks.length > 0 && (
+        <div style={{
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
+          borderRadius: 10,
+          overflow: 'hidden',
+          marginBottom: 16,
+        }}>
+          <div style={{ height: 3, background: '#3b82f6' }} />
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 14px',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <BookOpen size={13} color="#3b82f6" />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>Quick Links</span>
+            </div>
+            <Link href="/resources" style={{ fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+              Manage →
+            </Link>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 14px' }}>
+            {quickLinks.map(link => link.url ? (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  fontSize: 12, fontWeight: 600,
+                  color: 'var(--accent)',
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                  padding: '5px 10px',
+                  textDecoration: 'none',
+                }}
+              >
+                <ExternalLink size={11} />
+                {link.name}
+              </a>
+            ) : (
+              <span
+                key={link.id}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  fontSize: 12, fontWeight: 600,
+                  color: 'var(--text3)',
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                  padding: '5px 10px',
+                }}
+              >
+                {link.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Site Cards ── */}
       {sites.length > 0 && (
