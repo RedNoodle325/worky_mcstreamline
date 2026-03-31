@@ -345,6 +345,27 @@ export interface LoginResponse {
   display_name?: string
 }
 
+// ── Daily Tech Report ─────────────────────────────────────────────────────────
+
+export interface DailyTechReport {
+  id: string
+  report_date: string
+  technician_id?: string
+  technician_name?: string
+  site_id?: string
+  units_worked?: string
+  work_performed?: string
+  site_delays?: string
+  parts_needed?: string
+  engineering_requests?: string
+  notes?: string
+  created_at?: string
+  updated_at?: string
+  // joined
+  _site_name?: string
+  _technician_name?: string
+}
+
 // ── API response shapes ───────────────────────────────────────────────────────
 
 export interface ImportResult {

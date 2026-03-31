@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import {
   LayoutDashboard, Ticket, AlertTriangle,
   Users, FileText, CheckSquare, Wrench, Sun, Moon,
-  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2, BookOpen, Wand2, PackageCheck, RotateCcw,
+  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2, BookOpen, Wand2, PackageCheck, RotateCcw, ClipboardList,
 } from 'lucide-react'
 
 const NAV = [
@@ -24,7 +24,8 @@ const NAV = [
   { to: '/todos',       label: 'To-Do',       Icon: CheckSquare },
   { to: '/operations',  label: 'Operations',  Icon: Wrench },
   { to: '/resources',   label: 'Resources',   Icon: BookOpen },
-  { to: '/report',      label: 'Report',      Icon: BarChart2 },
+  { to: '/report',               label: 'Report',             Icon: BarChart2 },
+  { to: '/daily-tech-reports',   label: 'Daily Tech Reports', Icon: ClipboardList },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
