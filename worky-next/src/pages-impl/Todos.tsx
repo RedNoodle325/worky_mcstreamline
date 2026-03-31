@@ -86,7 +86,7 @@ export function Todos() {
         description: todo.description ?? '',
         priority:    todo.priority ?? 'normal',
         status:      todo.status ?? 'todo',
-        due_date:    todo.due_date ?? '',
+        due_date:    todo.due_date?.slice(0, 10) ?? '',
         site_id:     todo.site_id ?? '',
       })
     } else {
@@ -184,7 +184,7 @@ export function Todos() {
             const pri = PRIORITY_CONFIG[t.priority ?? 'normal'] ?? PRIORITY_CONFIG.normal
             const st  = STATUS_CONFIG[t.status ?? 'todo'] ?? STATUS_CONFIG.todo
             const site = siteName(t.site_id)
-            const due = t.due_date ? new Date(t.due_date + 'T00:00:00') : null
+            const due = t.due_date ? new Date(t.due_date.slice(0, 10) + 'T12:00:00') : null
             const overdue = due && due < new Date() && t.status !== 'done'
 
             return (
