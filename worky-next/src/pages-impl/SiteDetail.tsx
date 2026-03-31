@@ -645,6 +645,33 @@ export function SiteDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // PM log modal state
+  const [pmLogModal, setPmLogModal] = useState(false)
+  const [pmLogText, setPmLogText] = useState('')
+  const [pmLogWeek, setPmLogWeek] = useState('')
+  const [pmLogSaving, setPmLogSaving] = useState(false)
+
+  async function savePmLog() {
+    if (!pmLogText.trim() || !id) return
+    setPmLogSaving(true)
+    try {
+      const weekLabel = pmLogWeek
+        ? new Date(pmLogWeek + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      const content = `Week of ${weekLabel}\n\n${pmLogText.trim()}`
+      const saved = await API.notes.createSite(id, { content, note_type: 'pm_log' })
+      setNotes(prev => [saved, ...prev])
+      setPmLogModal(false)
+      setPmLogText('')
+      setPmLogWeek('')
+      toast('PM log entry added')
+    } catch (e) {
+      toast('Error: ' + (e instanceof Error ? e.message : String(e)), 'error')
+    } finally {
+      setPmLogSaving(false)
+    }
+  }
+
   // Modals
   const [contactModal, setContactModal] = useState<Partial<Contact> | null | false>(false)
   const [noteModal, setNoteModal] = useState<Partial<Note> | null | false>(false)
@@ -1273,6 +1300,98 @@ export function SiteDetail() {
           )}
         </div>
       </ColCard>
+
+      {/* PM Project Log */}
+      {(() => {
+        const pmEntries = notes.filter(n => n.note_type === 'pm_log')
+        return (
+          <ColCard
+            title={<>PM Project Log <span style={{ fontWeight: 400, color: 'var(--text3)' }}>({pmEntries.length})</span></>}
+            right={
+              <button className="btn btn-sm btn-primary" onClick={() => setPmLogModal(true)}>
+                + Weekly Update
+              </button>
+            }
+          >
+            <div style={{ marginTop: 4 }}>
+              {pmEntries.length === 0 ? (
+                <div style={{ color: 'var(--text3)', fontSize: 13 }}>No log entries yet. Add the first weekly update.</div>
+              ) : (
+                pmEntries.map(n => (
+                  <div key={n.id} style={{
+                    border: '1px solid var(--border)',
+                    borderLeft: '3px solid #2dd4bf',
+                    borderRadius: 8, padding: 12, marginBottom: 8, background: 'var(--bg3)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#2dd4bf' }}>PM LOG</span>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, color: 'var(--text3)' }}>{fmt(n.created_at)}</span>
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          style={{ padding: '2px 8px', fontSize: 11, color: 'var(--red)' }}
+                          onClick={async () => {
+                            if (!confirm('Delete this log entry?')) return
+                            try {
+                              await API.notes.delete(n.id)
+                              setNotes(prev => prev.filter(x => x.id !== n.id))
+                              toast('Entry deleted')
+                            } catch (e) {
+                              toast('Error: ' + (e instanceof Error ? e.message : String(e)), 'error')
+                            }
+                          }}
+                        >✕</button>
+                      </div>
+                    </div>
+                    <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--text)' }}>
+                      {n.content}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </ColCard>
+        )
+      })()}
+
+      {/* PM Log modal */}
+      {pmLogModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+        }} onClick={() => setPmLogModal(false)}>
+          <div style={{
+            background: 'var(--bg2)', border: '1px solid var(--border)',
+            borderRadius: 12, padding: 24, width: '100%', maxWidth: 520,
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>New Weekly PM Log Entry</div>
+            <div className="form-grid">
+              <div className="form-group full">
+                <label>Week Of</label>
+                <input type="date" value={pmLogWeek} onChange={e => setPmLogWeek(e.target.value)} />
+              </div>
+              <div className="form-group full">
+                <label>Update / Staffing Notes <span style={{ color: 'var(--red)' }}>*</span></label>
+                <textarea
+                  rows={6}
+                  autoFocus
+                  placeholder="Who is on site, what was completed, issues encountered, next steps…"
+                  value={pmLogText}
+                  onChange={e => setPmLogText(e.target.value)}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button className="btn btn-secondary" onClick={() => { setPmLogModal(false); setPmLogText(''); setPmLogWeek('') }}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={savePmLog} disabled={pmLogSaving || !pmLogText.trim()}>
+                {pmLogSaving ? 'Saving…' : 'Save Entry'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Job Numbers */}
       <ColCard
