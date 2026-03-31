@@ -1,5 +1,6 @@
+import { AuthGuard } from '@/components/AuthGuard'
 import { Resources } from '@/pages-impl/Resources'
 
 export default function ResourcesPage() {
-  return <Resources />
+  return <AuthGuard><Resources /></AuthGuard>
 }
