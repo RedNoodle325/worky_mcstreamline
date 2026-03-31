@@ -5,6 +5,7 @@ export interface Site {
   name: string
   project_name?: string
   project_number?: string
+  customer_name?: string
   address?: string
   city?: string
   state?: string
