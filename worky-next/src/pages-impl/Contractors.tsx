@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
+import { ContactPicker } from '../components/ContactPicker'
 import type { Contractor } from '../types'
 
 interface ContractorForm {
@@ -186,10 +187,10 @@ export function Contractors() {
           <div className="form-grid">
             <div className="form-group full">
               <label>Name *</label>
-              <input
-                placeholder="Full name"
+              <ContactPicker
                 value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                onChange={v => setForm(f => ({ ...f, name: v }))}
+                placeholder="Full name"
                 autoFocus
               />
             </div>

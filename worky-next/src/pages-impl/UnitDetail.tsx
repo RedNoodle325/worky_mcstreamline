@@ -7,6 +7,7 @@ import { API } from '../api'
 import type { Unit, Site, Note, Issue } from '../types'
 import { Modal } from '../components/Modal'
 import { StatusBadge } from '../components/StatusBadge'
+import { ContactPicker } from '../components/ContactPicker'
 import { useToastFn } from '@/app/providers'
 
 const UNIT_TYPE_LABELS: Record<string, string> = {
@@ -126,9 +127,9 @@ function NoteModal({ note, unitId, onClose, onSaved, onDeleted }: NoteModalProps
     <Modal title={note?.id ? 'Edit Note' : 'Add Note'} onClose={onClose}>
       <div className="form-group" style={{ marginBottom: 12 }}>
         <label>Author</label>
-        <input
+        <ContactPicker
           value={authorName}
-          onChange={e => setAuthorName(e.target.value)}
+          onChange={setAuthorName}
           placeholder="Your name (optional)"
         />
       </div>

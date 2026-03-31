@@ -7,6 +7,7 @@ import { API } from '../api'
 import type { Site, Unit, Contact, Note, Issue, ServiceTicket, JobNumber } from '../types'
 import { Modal } from '../components/Modal'
 import { StatusBadge } from '../components/StatusBadge'
+import { ContactPicker } from '../components/ContactPicker'
 import { useToastFn } from '@/app/providers'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -141,6 +142,12 @@ interface ContactModalProps {
   onDeleted?: (id: string) => void
 }
 
+function toMuntersEmail(name: string): string {
+  const parts = name.trim().toLowerCase().split(/\s+/)
+  if (parts.length < 2) return ''
+  return `${parts[0]}.${parts[parts.length - 1]}@munters.com`
+}
+
 function ContactModal({ contact, siteId, onClose, onSaved, onDeleted }: ContactModalProps) {
   const toast = useToastFn()
   const [name, setName] = useState(contact?.name || '')
@@ -149,6 +156,15 @@ function ContactModal({ contact, siteId, onClose, onSaved, onDeleted }: ContactM
   const [title, setTitle] = useState(contact?.title || '')
   const [contactType, setContactType] = useState(contact?.contact_type || 'site_contact')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (contactType === 'munters_employee') {
+      const generated = toMuntersEmail(name)
+      if (generated && (!email || email.endsWith('@munters.com'))) {
+        setEmail(generated)
+      }
+    }
+  }, [name, contactType])
 
   const handleSubmit = async () => {
     if (!name.trim()) return
@@ -186,7 +202,7 @@ function ContactModal({ contact, siteId, onClose, onSaved, onDeleted }: ContactM
     <Modal title={contact?.id ? 'Edit Contact' : 'Add Contact'} onClose={onClose}>
       <div className="form-group" style={{ marginBottom: 12 }}>
         <label>Name *</label>
-        <input value={name} onChange={e => setName(e.target.value)} autoFocus />
+        <ContactPicker value={name} onChange={setName} autoFocus />
       </div>
       <div className="form-group" style={{ marginBottom: 12 }}>
         <label>Type</label>
@@ -291,7 +307,7 @@ function SiteNoteModal({ note, siteId, onClose, onSaved, onDeleted }: SiteNoteMo
         </div>
         <div className="form-group" style={{ flex: 1 }}>
           <label>Author</label>
-          <input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="Your name (optional)" />
+          <ContactPicker value={authorName} onChange={setAuthorName} placeholder="Your name (optional)" />
         </div>
       </div>
       <div className="form-group" style={{ marginBottom: 16 }}>

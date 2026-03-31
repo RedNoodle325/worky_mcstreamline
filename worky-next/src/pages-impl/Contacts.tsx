@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
+import { ContactPicker } from '../components/ContactPicker'
 import type { Site, Contact, Contractor } from '../types'
 
 const TEMPLATE_HEADERS = ['name', 'company', 'phone', 'email', 'notes']
@@ -339,10 +340,10 @@ export function Contacts() {
           <div className="form-grid">
             <div className="form-group full">
               <label>Name *</label>
-              <input
-                placeholder="Full name"
+              <ContactPicker
                 value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                onChange={v => setForm(f => ({ ...f, name: v }))}
+                placeholder="Full name"
                 autoFocus
               />
             </div>
