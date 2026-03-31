@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Copy, Check, AlertTriangle, Plus, X } from 'lucide-react'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -91,14 +92,37 @@ type Dest = 'va' | 'tx'
 type Ship = 'standard' | 'nda'
 
 export function PartsTransfer() {
-  const [dest, setDest]       = useState<Dest>('va')
+  const searchParams = useSearchParams()
+
+  const [dest, setDest]         = useState<Dest>('va')
   const [vaSource, setVaSource] = useState<'Main' | 'Main2'>('Main')
-  const [ship, setShip]       = useState<Ship>('standard')
-  const [parts, setParts]     = useState<PartRow[]>([newRow()])
-  const [needBy, setNeedBy]   = useState('')
+  const [ship, setShip]         = useState<Ship>('standard')
+  const [parts, setParts]       = useState<PartRow[]>(() => {
+    const partParam = searchParams.get('part')
+    if (partParam) {
+      const r = newRow()
+      r.partNumber   = partParam
+      r.description  = searchParams.get('desc') || ''
+      return [r]
+    }
+    return [newRow()]
+  })
+  const [needBy, setNeedBy]     = useState('')
   const [soNumber, setSoNumber] = useState('')
   const [priority, setPriority] = useState('Standard')
-  const [notes, setNotes]     = useState('')
+  const [notes, setNotes]       = useState('')
+
+  // Refill when URL params change (e.g. user navigates from BOM twice)
+  useEffect(() => {
+    const partParam = searchParams.get('part')
+    if (partParam) {
+      setParts(prev => {
+        const r = { ...prev[0], partNumber: partParam, description: searchParams.get('desc') || prev[0].description }
+        return [r, ...prev.slice(1)]
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const lateWarning = ship === 'nda' && isAfter2pm()
   const needByFmt   = fmtDate(needBy)

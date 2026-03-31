@@ -1,13 +1,21 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
 import type { BomImport, BomItem, Site } from '../types'
 
 export function BOM() {
-  const toast = useToastFn()
+  const toast  = useToastFn()
+  const router = useRouter()
+
+  function goToTransfer(partNumber: string, description?: string) {
+    const params = new URLSearchParams({ part: partNumber })
+    if (description) params.set('desc', description)
+    router.push(`/parts-transfer?${params}`)
+  }
 
   const [imports, setImports] = useState<BomImport[]>([])
   const [loading, setLoading] = useState(true)
@@ -123,18 +131,19 @@ export function BOM() {
                   <th>Part Number</th>
                   <th>Description</th>
                   <th>UM</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {!partsSearched && partsQuery.length < 2 ? (
                   <tr>
-                    <td colSpan={3} style={{ color: 'var(--text3)' }}>
+                    <td colSpan={4} style={{ color: 'var(--text3)' }}>
                       {partsQuery.length === 0 ? 'Search above to find parts' : 'Type at least 2 characters…'}
                     </td>
                   </tr>
                 ) : partsResults.length === 0 ? (
                   <tr>
-                    <td colSpan={3} style={{ color: 'var(--text3)' }}>No parts found</td>
+                    <td colSpan={4} style={{ color: 'var(--text3)' }}>No parts found</td>
                   </tr>
                 ) : (
                   partsResults.map(p => (
@@ -142,6 +151,14 @@ export function BOM() {
                       <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{p.part_number || '—'}</td>
                       <td style={{ fontSize: 12 }}>{p.description || '—'}</td>
                       <td style={{ fontSize: 12 }}>{p.unit || '—'}</td>
+                      <td>
+                        {p.part_number && (
+                          <button className="btn btn-sm btn-secondary"
+                            onClick={() => goToTransfer(p.part_number!, p.description)}>
+                            Transfer →
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -230,12 +247,13 @@ export function BOM() {
                     <th>Qty</th>
                     <th>Unit</th>
                     <th>Unit Price</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {bomItems.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ color: 'var(--text3)' }}>No items</td>
+                      <td colSpan={6} style={{ color: 'var(--text3)' }}>No items</td>
                     </tr>
                   ) : (
                     bomItems.map(i => (
@@ -249,6 +267,14 @@ export function BOM() {
                             ? `$${i.unit_price.toFixed(2)}`
                             : '—'
                           }
+                        </td>
+                        <td>
+                          {i.part_number && (
+                            <button className="btn btn-sm btn-secondary"
+                              onClick={() => goToTransfer(i.part_number!, i.description)}>
+                              Transfer →
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
