@@ -9,7 +9,7 @@ import { useState, type ReactNode } from 'react'
 import {
   LayoutDashboard, Ticket, AlertTriangle,
   Users, FileText, CheckSquare, Wrench, Sun, Moon,
-  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2,
+  Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2, BookOpen,
 } from 'lucide-react'
 
 const NAV = [
@@ -20,6 +20,7 @@ const NAV = [
   { to: '/notes',       label: 'Notes',       Icon: FileText },
   { to: '/todos',       label: 'To-Do',       Icon: CheckSquare },
   { to: '/operations',  label: 'Operations',  Icon: Wrench },
+  { to: '/resources',   label: 'Resources',   Icon: BookOpen },
   { to: '/report',      label: 'Report',      Icon: BarChart2 },
 ]
 
