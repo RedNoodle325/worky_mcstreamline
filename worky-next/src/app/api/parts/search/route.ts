@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q') ?? ''
 
   const rows = await sql`
-    SELECT * FROM public.parts_catalog
+    SELECT id, part_number, description, unit_of_measure AS unit
+    FROM public.parts_catalog
     WHERE part_number ILIKE ${'%' + q + '%'}
        OR description ILIKE ${'%' + q + '%'}
     ORDER BY part_number
