@@ -12,9 +12,20 @@ export async function GET(
   const { id } = await params
 
   const rows = await sql`
-    SELECT * FROM public.bom_items
-    WHERE bom_import_id = ${id}
-    ORDER BY sort_order
+    SELECT
+      bi.id,
+      bi.bom_import_id,
+      bi.component        AS part_number,
+      bi.description,
+      bi.quantity,
+      bi.unit_of_measure  AS unit,
+      bi.rev,
+      bi.sort_order,
+      pc.part_number      AS catalog_part_number
+    FROM public.bom_items bi
+    LEFT JOIN public.parts_catalog pc ON pc.id = bi.part_catalog_id
+    WHERE bi.bom_import_id = ${id}
+    ORDER BY bi.sort_order
   `
   return NextResponse.json(rows)
 }
