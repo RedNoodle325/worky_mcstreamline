@@ -85,7 +85,8 @@ export const API = {
 
   // Units
   units: {
-    list: () => apiFetch<Unit[]>('/units'),
+    list: (params?: { site_id?: string }) =>
+      apiFetch<Unit[]>('/units' + (params?.site_id ? `?site_id=${params.site_id}` : '')),
     get: (id: string) => apiFetch<Unit>(`/units/${id}`),
     create: (data: Partial<Unit>) =>
       apiFetch<Unit>('/units', { method: 'POST', body: JSON.stringify(data) }),
@@ -331,6 +332,19 @@ export const API = {
       apiFetch<DailyTechReport>(`/daily-tech-reports/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) =>
       apiFetch(`/daily-tech-reports/${id}`, { method: 'DELETE' }),
+    uploadPhoto: async (file: File): Promise<string> => {
+      const token = getToken()
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch(`${API_BASE}/daily-tech-reports/photos`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      return data.url as string
+    },
   },
 
   // SyCool systems

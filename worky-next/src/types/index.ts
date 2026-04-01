@@ -351,18 +351,31 @@ export interface LoginResponse {
 
 // ── Daily Tech Report ─────────────────────────────────────────────────────────
 
+export interface ReportUnitEntry {
+  id?: string
+  unit_id?: string
+  unit_tag?: string
+  unit_serial?: string
+  issue_description?: string
+  resolution?: string
+  parts_text?: string
+  part_catalog_id?: string
+  part_number?: string
+  follow_up_required?: boolean
+  photo_urls?: string[]
+}
+
 export interface DailyTechReport {
   id: string
   report_date: string
   technician_id?: string
   technician_name?: string
   site_id?: string
-  units_worked?: string
-  work_performed?: string
+  customer_complaint?: string
   site_delays?: string
-  parts_needed?: string
   engineering_requests?: string
   notes?: string
+  unit_entries?: ReportUnitEntry[]
   created_at?: string
   updated_at?: string
   // joined
