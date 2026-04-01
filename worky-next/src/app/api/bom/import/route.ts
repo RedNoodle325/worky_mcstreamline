@@ -127,8 +127,14 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null
-  const siteId = formData.get('site_id') as string | null || null
   const unitId = formData.get('unit_id') as string | null || null
+
+  // Accept multiple site IDs as a JSON array string
+  const siteIdsRaw = formData.get('site_ids') as string | null
+  let siteIds: string[] = []
+  if (siteIdsRaw) {
+    try { siteIds = JSON.parse(siteIdsRaw) } catch { siteIds = [] }
+  }
 
   if (!file) return NextResponse.json({ error: 'file required' }, { status: 400 })
 
@@ -163,14 +169,34 @@ export async function POST(req: NextRequest) {
     if (m) { bomDesc = m[1].trim(); break }
   }
 
-  // Insert BOM import record
+  // Ensure junction table exists
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.bom_import_sites (
+      id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+      bom_import_id uuid NOT NULL REFERENCES public.bom_imports(id) ON DELETE CASCADE,
+      site_id uuid NOT NULL REFERENCES public.sites(id) ON DELETE CASCADE,
+      UNIQUE(bom_import_id, site_id)
+    )
+  `
+
+  // Insert BOM import record (keep site_id as first site for backwards compat)
+  const primarySiteId = siteIds.length > 0 ? siteIds[0] : null
   const [bomImport] = await sql`
     INSERT INTO public.bom_imports
       (site_id, unit_id, assembly_number, bom_description, source_filename, raw_text)
     VALUES
-      (${siteId ?? null}, ${unitId ?? null}, ${assemblyNumber}, ${bomDesc}, ${file.name}, ${rawText})
+      (${primarySiteId}, ${unitId ?? null}, ${assemblyNumber}, ${bomDesc}, ${file.name}, ${rawText})
     RETURNING id, site_id, unit_id, assembly_number, bom_description, source_filename, imported_at
   `
+
+  // Insert site associations into junction table
+  for (const sid of siteIds) {
+    await sql`
+      INSERT INTO public.bom_import_sites (bom_import_id, site_id)
+      VALUES (${bomImport.id}, ${sid})
+      ON CONFLICT DO NOTHING
+    `
+  }
 
   const items = parseBomItems(rawText)
 

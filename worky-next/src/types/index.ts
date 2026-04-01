@@ -281,7 +281,7 @@ export interface ResourceLink {
 
 export interface BomImport {
   id: string
-  site_id?: string
+  site_ids?: string[]
   filename: string
   imported_at?: string
   row_count?: number
