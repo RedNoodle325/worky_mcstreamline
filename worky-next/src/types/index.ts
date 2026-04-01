@@ -69,8 +69,12 @@ export interface Contractor {
   company?: string
   email?: string
   phone?: string
+  title?: string
+  region?: string
   specialty?: string
   notes?: string
+  category?: string
+  is_technician?: boolean
   created_at?: string
 }
 

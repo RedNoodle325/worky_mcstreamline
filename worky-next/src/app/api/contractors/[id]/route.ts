@@ -12,7 +12,7 @@ export async function GET(
   const { id } = await params
 
   const rows = await sql`
-    SELECT id, contact_name AS name, company_name AS company, title, email, phone, region, notes, created_at
+    SELECT id, contact_name AS name, company_name AS company, title, email, phone, region, notes, category, is_technician, created_at
     FROM public.contractors
     WHERE id = ${id}
   `
@@ -29,24 +29,26 @@ export async function PUT(
 
   const { id } = await params
   const body = await req.json()
-  const { title, email, phone, region, notes, is_active } = body
+  const { title, email, phone, region, notes, is_active, category, is_technician } = body
   const company_name = body.company_name ?? body.company ?? undefined
   const contact_name = body.contact_name ?? body.name ?? undefined
 
   const rows = await sql`
     UPDATE public.contractors
     SET
-      company_name = COALESCE(${company_name ?? null}, company_name),
-      contact_name = COALESCE(${contact_name ?? null}, contact_name),
-      title        = COALESCE(${title ?? null}, title),
-      email        = COALESCE(${email ?? null}, email),
-      phone        = COALESCE(${phone ?? null}, phone),
-      region       = COALESCE(${region ?? null}, region),
-      notes        = COALESCE(${notes ?? null}, notes),
-      is_active    = COALESCE(${is_active ?? null}, is_active),
-      updated_at   = now()
+      company_name   = COALESCE(${company_name ?? null}, company_name),
+      contact_name   = COALESCE(${contact_name ?? null}, contact_name),
+      title          = COALESCE(${title ?? null}, title),
+      email          = COALESCE(${email ?? null}, email),
+      phone          = COALESCE(${phone ?? null}, phone),
+      region         = COALESCE(${region ?? null}, region),
+      notes          = COALESCE(${notes ?? null}, notes),
+      is_active      = COALESCE(${is_active ?? null}, is_active),
+      category       = COALESCE(${category ?? null}, category),
+      is_technician  = COALESCE(${is_technician ?? null}, is_technician),
+      updated_at     = now()
     WHERE id = ${id}
-    RETURNING id, contact_name AS name, company_name AS company, title, email, phone, region, notes, created_at
+    RETURNING id, contact_name AS name, company_name AS company, title, email, phone, region, notes, category, is_technician, created_at
   `
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(rows[0])
