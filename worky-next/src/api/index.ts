@@ -273,10 +273,11 @@ export const API = {
     list: () => apiFetch<BomImport[]>('/bom'),
     getItems: (id: string) => apiFetch<BomItem[]>(`/bom/${id}/items`),
     searchParts: (q: string) => apiFetch<BomItem[]>(`/parts/search?q=${encodeURIComponent(q)}`),
-    import: async (file: File): Promise<{ id: string }> => {
+    import: async (file: File, siteIds: string[] = []): Promise<{ id: string }> => {
       const token = getToken()
       const form = new FormData()
       form.append('file', file)
+      if (siteIds.length) form.append('site_ids', JSON.stringify(siteIds))
       const res = await fetch(`${API_BASE}/bom/import`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},

@@ -28,7 +28,7 @@ export function BOM() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [sites, setSites] = useState<Site[]>([])
   const [importFile, setImportFile] = useState<File | null>(null)
-  const [importSiteId, setImportSiteId] = useState('')
+  const [importSiteIds, setImportSiteIds] = useState<string[]>([])
   const [importing, setImporting] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -81,6 +81,19 @@ export function BOM() {
     }
   }
 
+  function toggleSite(siteId: string) {
+    setImportSiteIds(prev =>
+      prev.includes(siteId) ? prev.filter(id => id !== siteId) : [...prev, siteId]
+    )
+  }
+
+  function closeImportModal() {
+    setShowImportModal(false)
+    setImportFile(null)
+    setImportSiteIds([])
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   async function handleImport() {
     if (!importFile) {
       toast('Please select a file', 'error')
@@ -88,11 +101,9 @@ export function BOM() {
     }
     setImporting(true)
     try {
-      await API.bom.import(importFile)
+      await API.bom.import(importFile, importSiteIds)
       toast('BOM imported successfully')
-      setShowImportModal(false)
-      setImportFile(null)
-      setImportSiteId('')
+      closeImportModal()
       loadImports()
     } catch (e) {
       toast('Import failed: ' + (e as Error).message, 'error')
@@ -100,6 +111,8 @@ export function BOM() {
       setImporting(false)
     }
   }
+
+  const siteMap = Object.fromEntries(sites.map(s => [s.id, s.name]))
 
   return (
     <div>
@@ -113,7 +126,7 @@ export function BOM() {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="bom-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         {/* Parts search */}
         <div className="card">
           <div className="card-title" style={{ marginBottom: 12 }}>Parts Search</div>
@@ -178,8 +191,8 @@ export function BOM() {
                 <thead>
                   <tr>
                     <th>Filename</th>
+                    <th>Sites</th>
                     <th>Imported</th>
-                    <th>Rows</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -192,15 +205,35 @@ export function BOM() {
                     imports.map(b => (
                       <tr key={b.id}>
                         <td
-                          style={{ fontSize: 12, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          style={{ fontSize: 12, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                           title={b.filename}
                         >
                           {b.filename || '—'}
                         </td>
-                        <td style={{ fontSize: 12 }}>
+                        <td style={{ fontSize: 11, maxWidth: 160 }}>
+                          {b.site_ids && b.site_ids.length > 0 ? (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                              {b.site_ids.map(sid => (
+                                <span key={sid} style={{
+                                  background: 'var(--bg3)',
+                                  border: '1px solid var(--border)',
+                                  borderRadius: 4,
+                                  padding: '1px 5px',
+                                  fontSize: 10,
+                                  color: 'var(--text2)',
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  {siteMap[sid] || sid.slice(0, 6)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text3)' }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                           {b.imported_at ? new Date(b.imported_at).toLocaleDateString() : '—'}
                         </td>
-                        <td style={{ fontSize: 12 }}>{b.row_count ?? '—'}</td>
                         <td>
                           <button
                             className="btn btn-sm btn-secondary"
@@ -288,19 +321,19 @@ export function BOM() {
 
       {showImportModal && (
         <Modal
-          title="Import BOM CSV"
-          onClose={() => { setShowImportModal(false); setImportFile(null); setImportSiteId('') }}
-          maxWidth={480}
+          title="Import BOM"
+          onClose={closeImportModal}
+          maxWidth={520}
         >
           <p style={{ color: 'var(--text2)', marginBottom: 16, fontSize: 13 }}>
-            Upload a BOM CSV file. Parts will be parsed and added to the catalog.
+            Upload a Glovia BOM file (TXT or PDF). Parts will be parsed and added to the catalog.
           </p>
           <div className="form-group" style={{ marginBottom: 12 }}>
             <label>BOM File *</label>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.xlsx,.pdf"
+              accept=".txt,.pdf"
               onChange={e => setImportFile(e.target.files?.[0] ?? null)}
               style={{ display: 'block', marginTop: 4 }}
             />
@@ -310,20 +343,56 @@ export function BOM() {
               </div>
             )}
           </div>
+
           <div className="form-group" style={{ marginBottom: 16 }}>
-            <label>Site (optional)</label>
-            <select value={importSiteId} onChange={e => setImportSiteId(e.target.value)}>
-              <option value="">— No site —</option>
-              {sites.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <label style={{ marginBottom: 8, display: 'block' }}>
+              Sites (select all that apply)
+            </label>
+            {sites.length === 0 ? (
+              <div style={{ fontSize: 12, color: 'var(--text3)' }}>No sites available</div>
+            ) : (
+              <div style={{
+                maxHeight: 200,
+                overflowY: 'auto',
+                border: '1px solid var(--border)',
+                borderRadius: 6,
+                background: 'var(--bg)',
+              }}>
+                {sites.map(s => (
+                  <label
+                    key={s.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '7px 10px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--border)',
+                      fontSize: 13,
+                      color: 'var(--text)',
+                      background: importSiteIds.includes(s.id) ? 'rgba(var(--accent-rgb, 59,130,246), 0.08)' : 'transparent',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={importSiteIds.includes(s.id)}
+                      onChange={() => toggleSite(s.id)}
+                      style={{ accentColor: 'var(--accent)', width: 14, height: 14, flexShrink: 0 }}
+                    />
+                    {s.name}
+                  </label>
+                ))}
+              </div>
+            )}
+            {importSiteIds.length > 0 && (
+              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
+                {importSiteIds.length} site{importSiteIds.length !== 1 ? 's' : ''} selected
+              </div>
+            )}
           </div>
+
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button
-              className="btn btn-secondary"
-              onClick={() => { setShowImportModal(false); setImportFile(null); setImportSiteId('') }}
-            >
+            <button className="btn btn-secondary" onClick={closeImportModal}>
               Cancel
             </button>
             <button

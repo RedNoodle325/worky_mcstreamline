@@ -125,9 +125,9 @@ export function Dashboard() {
         {/* Top accent bar */}
         <div style={{ height: 3, background: 'var(--accent)' }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 20px' }}>
+        <div className="dash-header-inner">
           {/* Branding */}
-          <div style={{ padding: '14px 24px 14px 0', borderRight: '1px solid var(--border)' }}>
+          <div className="dash-branding">
             <div style={{
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 16, fontWeight: 700, letterSpacing: -0.3, color: 'var(--text)',
@@ -140,7 +140,7 @@ export function Dashboard() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'flex', flex: 1, justifyContent: 'center' }}>
+          <div className="dash-stats">
             <ScoreDigit value={sites.length} label="Sites" color="var(--cyan)" />
             <ScoreDigit
               value={openIssues} label="Issues"
@@ -157,11 +157,7 @@ export function Dashboard() {
           </div>
 
           {/* Clock */}
-          <div className="dash-clock" style={{
-            padding: '14px 0 14px 24px',
-            borderLeft: '1px solid var(--border)',
-            textAlign: 'right',
-          }}>
+          <div className="dash-clock">
             <div style={{
               fontFamily: "'Inter', system-ui, sans-serif",
               fontSize: 20, fontWeight: 600, color: 'var(--text2)', lineHeight: 1,
