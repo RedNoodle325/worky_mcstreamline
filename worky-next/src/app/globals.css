@@ -163,7 +163,17 @@ body.read-only .edit-ui { display: none !important; }
 }
 .sidebar-user-logout:hover { color: var(--red); }
 
-.nav-links { list-style: none; padding: 8px 10px; }
+.nav-section-label {
+  padding: 12px 20px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  user-select: none;
+}
+
+.nav-links { list-style: none; padding: 2px 10px 4px; }
 .nav-links li a {
   display: flex; align-items: center; gap: 9px;
   padding: 8px 10px;
