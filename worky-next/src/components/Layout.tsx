@@ -12,21 +12,54 @@ import {
   Eye, Pencil, LogOut, Menu, ChevronLeft, BarChart2, BookOpen, Wand2, PackageCheck, RotateCcw, ClipboardList, Layers,
 } from 'lucide-react'
 
-const NAV = [
-  { to: '/',                label: 'Dashboard',     Icon: LayoutDashboard, end: true },
-  { to: '/astea',           label: 'Ticket Wizard', Icon: Wand2 },
-  { to: '/parts-transfer',  label: 'Parts Transfer', Icon: PackageCheck },
-  { to: '/bom',             label: 'BOM / Parts',   Icon: Layers },
-  { to: '/rga-form',        label: 'RGA Form',      Icon: RotateCcw },
-  { to: '/cs-tickets',      label: 'CS Tickets',    Icon: Ticket },
-  { to: '/issues',      label: 'Issues',      Icon: AlertTriangle },
-  { to: '/contacts',    label: 'Contacts',    Icon: Users },
-  { to: '/notes',       label: 'Notes',       Icon: FileText },
-  { to: '/todos',       label: 'To-Do',       Icon: CheckSquare },
-  { to: '/operations',  label: 'Operations',  Icon: Wrench },
-  { to: '/resources',   label: 'Resources',   Icon: BookOpen },
-  { to: '/report',               label: 'Report',             Icon: BarChart2 },
-  { to: '/daily-tech-reports',   label: 'Daily Tech Reports', Icon: ClipboardList },
+type NavItem = { to: string; label: string; Icon: React.ElementType; end?: boolean }
+type NavSection = { section: string; items: NavItem[] }
+
+const NAV: NavSection[] = [
+  {
+    section: '',
+    items: [
+      { to: '/', label: 'Dashboard', Icon: LayoutDashboard, end: true },
+    ],
+  },
+  {
+    section: 'Service',
+    items: [
+      { to: '/astea',      label: 'Ticket Wizard', Icon: Wand2 },
+      { to: '/cs-tickets', label: 'CS Tickets',    Icon: Ticket },
+      { to: '/rga-form',   label: 'RGA Form',      Icon: RotateCcw },
+      { to: '/issues',     label: 'Issues',        Icon: AlertTriangle },
+    ],
+  },
+  {
+    section: 'Parts',
+    items: [
+      { to: '/parts-transfer', label: 'Parts Transfer', Icon: PackageCheck },
+      { to: '/bom',            label: 'BOM / Parts',    Icon: Layers },
+    ],
+  },
+  {
+    section: 'Field Ops',
+    items: [
+      { to: '/operations',        label: 'Operations',        Icon: Wrench },
+      { to: '/daily-tech-reports',label: 'Tech Reports',      Icon: ClipboardList },
+      { to: '/todos',             label: 'To-Do',             Icon: CheckSquare },
+    ],
+  },
+  {
+    section: 'Sites',
+    items: [
+      { to: '/contacts', label: 'Contacts', Icon: Users },
+      { to: '/notes',    label: 'Notes',    Icon: FileText },
+    ],
+  },
+  {
+    section: 'Tools',
+    items: [
+      { to: '/report',    label: 'Report',    Icon: BarChart2 },
+      { to: '/resources', label: 'Resources', Icon: BookOpen },
+    ],
+  },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -58,25 +91,32 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <nav style={{ flex: 1 }}>
-          <ul className="nav-links">
-            {NAV.map(({ to, label, Icon, end }) => (
-              <li key={to}>
-                <Link
-                  href={to}
-                  className={
-                    end
-                      ? pathname === to ? 'active' : ''
-                      : pathname.startsWith(to) ? 'active' : ''
-                  }
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon size={15} strokeWidth={1.8} />
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <nav style={{ flex: 1, overflowY: 'auto' }}>
+          {NAV.map(({ section, items }) => (
+            <div key={section || '__top'}>
+              {section && (
+                <div className="nav-section-label">{section}</div>
+              )}
+              <ul className="nav-links">
+                {items.map(({ to, label, Icon, end }) => (
+                  <li key={to}>
+                    <Link
+                      href={to}
+                      className={
+                        end
+                          ? pathname === to ? 'active' : ''
+                          : pathname.startsWith(to) ? 'active' : ''
+                      }
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <Icon size={15} strokeWidth={1.8} />
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         <div className="sidebar-footer">
