@@ -1092,7 +1092,7 @@ select option { background: var(--bg2); }
   display: flex;
   align-items: center;
   padding: 0 20px;
-  overflow: hidden;
+  /* no overflow:hidden — it clips wrapped rows on mobile */
 }
 
 /* Branding block */
@@ -1102,13 +1102,14 @@ select option { background: var(--bg2); }
   flex-shrink: 0;
 }
 
-/* Stats row */
+/* Stats row — min-width:0 lets it shrink; no overflow-x:auto here because
+   justify-content:center + overflow-x:auto clips the left side of centered
+   overflowing content on desktop */
 .dash-stats {
   display: flex;
   flex: 1;
   justify-content: center;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 /* Clock block */
@@ -1129,7 +1130,6 @@ select option { background: var(--bg2); }
   .dash-header-inner {
     flex-wrap: wrap;
     padding: 0 14px;
-    gap: 0;
   }
   .dash-branding {
     width: 100%;
@@ -1137,10 +1137,13 @@ select option { background: var(--bg2); }
     border-bottom: 1px solid var(--border);
     padding: 10px 0;
   }
+  /* Stats on mobile: full-width row, left-aligned, scrollable */
   .dash-stats {
     width: 100%;
     justify-content: flex-start;
-    padding: 4px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0;
   }
   .bom-two-col {
     grid-template-columns: 1fr !important;
