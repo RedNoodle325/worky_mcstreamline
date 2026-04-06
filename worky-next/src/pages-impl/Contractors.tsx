@@ -94,11 +94,11 @@ export function Contractors() {
     <div>
       <div className="page-header">
         <div>
-          <h1>Contractors</h1>
-          <div className="page-subtitle">Field contractors and vendors</div>
+          <h1>Contacts</h1>
+          <div className="page-subtitle">Field contacts and vendors</div>
         </div>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          + Add Contractor
+          + Add Contact
         </button>
       </div>
 
