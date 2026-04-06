@@ -5,6 +5,8 @@ interface Props {
 
 const STATUS_COLORS: Record<string, string> = {
   open: 'var(--status-open)',
+  techs_scheduled: 'var(--accent)',
+  parts_on_order: 'var(--orange)',
   in_progress: 'var(--yellow)',
   complete: 'var(--green)',
   completed: 'var(--green)',
@@ -21,6 +23,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   open: 'Open',
+  techs_scheduled: 'Techs Scheduled',
+  parts_on_order: 'Parts on Order',
   in_progress: 'In Progress',
   complete: 'Complete',
   completed: 'Completed',

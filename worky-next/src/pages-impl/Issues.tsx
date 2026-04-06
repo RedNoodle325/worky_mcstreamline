@@ -11,11 +11,11 @@ import { useToastFn } from '@/app/providers'
 // ── Config ─────────────────────────────────────────────────────────────────────
 
 const STATUS_OPTS = [
-  { val: 'open',             label: 'Open',             color: 'var(--red)'    },
-  { val: 'in_progress',      label: 'In Progress',      color: 'var(--yellow)' },
-  { val: 'work_complete',    label: 'Work Complete',    color: 'var(--green)'  },
-  { val: 'ready_to_inspect', label: 'Ready to Inspect', color: 'var(--accent)' },
-  { val: 'closed',           label: 'Closed',           color: 'var(--text3)'  },
+  { val: 'open',            label: 'Open',            color: 'var(--red)'    },
+  { val: 'techs_scheduled', label: 'Techs Scheduled', color: 'var(--accent)' },
+  { val: 'parts_on_order',  label: 'Parts on Order',  color: 'var(--orange)' },
+  { val: 'in_progress',     label: 'In Progress',     color: 'var(--yellow)' },
+  { val: 'complete',        label: 'Complete',         color: 'var(--green)'  },
 ]
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -150,10 +150,10 @@ function IssueModal({ issue, sites, onSave, onDelete, onClose }: IssueModalProps
               <label>Status</label>
               <select value={status} onChange={e => setStatus(e.target.value)}>
                 <option value="open">Open</option>
+                <option value="techs_scheduled">Techs Scheduled</option>
+                <option value="parts_on_order">Parts on Order</option>
                 <option value="in_progress">In Progress</option>
-                <option value="work_complete">Work Complete</option>
-                <option value="ready_to_inspect">Ready to Inspect</option>
-                <option value="closed">Closed</option>
+                <option value="complete">Complete</option>
               </select>
             </div>
           )}
@@ -347,7 +347,7 @@ export function Issues() {
   const [search, setSearch] = useState('')
   const [filterSite, setFilterSite] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
-  const [filterStatuses, setFilterStatuses] = useState<Set<string>>(new Set(['open', 'in_progress']))
+  const [filterStatuses, setFilterStatuses] = useState<Set<string>>(new Set(['open', 'techs_scheduled', 'parts_on_order', 'in_progress']))
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingIssue, setEditingIssue] = useState<Issue | null | undefined>(undefined)
@@ -402,7 +402,7 @@ export function Issues() {
         <div>
           <h1 style={{ margin: 0 }}>Issues</h1>
           <div className="page-subtitle">
-            {issues.length} total · {counts['open'] ?? 0} open · {counts['closed'] ?? 0} closed
+            {issues.length} total · {counts['open'] ?? 0} open · {counts['complete'] ?? 0} complete
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

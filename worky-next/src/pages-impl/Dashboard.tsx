@@ -90,16 +90,17 @@ export function Dashboard() {
   }
 
   const siteMap = Object.fromEntries(sites.map(s => [s.id, s.name]))
-  const openIssues = issues.filter(i => i.status === 'open' || i.status === 'in_progress').length
+  const isActiveIssue = (status: string) => status !== 'complete'
+  const openIssues = issues.filter(i => isActiveIssue(i.status ?? 'open')).length
   const openTickets = serviceTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length
   const emergencyCount = sites.filter(s => {
-    const si = issues.filter(i => i.site_id === s.id && (i.status === 'open' || i.status === 'in_progress'))
+    const si = issues.filter(i => i.site_id === s.id && isActiveIssue(i.status ?? 'open'))
     return si.some(i => i.priority === 'critical')
   }).length
 
   // Per-site issue counts, sorted: emergency → problem → operational
   const siteIssueStats = sites.map(s => {
-    const si = issues.filter(i => i.site_id === s.id && (i.status === 'open' || i.status === 'in_progress'))
+    const si = issues.filter(i => i.site_id === s.id && isActiveIssue(i.status ?? 'open'))
     const critical = si.filter(i => i.priority === 'critical').length
     const high = si.filter(i => i.priority === 'high').length
     const total = si.length
