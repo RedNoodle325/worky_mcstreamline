@@ -6,7 +6,30 @@ import { API } from '../api'
 import { useToastFn } from '@/app/providers'
 import { Modal } from '../components/Modal'
 import { ContactPicker } from '../components/ContactPicker'
+import { Copy, Check } from 'lucide-react'
 import type { Site, Contact, Contractor } from '../types'
+
+// ── Copy helper ───────────────────────────────────────────────────────────────
+function useCopy() {
+  const [copied, setCopied] = useState<string | null>(null)
+  function copy(text: string, id: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(id)
+      setTimeout(() => setCopied(c => c === id ? null : c), 1800)
+    })
+  }
+  return { copied, copy }
+}
+
+function formatCard(c: { name: string; title: string; company: string; phone: string; email: string | null }) {
+  return [
+    c.name,
+    c.title || null,
+    c.company || null,
+    c.phone !== '—' ? c.phone : null,
+    c.email || null,
+  ].filter(Boolean).join('\n')
+}
 
 // ── Category config ────────────────────────────────────────────────────────────
 export const CATEGORIES: Record<string, { label: string; color: string; bg: string; border: string }> = {
@@ -62,6 +85,7 @@ const EMPTY_FORM: ContactForm = {
 export function Contacts() {
   const toast = useToastFn()
   const router = useRouter()
+  const { copied, copy } = useCopy()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -263,8 +287,14 @@ export function Contacts() {
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map(c => (
-                        <tr key={`${c._type}-${c.id}`}>
+                      {items.map(c => {
+                        const cardId = `${c._type}-${c.id}`
+                        const phoneId = `phone-${cardId}`
+                        const isCopiedCard = copied === cardId
+                        const isCopiedPhone = copied === phoneId
+                        const hasPhone = c.phone && c.phone !== '—'
+                        return (
+                        <tr key={cardId}>
                           <td style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               {c.name}
@@ -284,31 +314,69 @@ export function Contacts() {
                           </td>
                           <td style={{ color: 'var(--text2)', fontSize: 13 }}>{c.title || '—'}</td>
                           <td style={{ fontSize: 13 }}>{c.company || '—'}</td>
-                          <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{c.phone}</td>
+
+                          {/* Phone — tap to copy */}
+                          <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                            {hasPhone ? (
+                              <button
+                                onClick={() => copy(c.phone, phoneId)}
+                                title="Tap to copy"
+                                style={{
+                                  background: 'none', border: 'none', cursor: 'pointer',
+                                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                                  color: isCopiedPhone ? 'var(--green)' : 'var(--text)',
+                                  fontSize: 13, padding: 0, fontFamily: 'inherit',
+                                }}
+                              >
+                                {isCopiedPhone ? <Check size={12} /> : <Copy size={11} style={{ opacity: 0.4 }} />}
+                                {c.phone}
+                              </button>
+                            ) : '—'}
+                          </td>
+
+                          {/* Email */}
                           <td style={{ fontSize: 13 }}>
                             {c.email
                               ? <a href={`mailto:${c.email}`} style={{ color: 'var(--accent)' }}>{c.email}</a>
                               : '—'}
                           </td>
+
+                          {/* Actions: copy card + edit/site */}
                           <td style={{ whiteSpace: 'nowrap' }}>
-                            {c._type === 'contractor' ? (
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                               <button
                                 className="btn btn-secondary btn-sm"
-                                onClick={() => router.push(`/contractors/${c.id}`)}
+                                title="Copy contact card"
+                                onClick={() => copy(formatCard(c), cardId)}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                                  color: isCopiedCard ? 'var(--green)' : undefined,
+                                  borderColor: isCopiedCard ? 'var(--green)' : undefined,
+                                }}
                               >
-                                Edit
+                                {isCopiedCard ? <Check size={11} /> : <Copy size={11} />}
+                                {isCopiedCard ? 'Copied' : 'Copy'}
                               </button>
-                            ) : (
-                              <button
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => router.push(`/sites/${c.siteId}`)}
-                              >
-                                Site →
-                              </button>
-                            )}
+                              {c._type === 'contractor' ? (
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => router.push(`/contractors/${c.id}`)}
+                                >
+                                  Edit
+                                </button>
+                              ) : (
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => router.push(`/sites/${c.siteId}`)}
+                                >
+                                  Site →
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
